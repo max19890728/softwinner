@@ -1,0 +1,19 @@
+{
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "width": 240,
+    "height": 320
+  },
+  "subviews": [
+    {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "width": 240,
+        "height": 67
+      },
+      "background_image_name": "status_bar_background"
+    }
+  ]
+}

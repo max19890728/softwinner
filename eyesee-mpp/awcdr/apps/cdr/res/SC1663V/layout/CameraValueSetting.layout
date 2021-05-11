@@ -1,0 +1,20 @@
+{
+  "frame": {
+    "x": 0,
+    "y": 0,
+    "width": 240,
+    "height": 320
+  },
+  "background_color": "0xFF464646",
+  "title_view": {
+    "type": "label",
+    "title": "",
+    "background_image_name": "TitleBar/child_background",
+    "frame": {
+      "x": 0,
+      "y": 0,
+      "width": 240,
+      "height": 32
+    }
+  }
+}

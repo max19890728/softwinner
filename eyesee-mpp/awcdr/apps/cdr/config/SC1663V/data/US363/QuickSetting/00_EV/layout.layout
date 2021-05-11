@@ -1,0 +1,11 @@
+{
+  "icon": "icon",
+  "background": "00",
+  "options": [
+    {
+      "default": "Option/00/default",
+      "lock": "Option/00/lock",
+      "background": "00"
+    }
+  ]
+}
