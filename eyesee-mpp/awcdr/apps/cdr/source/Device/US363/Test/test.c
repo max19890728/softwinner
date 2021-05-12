@@ -2,6 +2,8 @@
  * Copyright (c), 2021, Ultracker Tech. All rights reserved.
  ******************************************************************************/
 
+#include "Device/US363/Test/test.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +23,8 @@
 //#include <linux/videodev2.h>
 //#include <linux/usbdevice_fs.h>
 
-#include "Device/US363/Test/test.h"
+#include "Device/us363_camera.h"
+#include "Device/US363/us360.h"
 #include "Device/US363/Cmd/spi_cmd.h"
 #include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/us360_func.h"
@@ -782,12 +785,12 @@ int getBatteryNowCurrent(){
 	return current;
 }
 
-char VersionStrJNI[32];
+/*char VersionStrJNI[32];
 void setVersionJNI(char *ver, int len)
 {
 	memcpy(&VersionStrJNI[0], ver, len);
 	VersionStrJNI[len] = '\0';
-}
+}*/
 
 char T_mSSID[16];
 //Test_Tool_Result_Struct Test_Tool_Result;
@@ -804,7 +807,7 @@ void WriteTestResult(int type, int debug)
 	Test_Tool_Result.CheckSum          = TEST_RESULT_CHECK_SUM;
 	Test_Tool_Result.TestBlockTableNum = Test_Block_Table_MAX;
 	sprintf(Test_Tool_Result.SSID, "%s\0", T_mSSID);
-	sprintf(Test_Tool_Result.AletaVer, "%s\0", VersionStrJNI);
+	sprintf(Test_Tool_Result.AletaVer, "%s\0", us363Ver);
 	if(type == 0) {
 		if(debug == 1)
 			Test_Tool_Result.StitchVer = S2_STITCH_VERSION_DEBUG;

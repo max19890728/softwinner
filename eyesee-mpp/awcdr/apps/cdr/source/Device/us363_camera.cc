@@ -2,10 +2,11 @@
  * Copyright (c), 2021, Ultracker Tech. All rights reserved.
  ******************************************************************************/
 
+#include "Device/us363_camera.h"
+
 #include <mpi_sys.h>
 #include <mpi_venc.h>
 
-#include "Device/us363_camera.h"
 #include "Device/spi.h"
 #include "Device/qspi.h"
 #include "Device/US363/us360.h"
@@ -35,14 +36,22 @@
 #define LOG_TAG "US363Camera"
 
 //==================== parameter ====================
-char us363Version[64] = "v1.00.00\0";
+char mUS363Version[64] = "v1.00.00\0";
 
-char wifiApSsid[32] = "US_0000\0"; 
-char wifiApPassword[16] = "88888888\0";
+char mWifiApSsid[32] = "US_0000\0"; 
+char mWifiApPassword[16] = "88888888\0";
 
-int countryCode = 840;		//國家代碼 對應ISO 3166-1  158台灣 392日本 156中國 840美國 
-int customerCode = 0;		//辨識編號 0:Ultracker	10137:Let's   2067001:阿里巴巴
-char pcbVersion[8] = "V0.0\0";
+int mCountryCode = 840;		//國家代碼 對應ISO 3166-1  158台灣 392日本 156中國 840美國 
+int mCustomerCode = 0;		//辨識編號 0:Ultracker	10137:Let's   2067001:阿里巴巴
+char mPcbVersion[8] = "V0.0\0";
+
+char mHttpAccount[32] = "admin\0";
+char mHttpPassword[32] = "admin\0";
+
+char mEthernetIP[64];
+char mEthernetMask[64];
+char mEthernetGway[64];
+char mEthernetDns[64];
 
 
 //==================== variable ====================
@@ -55,10 +64,62 @@ int doResize_mode[8];
 //==================== get/set =====================
 void getUS363Version(char *version)
 {
-    sprintf(version, "%s\0", us363Version);
+    sprintf(version, "%s\0", mUS363Version);
 }
 
+
 //==================== fucntion ====================
+void initCountryFunc() 
+{  
+	mCountryCode = readCountryCode();
+//tmp	waitLanguage(mCountryCode);
+    db_debug("initLensFunc() mCountryCode=%d\n", mCountryCode);
+}
+	
+void initCustomerFunc() 
+{
+    char name[16] = "AletaS2\0";
+	char *ptr = NULL;
+
+    mCustomerCode = readCustomerCode();
+	sprintf(wifiAPssid, "%s\0", mSSID);
+//tmp    ledStateArray[showSsidHead] = 0;
+    db_debug("initCustomerFunc() mCustomerCode=%d\n", mCustomerCode);
+
+    switch(mCustomerCode) {
+    case CUSTOMER_CODE_LETS:
+		sprintf(name, "LET'S\0");
+		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_lets\0");
+//tmp    	ControllerServer.machineNmae = "LET'S";
+    	setModelName(&name[0]);
+    	writeWifiMaxLink(10);
+    	break;
+    case CUSTOMER_CODE_ALIBABA:
+		sprintf(name, "Alibaba\0");
+		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_alibaba\0");
+//tmp    	ControllerServer.machineNmae = "Alibaba";
+    	setModelName(&name[0]);
+    	writeWifiMaxLink(10);
+    	setSensorLogEnable(1);
+    	break;
+    case CUSTOMER_CODE_PIIQ:
+		sprintf(name, "peek\0");
+		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_peek\0");
+    	//wifiAPssid = ssid.replace("US_", "peek-HD_");
+		ptr = strchr(mSSID, '_');
+		sprintf(wifiAPssid, "peek-HD_%s\0", (ptr+1) );
+//tmp        ledStateArray[showSsidHead] = 1;
+//tmp        ControllerServer.machineNmae = "peek";
+    	setModelName(&name[0]);
+    	writeWifiMaxLink(1); //控制連線上限範圍 1 - 10
+    	break;
+    default:
+    	setModelName(&name[0]);
+    	writeWifiMaxLink(10);
+    	break;
+    }
+}
+
 void destroyCamera()
 {
 	free_us360_buf();
@@ -88,7 +149,7 @@ void initCamera()
 	if(EyeseeLinux::StorageManager::GetInstance()->IsMounted() ) {
 		makeUS360Folder();
 		makeTestFolder();
-		readWifiConfig(&wifiApSsid[0], &wifiApPassword[0]);
+		readWifiConfig(&mWifiApSsid[0], &mWifiApPassword[0]);
 	}
 	else {
 		getNewSsidPassword(&wifiApSsid[0], &wifiApPassword[0]);
@@ -114,9 +175,9 @@ void onCreate()
 //tmp    systemlog.start();
 //tmp    systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is start.", "---");
 
-    set_A2K_Softwave_Version(&us363Version[0]);
+    set_A2K_Softwave_Version(&mUS363Version[0]);
 //    SetmMcuVersion(mMcuVersion);
-    readPcbVersion(&pcbVersion[0]);
+    readPcbVersion(&mPcbVersion[0]);
         
 //tmp    int led_mode = GetLedControlMode();
 //tmp    ChangeLedMode(led_mode);
@@ -127,7 +188,7 @@ void onCreate()
     for(i = 0; i< 8; i++) 
 		doResize_mode[i] = -1;
         
-//tmp    setVersionOLED(us363Version.getBytes());
+//tmp    setVersionOLED(mUS363Version.getBytes());
 
     setCpuFreq(4, CpuFullSpeed);
         
@@ -138,47 +199,40 @@ void onCreate()
 		setSysTime(defaultSysTime);
     }
 //tmp    writeHistory();
-		
-    setVersionJNI(&us363Version[0], strlen(us363Version) );
 	
     ret = ReadTestResult();
     if(ret != 0) 
 		SetDoAutoStitchFlag(1);
 
-    readWifiConfig(&mSSID[0], &mPwd[0]);    // 讀取 US360 參數 (Serial_Number. Wifi_ID. Wifi_Password. ...)
+    readWifiConfig(&mWifiApSsid[0], &mWifiApPassword[0]);
     //CreatCountryList();
     initCountryFunc();
     initCustomerFunc();
         
-    SetDataBinVersionDate(versionDate); 
     databinInit(LangCode, customerCode);
         
 //tmp    ControllerServer.changeDataToDataBin();
-    Get_DataBin_HttpAccount(&httpAccount[0], sizeof(httpAccount) );
-    Get_DataBin_HttpPassword(&httpPassword[0], sizeof(httpPassword) );	
+    Get_DataBin_HttpAccount(&mHttpAccount[0], sizeof(mHttpAccount) );
+    Get_DataBin_HttpPassword(&mHttpPassword[0], sizeof(mHttpPassword) );	
 //tmp	Live555Thread(httpAccount.getBytes(), httpAccount.getBytes().length, httpPassword.getBytes(), httpPassword.getBytes().length);
 
-    checkSaveSmoothBin();
+    //checkSaveSmoothBin();     //#debug smooth
 //tmp    Init_OLED_Country();
 //tmp    Init_US360_OLED();
 //tmp    disableShutdown(1);  
-    ReadLensCode();
+    //ReadLensCode();           //#old/new lens
 //tmp    CreatBackgroundDir();
 //tmp    Copy_FPGA_File();
-//tmp    initThmFile();
-//tmp    initGsensor();
-//tmp    initCompass();
+//tmp    initThmFile();         //#thm icon
+//tmp    initGsensor();         //#gsensor校正資料
+//tmp    initCompass();         //#gsensor資料
         
-    char ip_byte[64];
-    char mask_byte[64];
-    char gway_byte[64];
-    char dns_byte[64];
 //tmp    if(mEth != null) {
-		Get_DataBin_EthernetIP(&ip_byte[0], sizeof(ip_byte) );
-        Get_DataBin_EthernetMask(&mask_byte[0], sizeof(mask_byte) );
-        Get_DataBin_EthernetGateWay(&gway_byte[0], sizeof(gway_byte) );
-        Get_DataBin_EthernetDNS(&dns_byte[0], sizeof(dns_byte) );
-//tmp        mEth.SetInfo(Get_DataBin_EthernetMode(), ip_s, mask_s, gway_s, dns_s);
+		Get_DataBin_EthernetIP(&mEthernetIP[0], sizeof(mEthernetIP) );
+        Get_DataBin_EthernetMask(&mEthernetMask[0], sizeof(mEthernetMask) );
+        Get_DataBin_EthernetGateWay(&mEthernetGway[0], sizeof(mEthernetGway) );
+        Get_DataBin_EthernetDNS(&mEthernetDns[0], sizeof(mEthernetDns) );
+//tmp        mEth.SetInfo(Get_DataBin_EthernetMode(), ip_s, mask_s, gway_s, dns_s);     //#設定Ethernet參數
 //tmp    }
         
 //tmp    int wifiMode = sharedPreferences.getInt("wifiMode", 0);
@@ -232,9 +286,8 @@ void onCreate()
     for(i = 0; i < 8; i++) 
         writeCmdTable(i, GetResolutionMode(), GetmFPS(), 0, 1, 0); 
         
-db_debug("debug 08\n"); 
     getPath();		//取得 THMPath / DirPath
-db_debug("debug 09\n"); 
+ 
 //tmp        sendImgThe = new SendImageThread();
 //tmp        sendImgThe.start();
 
@@ -562,11 +615,11 @@ db_debug("debug 09\n");
         sensorTool.setParameterName(15, "P4_Y");
 */
 //tmp    runAdbWifiCmd();
-db_debug("onCreate() 15 ssid=%s pwd=%s ver=%s\n", mSSID, mPwd, VersionStr);
+
     setSendMcuA64Version(&mSSID[0], &mPwd[0], &VersionStr[0]);
-db_debug("onCreate() 16\n");
+
 //tmp    startWebService();
-db_debug("onCreate() 17\n");
+
 
 //tmp        if(wifiSerThe != null){
 //tmp        	wifiSerThe.UninstallEn = checkIsUserApp();
@@ -579,7 +632,6 @@ db_debug("onCreate() 17\n");
 //tmp        udpBroThe.start();
 
     SetPlaySoundFlag(7);	//playSound(7);	// 最後才播放音效, 避免聲音斷斷續續
-db_debug("onCreate() End\n");
 }
 
 void startPreview()

@@ -6824,55 +6824,6 @@ void databinInit(int country, int customer) {
 
 
 //--------------------------------------------------------------------------
-void initCountryFunc() {  
-	LangCode = readCountryCode();
-//tmp	waitLanguage(LangCode);
-    db_debug("initLensFunc() LangCode=%d\n", LangCode);
-}
-	
-void initCustomerFunc() {
-    char name[16] = "AletaS2\0";
-	char *ptr = NULL;
-
-    customerCode = readCustomerCode();
-	sprintf(wifiAPssid, "%s\0", mSSID);
-//tmp    ledStateArray[showSsidHead] = 0;
-        
-    db_debug("initCustomerFunc() customerCode=%d\n", customerCode);
-
-    switch(customerCode) {
-    case CUSTOMER_CODE_LETS:
-		sprintf(name, "LET'S\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_lets\0");
-//tmp    	ControllerServer.machineNmae = "LET'S";
-    	setModelName(&name[0]);
-    	writeWifiMaxLink(10);
-    	break;
-    case CUSTOMER_CODE_ALIBABA:
-		sprintf(name, "Alibaba\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_alibaba\0");
-//tmp    	ControllerServer.machineNmae = "Alibaba";
-    	setModelName(&name[0]);
-    	writeWifiMaxLink(10);
-    	setSensorLogEnable(1);
-    	break;
-    case CUSTOMER_CODE_PIIQ:
-		sprintf(name, "peek\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_peek\0");
-    	//wifiAPssid = ssid.replace("US_", "peek-HD_");
-		ptr = strchr(mSSID, '_');
-		sprintf(wifiAPssid, "peek-HD_%s\0", (ptr+1) );
-//tmp        ledStateArray[showSsidHead] = 1;
-//tmp        ControllerServer.machineNmae = "peek";
-    	setModelName(&name[0]);
-    	writeWifiMaxLink(1); //控制連線上限範圍 1 - 10
-    	break;
-    default:
-    	setModelName(&name[0]);
-    	writeWifiMaxLink(10);
-    	break;
-    }
-}
 
 void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec) {
     char message[64];

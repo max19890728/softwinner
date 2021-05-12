@@ -225,12 +225,9 @@ static int		PowerSaving = 0;						// ¬Ù¹q¼Ò¦¡ 			0:Off 1:On
 #define TagLiveBitrate  			94
 #define TagPowerSaving  			95
 
-static int versionDate = 190507;
-void SetDataBinVersionDate(int ver) {
-	versionDate = ver;
-}
+#define DATABIN_VERSION_DATE    190507
 int GetDataBinVersionDate(void) {
-	return versionDate;
+	return DATABIN_VERSION_DATE;
 }
 
 //{ValType,		0: int 1: byte

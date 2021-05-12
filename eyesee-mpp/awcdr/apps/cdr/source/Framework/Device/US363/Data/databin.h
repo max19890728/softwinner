@@ -210,7 +210,6 @@ void WriteUS360DataBin();
 void ReadUS360DataBin(int country, int customer);
 void DeleteUS360DataBin();
 int CheckExpFreqDefault(int country);
-void SetDataBinVersionDate(int ver);
 
 #ifdef __cplusplus
 }   // extern "C"
