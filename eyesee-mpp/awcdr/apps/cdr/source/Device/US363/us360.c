@@ -254,17 +254,14 @@ int Send_ST_Flag = 0;
 int UVCErrCount = 0;
 int downloadLevel = 0;
 int mBmm050Start = 0;
-int mCtrlCameraPositionMode = 1;
-int mCameraPositionMode = 0;
-int mCameraPositionModelst = 0;
-int mCameraPositionModeChange = 0;
+
 int Power_Saving_Init = 0;		//開機 / 休眠起來一段時間FPGA才進入休眠
 unsigned long long Power_Saving_Init_t1=0;
 int Seting_UI_State = 0;
 unsigned long long Send_Data_State_t=0;
 
 int check_st_cmd_ddr_flag = 0;
-int writeUS360DataBin_flag = 0;
+
 int adc_ratio = 1100;
 int Adj_Sensor_Sync_Flag = 0;		//0:none 1:doSensorReset	2:doAdjSensorSync	3:doChooseMode
 int Cmd_Idx = -1;
@@ -396,8 +393,6 @@ int doResize_flag = 0, doResize_flag_lst = 0;
 char doResize_path[8][64];
 
 int definePort = 8080;
-char httpAccount[32] = "admin\0";
-char httpPassword[32] = "admin\0";
 
 #define BOTTOM_S_WIDTH		1024                  
 #define BOTTOM_S_HEIGHT		1024                                                                      
@@ -2971,34 +2966,6 @@ int GetBmm050Start(void) {
 	return mBmm050Start;
 }
 
-void SetCtrlCameraPositionMode(int mode) {
-	mCtrlCameraPositionMode = mode;
-}
-int GetCtrlCameraPositionMode(void) {
-	return mCtrlCameraPositionMode;
-}
-
-void SetCameraPositionMode(int mode) {
-	mCameraPositionMode = mode;
-}
-int GetCameraPositionMode(void) {
-	return mCameraPositionMode;
-}
-
-void SetCameraPositionModelst(int mode) {
-	mCameraPositionModelst = mode;
-}
-int GetCameraPositionModelst(void) {
-	return mCameraPositionModelst;
-}
-
-void SetCameraPositionModeChange(int en) {
-	mCameraPositionModeChange = en;
-}
-int GetCameraPositionModeChange(void) {
-	return mCameraPositionModeChange;
-}
-
 void SetPowerSavingInit(int flag) {
 	Power_Saving_Init = flag;
 }
@@ -3888,12 +3855,12 @@ int GetResolutionMode(void) {
 	return ResolutionMode;
 }
 
-void SetResolutionModeLst(int mode) {
+/*void SetResolutionModeLst(int mode) {
 	ResolutionMode_lst = mode;
 }
 int GetResolutionModeLst(void) {
 	return ResolutionMode_lst;
-}
+}*/
 
 void SetmFPS(int fps) {
 	mFPS = fps;
@@ -4575,7 +4542,7 @@ void *thread_5ms(void)
 					}
 				}
 				else if(mCameraPositionModeChange == 1) {
-					setCameraPositionMode(mCtrlCameraPositionMode, mCameraPositionMode);
+                    set_A2K_DMA_CameraPosition(mCameraPositionMode);
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					mCameraPositionModeChange = 0;
@@ -6533,294 +6500,6 @@ void Setting_RemovalHDR_Proc(int mode)
    	}
    	setting_Removal_HDR(mode, increment * 2, strength);
 }
-
-void databinInit(int country, int customer) {
-	int len=0;
-	char tmpStr[64];
-	
-	ReadUS360DataBin(country, customer);
-	
-	//TagVersion = 			0;
-	int defaultVer = GetDataBinVersionDate();
-	int readVer = Get_DataBin_Version();
-    if(readVer != defaultVer) {
-        Set_DataBin_Version(defaultVer);
-        writeUS360DataBin_flag = 1;
-    }
-	
-    //TagDemoMode = 		1;
-    char us363VerDatabin[16];
-    Get_DataBin_US360Version(&us363VerDatabin[0], sizeof(us363VerDatabin) );
-    if(strcmp(us363VerDatabin, us363Version) != 0) {
-        Set_DataBin_US360Version(&us363Version[0]);
-        writeUS360DataBin_flag = 1;
-    }
-	
-	//TagCamPositionMode = 	2;
-    switch(Get_DataBin_CamPositionMode() ) {
-    case 0:  mCtrlCameraPositionMode = 1; break;
-    case 1:  mCtrlCameraPositionMode = 0; mCameraPositionMode = 0; break;
-    case 2:  mCtrlCameraPositionMode = 0; mCameraPositionMode = 1; break;
-    case 3:  mCtrlCameraPositionMode = 0; mCameraPositionMode = 2; break;
-    default: mCtrlCameraPositionMode = 0; mCameraPositionMode = 0; break;
-    }
-    mCameraPositionModelst = mCameraPositionMode;
-    setCameraPositionMode(mCtrlCameraPositionMode, mCameraPositionMode);
-	
-	//TagPlayMode = 		3;
-	//TagResoultMode = 		4;
-    ResolutionMode = Get_DataBin_ResoultMode();
-	
-	//TagEVValue = 			5;
-    setAETergetRateWifiCmd(Get_DataBin_EVValue() );
-	
-	//TagMFValue = 			6;
-    setALIGlobalPhiWifiCmd(Get_DataBin_MFValue() );
-	
-	//TagMF2Value = 		7;
-    setALIGlobalPhi2WifiCmd(Get_DataBin_MF2Value() );
-	
-	//TagISOValue = 		8;
-    int iso = Get_DataBin_ISOValue();
-    if(iso == -1) setAEGGainWifiCmd(0, iso);
-    else          setAEGGainWifiCmd(1, iso);
-	
-	//TagExposureValue = 	9;
-    int exp = Get_DataBin_ExposureValue();
-    if(exp == -1) setExposureTimeWifiCmd(0, exp);
-    else          setExposureTimeWifiCmd(1, exp);
-	
-	//TagWBMode = 			10;
-    mWB_Mode = Get_DataBin_WBMode();
-    setWBMode(mWB_Mode);
-	
-	//TagCaptureMode = 		11;
-    CaptureMode = Get_DataBin_CaptureMode();
-	
-	//TagCaptureCnt = 		12;
-    CaptureCnt = Get_DataBin_CaptureCnt();
-	
-	//TagCaptureSpaceTime = 13;
-    CaptureSpaceTime = Get_DataBin_CaptureSpaceTime();
-	
-	//TagSelfTimer = 		14;
-    SelfTimer = Get_DataBin_SelfTimer();
-	
-	//TagTimeLapseMode = 	15;
-    Time_Lapse_Mode = Get_DataBin_TimeLapseMode();
-	
-	//TagSaveToSel = 		16;
-	//TagWifiDisableTime = 	17;
-    wifiDisableTime = Get_DataBin_WifiDisableTime();
-	
-	//TagEthernetMode = 	18;
-	//TagEthernetIP = 		19;
-	//TagEthernetMask = 	20;
-	//TagEthernetGateWay = 	21;
-	//TagEthernetDNS = 		22;
-	//TagMediaPort = 		23;
-    Set_DataBin_MediaPort(Get_DataBin_MediaPort() ); //檢測自己數值是否正常
-	
-	//TagDrivingRecord = 	24;
-    if(customer == CUSTOMER_CODE_PIIQ)
-    	DrivingRecord_Mode = 0;	//databin.getDrivingRecord();
-    else
-    	DrivingRecord_Mode = 1;	//Get_DataBin_DrivingRecord();
-	
-	//TagUS360Versin = 		25;
-	//TagWifiChannel = 		26;
-    WifiChannel = Get_DataBin_WifiChannel();
-    WriteWifiChannel(WifiChannel);
-	
-	//TagExposureFreq = 	27;
-    int freq = Get_DataBin_ExposureFreq();
-    SetAEGEPFreq(freq);
-	
-	//TagFanControl = 		28;
-	int ctrl = Get_DataBin_FanControl();
-	SetFanCtrl(ctrl);
-	
-	//TagSharpness = 		29;
-    setStrengthWifiCmd(Get_DataBin_Sharpness() );
-	
-	//TagUserCtrl30Fps = 	30;
-    //User_Ctrl = Get_DataBin_UserCtrl30Fps();
-	
-	//TagCameraMode = 		31;
-    SetCameraMode(Get_DataBin_CameraMode() );
-
-	//TagColorSTMode = 		32;
-    SetColorSTSW(1);		//SetColorSTSW(Get_DataBin_ColorSTMode() );
-	
-	//TagAutoGlobalPhiAdjMode = 33;
-    doAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
-    setSmoothParameter(3, doAutoGlobalPhiAdjMode);
-	
-	//TagHDMITextVisibility = 34;
-    HDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
-	
-	//TagSpeakerMode = 		35;
-    speakerMode = Get_DataBin_SpeakerMode();
-	
-	//TagLedBrightness = 	36;
-//tmp    SetLedBrightness(Get_DataBin_LedBrightness() );
-
-	//TagOledControl = 		37;
-//tmp    setOledControl(Get_DataBin_OledControl() );
-
-	//TagDelayValue = 		38;
-	//TagImageQuality = 	39;
-    JPEGQualityMode = Get_DataBin_ImageQuality();
-    set_A2K_JPEG_Quality_Mode(JPEGQualityMode);
-	
-	//TagPhotographReso = 	40;
-	//TagRecordReso = 		41;
-	//TagTimeLapseReso = 	42;
-	//TagTranslucent = 		43;
-    Translucent_Mode = 1;			//Translucent_Mode = Get_DataBin_Translucent();
-    SetTransparentEn(Translucent_Mode);
-	
-	//TagCompassMaxx = 		44;
-	//TagCompassMaxy = 		45;
-	//TagCompassMaxz = 		46;
-	//TagCompassMinx = 		47;
-	//TagCompassMiny = 		48;
-	//TagCompassMinz = 		49;
-	//TagDebugLogMode = 	50;
-    DebugLog_Mode = Get_DataBin_DebugLogMode();
-	
-	//TagBottomMode = 		51;
-    mBottomMode = Get_DataBin_BottomMode();
-	
-	//TagBottomSize = 		52;
-    mBottomSize = Get_DataBin_BottomSize();
-//tmp    SetBottomValue(mBottomMode, mBottomSize);
-
-	//TagHdrEvMode = 		53;
-    int wdr_mode=1;
-    int hdr_mode = Get_DataBin_hdrEvMode();
-    HdrEvMode = hdr_mode;
-    setSensorHdrLevel(hdr_mode);
-	if(hdr_mode == 2)      wdr_mode = 2;	//弱
-	else if(hdr_mode == 4) wdr_mode = 1;	//中
-	else if(hdr_mode == 8) wdr_mode = 0;	//強
-    SetWDRLiveStrength(wdr_mode);
-	
-    //TagBitrate = 			54;
-//tmp    SetBitrateMode(Get_DataBin_Bitrate() );
-
-    //TagHttpAccount =      55;
-	//HttpAccount = new byte[32];				// 網頁/RTSP帳號
-	//TagHttpPassword =     56;
-	//HttpPassword = new byte[32];			// 網頁/RTSP密碼
-	//TagHttpPort =         57;
-    Set_DataBin_HttpPort(Get_DataBin_HttpPort()); //檢測自己數值是否正常
-	
-    //TagCompassMode  = 	58;
-//tmp    setbmm050_enable(Get_DataBin_CompassMode() );
-
-	//TagGsensorMode  = 	59;
-//tmp    setBma2x2_enable(Get_DataBin_GsensorMode() );
-
-	//TagCapHdrMode =		60;
-	//TagBottomTMode =		61;
-	mBottomTextMode = Get_DataBin_BottomTMode();
-//tmp	SetBottomTextMode(mBottomTextMode);
-
-	//TagBottomTColor =		62;
-	//TagBottomBColor =		63;
-	//TagBottomTFont =		64;
-	//TagBottomTLoop =		65;
-	//TagBottomText =		66;
-	//TagFpgaEncodeType =	67;
-	mFPGA_Encode_Type = Get_DataBin_FpgaEncodeType();
-
-	//TagWbRGB =			68;
-	//TagContrast =			69;
-	int contrast = Get_DataBin_Contrast();
-	setContrast(contrast);
-	
-	//TagSaturation =		70;
-	int sv = Get_DataBin_Saturation();
-	Saturation = GetSaturationValue(sv);
-	
-	//TagFreeCount
-	getSDFreeSize(&sd_freesize);
-//tmp    getRECTimes(sd_freesize);
-    freeCount = Get_DataBin_FreeCount();
-    if(freeCount == -1){
-//tmp    	Set_DataBin_FreeCount(GetSpacePhotoNum() );
-    	freeCount = Get_DataBin_FreeCount();
-    	writeUS360DataBin_flag = 1;
-    }else{
-//tmp    	int de = freeCount - GetSpacePhotoNum();
-		int de = freeCount;
-    	if(de > 100 || de < -100){
-//tmp    		freeCount = GetSpacePhotoNum();
-    	}else if(de > 10){
-    		freeCount = freeCount + 10;
-    	}else if(de > 0){
-    		freeCount = freeCount + de;
-    	}else if(de < -10){
-    		freeCount = freeCount - 10;
-    	}else if(de < -9){
-    		freeCount = freeCount - de;
-    	}
-    	Set_DataBin_FreeCount(freeCount);
-    	writeUS360DataBin_flag = 1;
-    }
-	
-    //TagBmodeSec
-    setAEGBExp1Sec(Get_DataBin_BmodeSec() );
-	
-    //TagBmodeGain
-    setAEGBExpGain(Get_DataBin_BmodeGain() );
-	
-    //TagHdrManual
-    set_A2K_DeGhostEn(Get_DataBin_HdrDeghosting() );
-    Setting_HDR7P_Proc(Get_DataBin_HdrManual(), hdr_mode);
-	
-    //TagAebNumber
-    setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
-	
-    //TagLiveQualityMode
-    mLiveQualityMode = Get_DataBin_LiveQualityMode();
-    set_A2K_JPEG_Live_Quality_Mode(mLiveQualityMode);
-	
-    //TagWbTemperature
-    //TagWbTint
-    setWBTemperature(Get_DataBin_WbTemperature() * 100, Get_DataBin_WbTint() );
-	
-    //TagRemoveHdrMode
-    Setting_RemovalHDR_Proc(Get_DataBin_RemoveHdrMode() );
-	
-    //TagAntiAliasingEn
-    if(customer == CUSTOMER_CODE_ALIBABA) {
-    	if(Get_DataBin_AntiAliasingEn() == 1)
-    		Set_DataBin_AntiAliasingEn(0);
-    	SetAntiAliasingEn(0);
-    }
-    else {
-    	SetAntiAliasingEn(Get_DataBin_AntiAliasingEn() );
-    }
-	
-    //TagRemoveAntiAliasingEn
-    if(customer == CUSTOMER_CODE_ALIBABA) {
-    	if(Get_DataBin_RemoveAntiAliasingEn() == 1)
-    		Set_DataBin_RemoveAntiAliasingEn(0);
-    	SetRemovalAntiAliasingEn(0);
-    }
-    else {
-    	SetRemovalAntiAliasingEn(Get_DataBin_RemoveAntiAliasingEn() );
-    }
-	
-    //TagLiveBitrate = 			94;
-//tmp    SetLiveBitrateMode(Get_DataBin_LiveBitrate() );
-
-    //TagLiveBitrate = 			95;
-    Power_Saving_Mode = Get_DataBin_PowerSaving();
-}
-
 
 
 //--------------------------------------------------------------------------

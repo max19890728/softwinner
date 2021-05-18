@@ -53,19 +53,53 @@ char mEthernetMask[64];
 char mEthernetGway[64];
 char mEthernetDns[64];
 
+int mCtrlCameraPositionMode = 1;    // 0:手動 1:自動(G Sensor)
+int mCameraPositionMode = 0;        // 0:0 1:180 2:90
+int mCameraPositionModelst = 0;
+int mCameraPositionModeChange = 0;
+
+int mResolutionMode = 7;
+int mResolutionMode_lst = 7;
+
 
 //==================== variable ====================
 #define AUDIO_REC_EMPTY_BYTES_SIZE   1024
 char audioRecEmptyBytes[AUDIO_REC_EMPTY_BYTES_SIZE];
 
 int doResize_mode[8];
-
+int writeUS360DataBin_flag = 0;
 
 //==================== get/set =====================
-void getUS363Version(char *version)
-{
+void getUS363Version(char *version) {
     sprintf(version, "%s\0", mUS363Version);
 }
+
+void setCtrlCameraPositionMode(int mode) {
+	mCtrlCameraPositionMode = mode;
+}
+int getCtrlCameraPositionMode(void) {
+	return mCtrlCameraPositionMode;
+}
+
+int setCameraPositionMode(int mode) {
+	mCameraPositionMode = mode;
+    if(mCameraPositionMode != mCameraPositionModelst) {
+        mCameraPositionModelst = mCameraPositionMode;
+        mCameraPositionModeChange = 1;
+    }
+    else {
+        mCameraPositionModeChange = 0;
+    }
+    return mCameraPositionModeChange;
+}
+int getCameraPositionMode(void) {
+	return mCameraPositionMode;
+}
+
+int getCameraPositionModeChange(void) {
+	return mCameraPositionModeChange;
+}
+
 
 
 //==================== fucntion ====================
@@ -167,6 +201,290 @@ end:
 	destroyCamera();	
 }
 
+void databinInit(int country, int customer) 
+{
+	ReadUS360DataBin(country, customer);
+	
+	//TagVersion = 			0;
+	int nowVer  = Get_DataBin_Now_Version();
+	int readVer = Get_DataBin_Version();
+    if(readVer != nowVer) {
+        Set_DataBin_Version(nowVer);
+        writeUS360DataBin_flag = 1;
+    }
+	
+    //TagDemoMode = 		1;
+    char readUS363Ver[16];
+    Get_DataBin_US360Version(&readUS363Ver[0], sizeof(readUS363Ver) );
+    if(strcmp(readUS363Ver, mUS363Version) != 0) {
+        Set_DataBin_US360Version(&mUS363Version[0]);
+        writeUS360DataBin_flag = 1;
+    }
+	
+	//TagCamPositionMode = 	2;
+    switch(Get_DataBin_CamPositionMode() ) {
+    case 0:  setCtrlCameraPositionMode(1); break;
+    case 1:  setCtrlCameraPositionMode(0); setCameraPositionMode(0); break;
+    case 2:  setCtrlCameraPositionMode(0); setCameraPositionMode(1); break;
+    case 3:  setCtrlCameraPositionMode(0); setCameraPositionMode(2); break;
+    default: setCtrlCameraPositionMode(0); setCameraPositionMode(0); break;
+    }
+    set_A2K_DMA_CameraPosition(getCameraPositionMode());
+	
+	//TagPlayMode = 		3;
+	//TagResoultMode = 		4;
+    mResolutionMode = Get_DataBin_ResoultMode();
+	
+	//TagEVValue = 			5;
+    setAETergetRateWifiCmd(Get_DataBin_EVValue() );
+	
+	//TagMFValue = 			6;
+    setALIGlobalPhiWifiCmd(Get_DataBin_MFValue() );
+	
+	//TagMF2Value = 		7;
+    setALIGlobalPhi2WifiCmd(Get_DataBin_MF2Value() );
+	
+	//TagISOValue = 		8;
+    int iso = Get_DataBin_ISOValue();
+    if(iso == -1) setAEGGainWifiCmd(0, iso);
+    else          setAEGGainWifiCmd(1, iso);
+	
+	//TagExposureValue = 	9;
+    int exp = Get_DataBin_ExposureValue();
+    if(exp == -1) setExposureTimeWifiCmd(0, exp);
+    else          setExposureTimeWifiCmd(1, exp);
+	
+	//TagWBMode = 			10;
+    mWB_Mode = Get_DataBin_WBMode();
+    setWBMode(mWB_Mode);
+	
+	//TagCaptureMode = 		11;
+    CaptureMode = Get_DataBin_CaptureMode();
+	
+	//TagCaptureCnt = 		12;
+    CaptureCnt = Get_DataBin_CaptureCnt();
+	
+	//TagCaptureSpaceTime = 13;
+    CaptureSpaceTime = Get_DataBin_CaptureSpaceTime();
+	
+	//TagSelfTimer = 		14;
+    SelfTimer = Get_DataBin_SelfTimer();
+	
+	//TagTimeLapseMode = 	15;
+    Time_Lapse_Mode = Get_DataBin_TimeLapseMode();
+	
+	//TagSaveToSel = 		16;
+	//TagWifiDisableTime = 	17;
+    wifiDisableTime = Get_DataBin_WifiDisableTime();
+	
+	//TagEthernetMode = 	18;
+	//TagEthernetIP = 		19;
+	//TagEthernetMask = 	20;
+	//TagEthernetGateWay = 	21;
+	//TagEthernetDNS = 		22;
+	//TagMediaPort = 		23;
+    Set_DataBin_MediaPort(Get_DataBin_MediaPort() ); //檢測自己數值是否正常
+	
+	//TagDrivingRecord = 	24;
+    if(customer == CUSTOMER_CODE_PIIQ)
+    	DrivingRecord_Mode = 0;	//databin.getDrivingRecord();
+    else
+    	DrivingRecord_Mode = 1;	//Get_DataBin_DrivingRecord();
+	
+	//TagUS360Versin = 		25;
+	//TagWifiChannel = 		26;
+    WifiChannel = Get_DataBin_WifiChannel();
+    WriteWifiChannel(WifiChannel);
+	
+	//TagExposureFreq = 	27;
+    int freq = Get_DataBin_ExposureFreq();
+    SetAEGEPFreq(freq);
+	
+	//TagFanControl = 		28;
+	int ctrl = Get_DataBin_FanControl();
+	SetFanCtrl(ctrl);
+	
+	//TagSharpness = 		29;
+    setStrengthWifiCmd(Get_DataBin_Sharpness() );
+	
+	//TagUserCtrl30Fps = 	30;
+    //User_Ctrl = Get_DataBin_UserCtrl30Fps();
+	
+	//TagCameraMode = 		31;
+    SetCameraMode(Get_DataBin_CameraMode() );
+
+	//TagColorSTMode = 		32;
+    SetColorSTSW(1);		//SetColorSTSW(Get_DataBin_ColorSTMode() );
+	
+	//TagAutoGlobalPhiAdjMode = 33;
+    doAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
+    setSmoothParameter(3, doAutoGlobalPhiAdjMode);
+	
+	//TagHDMITextVisibility = 34;
+    HDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
+	
+	//TagSpeakerMode = 		35;
+    speakerMode = Get_DataBin_SpeakerMode();
+	
+	//TagLedBrightness = 	36;
+//tmp    SetLedBrightness(Get_DataBin_LedBrightness() );
+
+	//TagOledControl = 		37;
+//tmp    setOledControl(Get_DataBin_OledControl() );
+
+	//TagDelayValue = 		38;
+	//TagImageQuality = 	39;
+    JPEGQualityMode = Get_DataBin_ImageQuality();
+    set_A2K_JPEG_Quality_Mode(JPEGQualityMode);
+	
+	//TagPhotographReso = 	40;
+	//TagRecordReso = 		41;
+	//TagTimeLapseReso = 	42;
+	//TagTranslucent = 		43;
+    Translucent_Mode = 1;			//Translucent_Mode = Get_DataBin_Translucent();
+    SetTransparentEn(Translucent_Mode);
+	
+	//TagCompassMaxx = 		44;
+	//TagCompassMaxy = 		45;
+	//TagCompassMaxz = 		46;
+	//TagCompassMinx = 		47;
+	//TagCompassMiny = 		48;
+	//TagCompassMinz = 		49;
+	//TagDebugLogMode = 	50;
+    DebugLog_Mode = Get_DataBin_DebugLogMode();
+	
+	//TagBottomMode = 		51;
+    mBottomMode = Get_DataBin_BottomMode();
+	
+	//TagBottomSize = 		52;
+    mBottomSize = Get_DataBin_BottomSize();
+//tmp    SetBottomValue(mBottomMode, mBottomSize);
+
+	//TagHdrEvMode = 		53;
+    int wdr_mode=1;
+    int hdr_mode = Get_DataBin_hdrEvMode();
+    HdrEvMode = hdr_mode;
+    setSensorHdrLevel(hdr_mode);
+	if(hdr_mode == 2)      wdr_mode = 2;	//弱
+	else if(hdr_mode == 4) wdr_mode = 1;	//中
+	else if(hdr_mode == 8) wdr_mode = 0;	//強
+    SetWDRLiveStrength(wdr_mode);
+	
+    //TagBitrate = 			54;
+//tmp    SetBitrateMode(Get_DataBin_Bitrate() );
+
+    //TagHttpAccount =      55;
+	//HttpAccount = new byte[32];				// 網頁/RTSP帳號
+	//TagHttpPassword =     56;
+	//HttpPassword = new byte[32];			// 網頁/RTSP密碼
+	//TagHttpPort =         57;
+    Set_DataBin_HttpPort(Get_DataBin_HttpPort()); //檢測自己數值是否正常
+	
+    //TagCompassMode  = 	58;
+//tmp    setbmm050_enable(Get_DataBin_CompassMode() );
+
+	//TagGsensorMode  = 	59;
+//tmp    setBma2x2_enable(Get_DataBin_GsensorMode() );
+
+	//TagCapHdrMode =		60;
+	//TagBottomTMode =		61;
+	mBottomTextMode = Get_DataBin_BottomTMode();
+//tmp	SetBottomTextMode(mBottomTextMode);
+
+	//TagBottomTColor =		62;
+	//TagBottomBColor =		63;
+	//TagBottomTFont =		64;
+	//TagBottomTLoop =		65;
+	//TagBottomText =		66;
+	//TagFpgaEncodeType =	67;
+	mFPGA_Encode_Type = Get_DataBin_FpgaEncodeType();
+
+	//TagWbRGB =			68;
+	//TagContrast =			69;
+	int contrast = Get_DataBin_Contrast();
+	setContrast(contrast);
+	
+	//TagSaturation =		70;
+	int sv = Get_DataBin_Saturation();
+	Saturation = GetSaturationValue(sv);
+	
+	//TagFreeCount
+	getSDFreeSize(&sd_freesize);
+//tmp    getRECTimes(sd_freesize);
+    freeCount = Get_DataBin_FreeCount();
+    if(freeCount == -1){
+//tmp    	Set_DataBin_FreeCount(GetSpacePhotoNum() );
+    	freeCount = Get_DataBin_FreeCount();
+    	writeUS360DataBin_flag = 1;
+    }else{
+//tmp    	int de = freeCount - GetSpacePhotoNum();
+		int de = freeCount;
+    	if(de > 100 || de < -100){
+//tmp    		freeCount = GetSpacePhotoNum();
+    	}else if(de > 10){
+    		freeCount = freeCount + 10;
+    	}else if(de > 0){
+    		freeCount = freeCount + de;
+    	}else if(de < -10){
+    		freeCount = freeCount - 10;
+    	}else if(de < -9){
+    		freeCount = freeCount - de;
+    	}
+    	Set_DataBin_FreeCount(freeCount);
+    	writeUS360DataBin_flag = 1;
+    }
+	
+    //TagBmodeSec
+    setAEGBExp1Sec(Get_DataBin_BmodeSec() );
+	
+    //TagBmodeGain
+    setAEGBExpGain(Get_DataBin_BmodeGain() );
+	
+    //TagHdrManual
+    set_A2K_DeGhostEn(Get_DataBin_HdrDeghosting() );
+    Setting_HDR7P_Proc(Get_DataBin_HdrManual(), hdr_mode);
+	
+    //TagAebNumber
+    setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
+	
+    //TagLiveQualityMode
+    mLiveQualityMode = Get_DataBin_LiveQualityMode();
+    set_A2K_JPEG_Live_Quality_Mode(mLiveQualityMode);
+	
+    //TagWbTemperature
+    //TagWbTint
+    setWBTemperature(Get_DataBin_WbTemperature() * 100, Get_DataBin_WbTint() );
+	
+    //TagRemoveHdrMode
+    Setting_RemovalHDR_Proc(Get_DataBin_RemoveHdrMode() );
+	
+    //TagAntiAliasingEn
+    if(customer == CUSTOMER_CODE_ALIBABA) {
+    	if(Get_DataBin_AntiAliasingEn() == 1)
+    		Set_DataBin_AntiAliasingEn(0);
+    	SetAntiAliasingEn(0);
+    }
+    else {
+    	SetAntiAliasingEn(Get_DataBin_AntiAliasingEn() );
+    }
+	
+    //TagRemoveAntiAliasingEn
+    if(customer == CUSTOMER_CODE_ALIBABA) {
+    	if(Get_DataBin_RemoveAntiAliasingEn() == 1)
+    		Set_DataBin_RemoveAntiAliasingEn(0);
+    	SetRemovalAntiAliasingEn(0);
+    }
+    else {
+    	SetRemovalAntiAliasingEn(Get_DataBin_RemoveAntiAliasingEn() );
+    }
+	
+    //TagLiveBitrate = 			94;
+//tmp    SetLiveBitrateMode(Get_DataBin_LiveBitrate() );
+
+    //TagLiveBitrate = 			95;
+    Power_Saving_Mode = Get_DataBin_PowerSaving();
+}
+
 void onCreate() 
 {
 	int i, j, ret = 0, len = 0;
@@ -176,7 +494,7 @@ void onCreate()
 //tmp    systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is start.", "---");
 
     set_A2K_Softwave_Version(&mUS363Version[0]);
-//    SetmMcuVersion(mMcuVersion);
+//    SetmMcuVersion(mMcuVersion);      //max+ S3 沒有mcu
     readPcbVersion(&mPcbVersion[0]);
         
 //tmp    int led_mode = GetLedControlMode();
@@ -249,16 +567,12 @@ void onCreate()
 
 //tmp    initWifiSerThe();
 
-    if(GetIsStandby() == 0)    
-		FanCtrlFunc();            //weber+ 151222 end
+    //if(GetIsStandby() == 0)    
+	//	FanCtrlFunc();      //max+ S3 沒有風扇
         
     FPGA_Ctrl_Power_Func(0, 0);
 
-    ret = LoadConfig(1);    
-    if(ret == -1)
-        db_error("US360Config.bin not exist\n");
-    else if(ret == -2)
-        db_error("US360Config.bin size not same!\n");
+    LoadConfig(1);    
 
     ret = LoadParameterTmp();
     if(ret != 1 && ret != -1) {		//debug, 紀錄S2發生檔案錯誤問題

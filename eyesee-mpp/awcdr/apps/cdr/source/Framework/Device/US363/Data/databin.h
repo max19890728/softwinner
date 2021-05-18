@@ -204,7 +204,7 @@ int Get_DataBin_RemoveHdrAutoStrength();
 int Get_DataBin_LiveBitrate();
 int Get_DataBin_PowerSaving();
 
-int GetDataBinVersionDate(void);
+int Get_DataBin_Now_Version(void);
 int split_c(char **buf, char *str, char *del);
 void WriteUS360DataBin();
 void ReadUS360DataBin(int country, int customer);

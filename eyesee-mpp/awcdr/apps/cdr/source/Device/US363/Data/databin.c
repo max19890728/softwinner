@@ -226,7 +226,7 @@ static int		PowerSaving = 0;						// ¬Ù¹q¼Ò¦¡ 			0:Off 1:On
 #define TagPowerSaving  			95
 
 #define DATABIN_VERSION_DATE    190507
-int GetDataBinVersionDate(void) {
+int Get_DataBin_Now_Version(void) {
 	return DATABIN_VERSION_DATE;
 }
 

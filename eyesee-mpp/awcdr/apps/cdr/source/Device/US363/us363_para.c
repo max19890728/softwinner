@@ -379,18 +379,6 @@ void setALIGlobalPhi2WifiCmd(int phi_idx)
 	db_debug("setALIGlobalPhi2WifiCmd() idx=%d Global_phi_Top=%d\n", phi_idx, Smooth_Com.Global_phi_Top);
 }
 
-/*
- *     設定影像正擺或倒擺
- *     ctrl_mode: 0:手動   1:自動(G Sensor)
- *     mode: 0:0 1:180 2:90
- */
-void setCameraPositionMode(int ctrl_mode, int mode)
-{
-    CtrlCameraPositionMode = ctrl_mode;
-    CameraPositionMode     = mode;
-    set_A2K_DMA_CameraPosition(CameraPositionMode);
-}
-
 //extern unsigned short Trans_ZY_phi[128][256];
 //extern unsigned short Trans_ZY_thita[128][256];
 //extern unsigned short Trans_Sin[256];

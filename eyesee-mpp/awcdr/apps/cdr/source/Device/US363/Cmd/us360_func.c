@@ -1547,9 +1547,6 @@ void Make_thita_rate(void)
   }
 }
 
-int CtrlCameraPositionMode = 1;		// 0:手動 1:自動(G Sensor)
-int CameraPositionMode = 0;		// 0:0 1:180 2:90
-
 void Make_ST_Sensor_Cmd(void)
 {
 	int binn, i, j, Addr;
