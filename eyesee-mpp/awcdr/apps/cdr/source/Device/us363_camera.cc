@@ -36,13 +36,265 @@
 #define LOG_TAG "US363Camera"
 
 //==================== parameter ====================
-char mUS363Version[64] = "v1.00.00\0";
+char mUS363Version[64] = "v1.00.00\0";          /** VersionStr */
 
-char mWifiApSsid[32] = "US_0000\0"; 
-char mWifiApPassword[16] = "88888888\0";
+char mWifiApSsid[32] = "US_0000\0";             /** ssid */
+char mWifiApPassword[16] = "88888888\0";        /** pwd */
 
-int mCountryCode = 840;		//國家代碼 對應ISO 3166-1  158台灣 392日本 156中國 840美國 
-int mCustomerCode = 0;		//辨識編號 0:Ultracker	10137:Let's   2067001:阿里巴巴
+char mWifpStaIpFromAp[32];                      /** ipAddrFromAp */
+char mWifiStaSsid[32], mWifiStaPassword[16];    /** wifiSSID, wifiPassword */
+int mWifiStaType = 0, mWifiStaLinkType = 0, mWifiStaReboot = 0;     /** wifiType, wifiLinkType, wifiReboot */
+char mWifiStaIP[32], mWifiStaGateway[32], mWifiStaPrefix[32];       /** wifiIP, wifiGateway, wifiPrefix */
+char mWifiStaDns1[32], mWifiStaDns2[32];        /** wifiDns1, wifiDns2 */
+
+#define COUNTRY_CODE_TAIWAN         158
+#define COUNTRY_CODE_JAPAN          392
+#define COUNTRY_CODE_CHINA          156
+#define COUNTRY_CODE_USA            840
+int mCountryCode = COUNTRY_CODE_USA;            /** customerCode */
+
+#define CUSTOMER_CODE_ULTRACKER     0
+#define CUSTOMER_CODE_LETS          10137
+#define CUSTOMER_CODE_ALIBABA       2067001   
+#define CUSTOMER_CODE_PIIQ   	    20141	    /* 客戶後來更名為PEEK */
+int mCustomerCode = CUSTOMER_CODE_ULTRACKER;    /** LangCode */
+
+//int mLensCode = 0;			                //新舊鏡頭 0:old 1:new  /** LensCode */
+//int mVersionDate = 190507;                    /** versionDate */
+//int mMcuVersion = 45;                         /** mcuVersion */
+
+int mUserCtrl = 1, mUserCtrlLst = 0;            //使用者控制FPS,  0: auto 1: 30fps   /** User_Ctrl, User_Ctrl_lst */
+
+int mWifiDisableTime = 180;                     /** wifiDisableTime */
+
+//int mFreeCount = 0;                             //DataBin, 剩餘拍攝張數/錄影時間 /** freeCount */
+
+enum {
+    PLAY_MODE_GLOBAL = 0,
+    PLAY_MODE_FRONT  = 1,
+    PLAY_MODE_360    = 2,
+    PLAY_MODE_240    = 3,
+    PLAY_MODE_180X2  = 4,
+    PLAY_MODE_4SPLIT = 5,
+    PLAY_MODE_PIP    = 6
+};
+int mPlayMode     = PLAY_MODE_GLOBAL;           /** PlayMode2 */                              
+int mPlayMode2Tmp = PLAY_MODE_GLOBAL;           /** PlayMode2_tmp */   
+
+#define RESOLUTION_WIDTH_12K    11520
+#define RESOLUTION_WIDTH_4K     3840
+#define RESOLUTION_WIDTH_8K     7680
+#define RESOLUTION_WIDTH_10K    10240
+#define RESOLUTION_WIDTH_6K     6144
+#define RESOLUTION_WIDTH_3K     3072
+#define RESOLUTION_WIDTH_2K     2048
+
+#define RESOLUTION_HEIGHT_12K   5760
+#define RESOLUTION_HEIGHT_4K    1920
+#define RESOLUTION_HEIGHT_8K    3840
+#define RESOLUTION_HEIGHT_10K   5120
+#define RESOLUTION_HEIGHT_6K    3072
+#define RESOLUTION_HEIGHT_3K    1536
+#define RESOLUTION_HEIGHT_2K    1024
+int mResolutionWidthHeight[15][2] = {
+/* 0*/    { 0, 0 },
+/* 1*/    { RESOLUTION_WIDTH_12K, RESOLUTION_HEIGHT_12K },
+/* 2*/    { RESOLUTION_WIDTH_4K,  RESOLUTION_HEIGHT_4K  },
+/* 3*/    { 0, 0 },
+/* 4*/    { 0, 0 },
+/* 5*/    { 0, 0 },
+/* 6*/    { 0, 0 },
+/* 7*/    { RESOLUTION_WIDTH_8K,  RESOLUTION_HEIGHT_8K  },
+/* 8*/    { RESOLUTION_WIDTH_10K, RESOLUTION_HEIGHT_10K },
+/* 9*/    { 0, 0 },
+/*10*/    { 0, 0 },
+/*11*/    { 0, 0 },
+/*12*/    { RESOLUTION_WIDTH_6K,  RESOLUTION_HEIGHT_6K  },
+/*13*/    { RESOLUTION_WIDTH_3K,  RESOLUTION_HEIGHT_3K  },
+/*14*/    { RESOLUTION_WIDTH_2K,  RESOLUTION_HEIGHT_2K  }
+};
+
+enum {
+    RESOLUTION_MODE_FIX = 0,
+    RESOLUTION_MODE_12K = 1,
+    RESOLUTION_MODE_4K  = 2,
+    RESOLUTION_MODE_8K  = 7,
+    RESOLUTION_MODE_10K = 8,
+    RESOLUTION_MODE_6K  = 12,
+    RESOLUTION_MODE_3K  = 13,
+    RESOLUTION_MODE_2K  = 14
+};
+int mResolutionMode    = RESOLUTION_MODE_4K;    /** ResolutionMode */
+int mResolutionModeLst = RESOLUTION_MODE_4K;    /** ResolutionMode_lst */
+int mResolutionWidth   = mResolutionWidthHeight[RESOLUTION_MODE_4K][0];     /** ResolutionWidth */
+int mResolutionHeight  = mResolutionWidthHeight[RESOLUTION_MODE_4K][1];     /** ResolutionHeight */
+
+enum {
+    CAMERA_MODE_CAP           = 0,
+    CAMERA_MODE_REC           = 1,
+    CAMERA_MODE_TIMELAPSE     = 2,
+    CAMERA_MODE_AEB           = 3,
+    CAMERA_MODE_RAW           = 4,
+    CAMERA_MODE_HDR           = 5,
+    CAMERA_MODE_NIGHT         = 6,
+    CAMERA_MODE_NIGHT_HDR     = 7,
+    CAMERA_MODE_SPORT         = 8,
+    CAMERA_MODE_SPORT_WDR     = 9,
+    CAMERA_MODE_REC_WDR       = 10,
+    CAMERA_MODE_TIMELAPSE_WDR = 11,
+    CAMERA_MODE_M_MODE        = 12,
+    CAMERA_MODE_REMOVAL       = 13,
+    CAMERA_MODE_3D_MODEL      = 14
+};
+int mCameraMode = CAMERA_MODE_HDR;              /** CameraMode */       	
+int mFPS = 100;                                 /** FPS */
+
+enum {
+    CAPTURE_MODE_CNTINUOUS  = -1,
+    CAPTURE_MODE_NORMAL     = 0,
+    CAPTURE_MODE_SELFIE_2S  = 2,
+    CAPTURE_MODE_SELFIE_10S =10
+};
+int mCaptureMode = CAPTURE_MODE_NORMAL;         /** CaptureMode */
+int mCaptureCnt = 3;            	            // 連拍: 1 3 5 10 ...                           /** CaptureCnt */
+int mCaptureIntervalTime = 160;    	            // 連拍間隔時間: 500ms 1000ms ...               /** CaptureSpaceTime */
+int mSelfieTime = 0;            	            // 0: none 2: 2秒自拍 10: 10秒自拍              /** SelfTimer */
+
+enum {
+    TIMELAPSE_MODE_NONE  = 0,
+    TIMELAPSE_MODE_1S    = 1,
+    TIMELAPSE_MODE_2S    = 2,
+    TIMELAPSE_MODE_5S    = 3,
+    TIMELAPSE_MODE_10S   = 4,
+    TIMELAPSE_MODE_30S   = 5,
+    TIMELAPSE_MODE_60S   = 6,
+    TIMELAPSE_MODE_166MS = 7
+};
+int mTimeLapseMode = TIMELAPSE_MODE_NONE;        /** Time_Lapse_Mode */
+
+enum {
+    CAMERA_POSITION_CTRL_MODE_MANUAL = 0,
+    CAMERA_POSITION_CTRL_MODE_AUTO
+};
+enum {
+    CAMERA_POSITION_0   = 0,
+    CAMERA_POSITION_180 = 1,
+    CAMERA_POSITION_90  = 2
+};
+#define CAMERA_POSITION_OVER_COUNT      4
+int mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_AUTO;   /** CtrlCameraPositionMode */    
+int mCameraPositionMode     = CAMERA_POSITION_0;                /** CameraPositionMode */  
+int mCameraPositionModeLst  = CAMERA_POSITION_0;                /** CameraPositionModelst */
+int mCameraPositionModeChange = 0;               /** CameraPositionModeChange */
+int mCameraPositionCnt = 0;                      //連續幾次才變化, 解震盪現象 /** CameraPositionCnt */
+
+enum {
+    WHITE_BALANCE_MODE_AUTO        = 0,         //自動
+    WHITE_BALANCE_MODE_TUNGSTEN    = 1,         //鎢絲燈
+    WHITE_BALANCE_MODE_FLUORESCENT = 2,         //日光燈
+    WHITE_BALANCE_MODE_SUN         = 3,         //陽光
+    WHITE_BALANCE_MODE_CLOUDY      = 4          //陰天
+};
+int mWhiteBalanceMode = WHITE_BALANCE_MODE_AUTO;    /** WB_Mode */
+
+int mWifiChannel = 6;                           /** WifiChannel */
+int mAegEpFreq = 60;                            // 60:60Hz 50:50Hz  /** AEG_EP_Freq */
+
+//#define FAN_CTRL_TIME   2                       /* 幾秒做一次FanCtrl, 單位:秒 */    /** FanCtrlCounter */
+//#define CPU_TEMPERATURE_MAX     105             /* Cpu最高溫度 */   /** CpuTempMax */
+//enum {
+//    FAN_CTRL_OFF    = 0,
+//    FAN_CTRL_FAST   = 1,
+//    FAN_CTRL_MEDIAN = 2,
+//    FAN_CTRL_SLOW   = 3
+//};
+//int mCpuTempThreshold = 70;                     // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整   /** CpuTempThreshold */             
+//int mCpuTempDownClose = -5;                     // Cpu降幾度關風扇  /** CpuTempDownClose */
+//int mFanCtrl = FAN_CTRL_MEDIAN;                 /** FanCtrl */
+//int mFanSpeed = 0, mFanSpeedLst = -1;           /** FanSpeed, FanLstLv */
+//int mFanCtrlCount = 0;                          /** FanCtrlCount */
+
+enum {
+    COLOR_STITCHING_MODE_OFF  = 0,
+    COLOR_STITCHING_MODE_ON   = 1,
+    COLOR_STITCHING_MODE_AUTO = 2
+};
+int mColorStitchingMode = COLOR_STITCHING_MODE_ON;      /** Color_ST_Mode */
+
+enum {
+    TRANSLUCENT_MODE_OFF  = 0,
+    TRANSLUCENT_MODE_ON   = 1,
+    TRANSLUCENT_MODE_AUTO = 2
+};
+int mTranslucentMode = TRANSLUCENT_MODE_ON;             /** Translucent_Mode */
+
+int mAutoGlobalPhiAdjMode = 0;                          //0~100  /** doAutoGlobalPhiAdjMode */ 
+int mHDMITextVisibilityMode = 1;                        /** HDMITextVisibilityMode */
+
+enum {
+    JPEG_QUALITY_MODE_HIGH   = 0,
+    JPEG_QUALITY_MODE_MIDDLE = 1,
+    JPEG_QUALITY_MODE_LOW    = 2
+};
+enum {
+    JPEG_LIVE_QUALITY_MODE_HIGH = 0,                    //每秒全張數送給遠端, high quality, ex:4K = 10fps
+    JPEG_LIVE_QUALITY_MODE_LOW                          //每秒半張數送給遠端,  low quality, ex:4K =  5fps, 達到降低WIFI傳輸量
+};
+int mJpegQualityMode = JPEG_QUALITY_MODE_HIGH;			//照片的Quality    /** JPEGQualityMode */
+int mJpegLiveQualityMode = JPEG_LIVE_QUALITY_MODE_HIGH; //Live時JPEG的Quality    /** LiveQualityMode */
+
+#define LED_BRIGHTNESS_AUTO     -1
+int mLedBrightness = LED_BRIGHTNESS_AUTO;			    //-1:自動,亮度:0~100   /** ledBrightness */
+
+enum {
+    SPEAKER_MODE_ON = 0,
+    SPEAKER_MODE_OFF
+};
+int mSpeakerMode = SPEAKER_MODE_ON;				        /** speakerMode */
+
+enum {
+    OLED_CONTROL_ON = 0,
+    OLED_CONTROL_OFF
+};
+int mOledControl = OLED_CONTROL_ON;				        /** oledControl */
+
+enum {
+    HDR_INTERVAL_EV_MODE_LOW    = 2,                    //Ev:  0,-1,-2
+    HDR_INTERVAL_EV_MODE_MIDDLE = 4,                    //Ev: +1,-1,-3
+    HDR_INTERVAL_EV_MODE_HIGHT  = 8                     //Ev: +2,-1,-4
+};
+int mHdrIntervalEvMode = HDR_INTERVAL_EV_MODE_MIDDLE;   /** HdrEvMode */
+
+enum {
+    WDR_MODE_HIGH   = 0,
+    WDR_MODE_MIDDLE = 1,
+    WDR_MODE_LOW    = 2
+};
+int mWdrMode = WDR_MODE_MIDDLE;	 			            /** WdrMode */
+
+enum {
+    BOTTOM_MODE_OFF            = 0,                     //關閉
+    BOTTOM_MODE_EXTRND         = 1,                     //延伸
+    BOTTOM_MODE_IMAGE_DEFAULT  = 2,                     //加底圖(default)
+    BOTTOM_MODE_MIRROR         = 3,                     //鏡像
+    BOTTOM_MODE_IMAGE_USER     = 4                      //加底圖(user)
+};
+enum {
+    BOTTOM_TEXT_MODE_OFF = 0,
+    BOTTOM_TEXT_MODE_ON
+};
+int mBottomMode = BOTTOM_MODE_IMAGE_DEFAULT;			/** BottomMode */
+int mBottomSize = 50;	                                //10~100 /** BottomSize */
+int mBottomTextMode = BOTTOM_TEXT_MODE_OFF;		        /** BottomTextMode */
+    
+    
+    
+    
+    
+
+
+
+
 char mPcbVersion[8] = "V0.0\0";
 
 char mHttpAccount[32] = "admin\0";
@@ -53,21 +305,136 @@ char mEthernetMask[64];
 char mEthernetGway[64];
 char mEthernetDns[64];
 
-int mCtrlCameraPositionMode = 1;    // 0:手動 1:自動(G Sensor)
-int mCameraPositionMode = 0;        // 0:0 1:180 2:90
-int mCameraPositionModelst = 0;
-int mCameraPositionModeChange = 0;
-
-int mResolutionMode = 7;
-int mResolutionMode_lst = 7;
-
 
 //==================== variable ====================
+#define BOTTOM_S_WIDTH      1024                    
+#define BOTTOM_S_HEIGHT     1024    
+                                                                       
+#define BOTTOM_FILE_NAME_DEFAULT    "background_bottom"                           
+#define BOTTOM_FILE_NAME_USER       "background_bottom_user"  
+#define BOTTOM_FILE_NAME_ORG        "background_bottom_org" 
+#define BOTTOM_FILE_NAME_SOURCE     "background_bottom"
+
+#define SD_CARD_FREE_SIZE_MIN       0x1E00000   /* 30MB */  /** JAVA_SD_CARD_MIN_SIZE */
+
+int doResize[10];
+int doResizeFlag = 0, doResizeFlagLst = 0;      /** doResize_flag, doResize_flag_lst*/
+char doResizePath[8];                           /** doResize_path */
+int doResizeMode[8];                            /** doResize_mode */
+
+char webServiceData[0x10000];
+int webServiceDataLen = 0;
+
+int recordEn = 0;                               /** mRecordEn */
+int recordCmd = 0;                              /** mRecordCmd */
+//int recordEnJNI = -2;                         // read jni rec_state   /** mRecordEnJNI */
+
+int wifiModeCmd = 0;                            // change Wifi or WifiAP    /** mWifiModeCmd */
+enum {
+    WIFI_AP = 0,
+    WIFI_STA,
+    WIFI_STA_DISCONNECT,
+    WIFI_STA_CHANGE
+};
+int wifiModeState = WIFI_AP;                    /** mWifiModeState */
+//int wifiConnectState = 0;                     // 0:no 1:yes   /** Connect_State_lst */
+
+int hdmiState = 0, hdmiStateLst = -1;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
+int hdmiStateChange = 0;                        /** HDMI_State_Change */
+    
+int fpgaCheckSum = 0;
+int skipWatchDog = 0, skipWatchDogLst = -1;     /**  , skipWatchDog_lst */
+int dnaCheck = 0, dnaCheckLst = -1;             //0:err 1:ok  /** dna_check_ok, dna_check_ok_lst */
+
+char thmPath[128];                              /** THM_path */
+char driPath[128];                              /** DIR_path */
+char sdPath[128] = "/mnt/extsd";                /** sd_path */
+int sdState = 0, sdStateLst = -1;               /** sd_state, lst_sd_state */
+unsigned long sdFreeSize = 0;                   /** sd_freesize */
+unsigned long sdAllSize = 0;                    /** sd_allsize */
+
+char capNumStr[64];                             //還可以拍幾張  /** cap_num */
+char recTimeStr[64];                            //還可以錄多久 /** rec_time */
+int recTime = 0;                                //已經錄了多久
+int isNeedNewFreeCount = 0;                     //需要重新計算還可以拍幾張/路多久, 則設成1
+//int captureDCnt = 0;                          //取得拍照時Pipe Line Cmd, readCaptureDCnt(), 可能Cmd沒有成功加入會歸零, 拍完照也會歸零
+
+int batteryPower = 0;                           /** power */
+int batteryPowerLst = 10;                       /** powerRang */
+int batteryVoltage = 0;                         /** voltage */
+int dcState = 0;
+
+unsigned long systemTime = 0;
+int writeUS360DataBinFlag = 0;                  /** writeUS360DataBin_flag */
+
+int lidarState = 0;
+int lidarCode = 0;
+char lidarVersion[8];
+long lidarDelay = -1;
+
+int chooseModeFlag = 0;                         /** choose_mode_flag */
+int fpgaCtrlPower = 0;                          /** FPGA_Ctrl_Power */
+int fpgaCmdIdx = -1, fpgaCmdP1 = -1;            /** Cmd_Idx, Cmd_P1 */
+
+enum {
+    DEFECT_TYPE_TESTTOOL = 0,
+    DEFECT_TYPE_USER
+};
+enum {
+    DEFECT_STATE_ERROR = -1,
+    DEFECT_STATE_NONE  = 0,
+    DEFECT_STATE_OK    = 1,
+};
+int defectType = DEFECT_TYPE_TESTTOOL;          /** Defect_Type */       
+int defectStep = 0;                             /** Defect_Step */       
+int defectState = DEFECT_STATE_NONE; 		    /** Defect_State */       
+int defectEp = 30;                              /** Defect_Ep */       
+//紀錄抓壞點前的參數
+int defectCameraModeLst = 0;                    /** Defect_CMode_lst */       
+int defectResolutionModeLst   = 0;              /** Defect_Res_lst */       
+int defectEpLst    = 30;                        /** Defect_Ep_lst */       
+int defectGaniLst  = 0;                         /** Defect_Gani_lst */       
+
+#define CPU_FULL_SPEED      1152000
+#define CPU_HIGH_SPEED      600000     	        /* 2核 x 600Mhz*/
+#define CPU_MIDDLE_SPEED    480000    	        /* 4核 x 480Mhz*/
+#define CPU_LOW_Speed       480000  	        /* 2核 x 480Mhz*/
+
+#define ETHERNET_CONNECT_MAX    3               /** EthCounter */
+int ethernetConnectCount = 0;                   /** EthCount */
+
+int drivingRecordMode = 1;                      // 行車紀錄模式 0:off 1:on   /** DrivingRecord_Mode */
+int debugLogSaveToSDCard = 0;	 	            // 系統資料是否存入SD卡 0:off 1:on   /** DebugLog_Mode */
+    
+int isStandby = 0;
+//int uvcErrCount = 0;                          /** UVCErrCount */
+
+int showFpgaDdrEn = 0;                          /** Show_DDR_En */
+int showFpgaDdrAddr = 0x00080000;               /** Show_DDR_Addr */
+
+int paintVisibilityMode = 0;                    /** ShowPaintVisibilityMode */
+int stitchingVisibilityMode = 0;                /** ShowStitchVisibilityMode */
+int stitchingVisibilityType = 3;                /** ShowStitchVisibilityType */
+int focusVisibilityMode = 0;                    /** ShowFocusVisibilityMode */
+
+int adjSensorIdx = 0;                           /** AdjSensorIdx */
+int smoothOIdx = 0;                             //debug /** Smooth_O_Idx */
+
+int gpsState = 0;					            /** mGps */
+int bmm050Start = 0;					        //手機校正電子羅盤  /** mBmm050Start */
+unsigned long standbyTime = 0;                  /** sleepTime */
+
+int smoothShow = -1;                            //debug
+int stitchShow = -1;                            //debug
+
+char updateFileName[128];                       /** zip */
+
+
+
+
+
 #define AUDIO_REC_EMPTY_BYTES_SIZE   1024
 char audioRecEmptyBytes[AUDIO_REC_EMPTY_BYTES_SIZE];
-
-int doResize_mode[8];
-int writeUS360DataBin_flag = 0;
 
 //==================== get/set =====================
 void getUS363Version(char *version) {
