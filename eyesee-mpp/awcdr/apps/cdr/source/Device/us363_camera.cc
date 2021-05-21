@@ -159,7 +159,6 @@ int mCaptureMode = CAPTURE_MODE_NORMAL;         /** CaptureMode */
 int mCaptureCnt = 3;            	            // 連拍: 1 3 5 10 ...                 /** CaptureCnt */
 int mCaptureIntervalTime = 160;    	            // 連拍間隔時間: 500ms 1000ms ...     /** CaptureSpaceTime */
 int mSelfieTime = 0;            	            // 0: none 2: 2秒自拍 10: 10秒自拍    /** SelfTimer */
-int checkSelfieTimeOut = 0;                     /** mSelfTimerSec */
 
 enum {
     TIMELAPSE_MODE_NONE  = 0,
@@ -321,6 +320,15 @@ int powerSavingSetingUiState = 0;								                    //手機Seting列�
 
 char mPcbVersion[8] = "V0.0\0";                                                     /** PCB_Ver */
 
+int mSaturation = 0;                                                                /** Saturation */
+int saturationInitFlag = 0;                                                         /** Saturation_Init_Flag */
+
+
+
+
+
+
+
 
 
 
@@ -365,6 +373,7 @@ int wifiModeState = WIFI_AP;                    /** mWifiModeState */
 int wifiAPEn=0;                                 /** wifi_connected */
 int wifiAPRestartCount = 0;                     /** systemRestartCount */
 int wifiConnectIsAlive = 0;                     /** Wifi_Connect_isAlive */
+int wifiChangeStop = 0;
 
 int hdmiState = 0, hdmiStateLst = -1;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
 int hdmiStateChange = 0;                        /** HDMI_State_Change */
@@ -394,6 +403,7 @@ int batteryLogCnt = 0;
 
 unsigned long systemTime = 0;
 int writeUS360DataBinFlag = 0;                  /** writeUS360DataBin_flag */
+int writeUS360DataBinStep = 0;                  /** saveBinStep */
 
 int lidarState = 0;
 int lidarCode = 0;
@@ -433,7 +443,8 @@ int defectEp = 30;                              /** Defect_Ep */
 int defectCameraModeLst = 0;                    /** Defect_CMode_lst */       
 int defectResolutionModeLst   = 0;              /** Defect_Res_lst */       
 int defectEpLst    = 30;                        /** Defect_Ep_lst */       
-int defectGaniLst  = 0;                         /** Defect_Gani_lst */       
+int defectGaniLst  = 0;                         /** Defect_Gani_lst */    
+unsigned long defectDelayTime1=0, defectDelayTime2=0;       /** Defect_T1, Defect_T2 */   
 
 #define CPU_FULL_SPEED      1152000
 #define CPU_HIGH_SPEED      600000     	        /* 2核 x 600Mhz*/
@@ -488,7 +499,9 @@ int rtmpVideoPushReady = 0;
 int rtmpAudioPushReady = 0;
 
 int doAutoStitchingFlag = 0;                    /** doAutoStitch_flag */
-int mcuUpdateFlag = 0;                          /** mcuUpdate_flag */
+//int mcuUpdateFlag = 0;                          /** mcuUpdate_flag */
+//int mcuDelayCheck = 0;                          /** delayCheck */
+//int mcuAdcValue = 1000;                         /** adcValue */
 
 int focusSensor2 = -1;                          /** Focus2_Sensor */
 int focusSensor = 0;                            /** Focus_Sensor */
@@ -512,26 +525,96 @@ int rtspFps = 0, rtspSendLength = 0;            /** rtsp_fps, rtsp_send */
 unsigned long checkTimeoutPowerTime1 = 0;       /** toutPowerT1*/
 unsigned long checkTimeoutBurstTime1 = 0;       /** toutBurstT1*/
 unsigned long checkTimeoutSelfieTime1 = 0;      /** toutSelfT1*/
+unsigned long checkTimeoutLongKeyTime = 0;      /** toutLongKey*/
 unsigned long checkTimeoutSaveTime1 = 0;        /** toutSaveT1*/
 unsigned long checkTimeoutTakeTime1 = 0;        /** toutTakeT1*/
-unsigned long checkTimeoutLongKeyTime = 0;      /** toutLongKey*/
 
-int burstCount = 0;          /** mBurstCount */
-int takePicture = 0;          /** mTakePicture */
+int checkTimeoutSelfieSec = 0;                  /** mSelfTimerSec */
+int checkTimeoutBurstCount = 0;                 /** mBurstCount */
+int checkTimeoutTakePicture = 0;                /** mTakePicture */
 
 unsigned long curTimeThread1s = 0, lstTimeThread1s = 0;         /** curTime_run1s, lstTime_run1s */
 unsigned long curTimeThreadSt = 0, lstTimeThreadSt = 0;         /** curTime_runSt, lstTime_runSt */
 unsigned long curTimeThread10ms = 0, lstTimeThread10ms = 0;     /** curTime_run10ms, lstTime_run10ms */
+unsigned long curTimeThread20ms = 0, lstTimeThread20ms = 0;     /** curTime_run20ms, lstTime_run20ms */
+unsigned long curTimeThread100ms = 0, lstTimeThread100ms = 0;   /** curTime_run100ms, lstTime_run100ms */
+unsigned long curTimeThread5ms = 0, lstTimeThread5ms = 0, runTimeThread5ms = 0;      /** curTime, lstTime, runTime*/
+unsigned long curTimeThread1 = 0, lstTimeThread1 = 0;           /** curTime_run1, lstTime_run1 */
 
+int mjpegFps = 0, mjpegSendLength = 0;          /** int mjpeg_fps, mjpeg_send */
 
+#define SEND_MAIN_CMD_PIPE_DELAY_TIME       50                      /* 50ms */
+unsigned long sendMainCmdPipeTime1 = 0, sendMainCmdPipeTime2 = 0;   /** SendMainCmdPipeT1, SendMainCmdPipeT2 */ //send main cmd delay time
+#define ADJUST_SENSOR_SYNC_INTERVAL_TIME    3000                    /* 3000ms */
+unsigned long adjSensorSyncTime1 = 0, adjSensorSyncTime2 = 0;       /** AdjSensorSyncT1, AdjSensorSyncT2 */
+#define READ_SENSOR_STATE_INTERVAL_TIME     1000                    /* 1000ms */
+unsigned long sensorStateTime1 = 0, sensorStateTime2 = 0;           /** SensorStateT1, SensorStateT2 */
+unsigned long testtoolDelayTime1 = 0, testtoolDelayTime2 = 0;       /** TestTool_D_t1, TestTool_D_t2 */
 
+int sendFpgaCmdStep = 0;                        /** Send_ST_Flag */
+#define READ_SENSOR_STATE_ERROR_COUNT_MAX   3
+int sensorState = 0, sensorStateErrorCnt = 0;   /** Sensor_State, Sensor_State_Cnt */
+enum {
+    ADJUST_SENSOR_FLAG_NONE        = 0,
+    ADJUST_SENSOR_FLAG_RESET       = 1,
+    ADJUST_SENSOR_FLAG_SYNC        = 2,
+    ADJUST_SENSOR_FLAG_CHOOSE_MODE = 3
+};
+int adjSensorFlag = 0;		                    /** Adj_Sensor_Sync_Flag */
 
+#define  SHOW_SENSOR                0
+#define  SHOW_Adj_C_New             1
+#define  SHOW_Adj                   2
+#define  REC_SHOW_NOW_MODE          3
+#define  RADIO_SHOW_NOW_MODE        4
+#define  HDMI_SHOW_NOW_MODE         5
+#define  FPGA_SHOW_NOW              6
+#define  HDMI_TEXT_VISIBILITY       7
+#define  SHOW_PAINT_VISIBILITY      8
+#define  SHOW_STITCH_VISIBILITY     9
+#define  SYS_CYCLE_SHOW_NOW	        10
+#define  SHOW_FOCUS_VISIBILITY      11
 
+//int menuFlag = 0;                             /** mMenuFlag */    //長按拍照鍵切換模式
+//float menuGsensorMaxX, menuGsensorMaxY;       /** Gsensor_Max_X Gsensor_Max_Y */  // 搖晃US360，進入menu模式                  
 
+int captureKeyLongPressFlag = 0;                /** mSYSRQ_LongPress_Flag */
+int powerKeyLongPressFlag = 0;                  /** mPOWER_LongPress_Flag */
+int powerKeyRepeatCount = -1;                   /** mPower_RepeatCount */
+enum {
+    POWER_MODE_STANDBY  = 0,
+    POWER_MODE_MEM      = 1,
+    POWER_MODE_BOOTFAST = 2,
+    POWER_MODE_ON       = 3
+};
+int powerMode = POWER_MODE_ON, powerOFF = 0;    /** PowerMode, PowerOFF */
 
-
-#define AUDIO_REC_EMPTY_BYTES_SIZE   1024
+#define AUDIO_REC_EMPTY_BYTES_SIZE   10240
 char audioRecEmptyBytes[AUDIO_REC_EMPTY_BYTES_SIZE];
+
+vector<long>::iterator audioTimeStamp;          /** ls_audioTS */
+vector<int>::iterator audioSize;                /** ls_readBufSize */
+vector<char[]>::iterator audioBuffer;           /** ls_audioBuf */
+
+int micSource = 0;			                    // 0:內部  1:外部
+int localAudioRate = 44100, localAudioBits = 16, localAudioChannel = 1;     /** audioRate, audioBit, audioChannel */
+int wifiAudioRate = 44100, wifiAudioBits = 16, wifiAudioChannel = 1;        /** wifi_audioRate, wifi_audioBit, wifi_audioChannel */
+
+int audioTestCount = 0;                         //產線測試喇叭用, 播放一段聲音並錄下
+
+enum {
+    LIVE360_STATE_STOP  = -1,
+    LIVE360_STATE_START = 0
+};
+int live360En = 0;                              /** mLive360En */
+int live360Cmd = 0;                             /** mLive360Cmd */
+int live360State = LIVE360_STATE_STOP;          /** Live360_State */    // 0:start -1:stop
+long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
+
+
+
+
+
 
 //==================== get/set =====================
 void getUS363Version(char *version) {
