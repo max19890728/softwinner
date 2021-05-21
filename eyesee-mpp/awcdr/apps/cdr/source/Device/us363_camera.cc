@@ -150,15 +150,16 @@ int mCameraMode = CAMERA_MODE_HDR;              /** CameraMode */
 int mFPS = 100;                                 /** FPS */
 
 enum {
-    CAPTURE_MODE_CNTINUOUS  = -1,
-    CAPTURE_MODE_NORMAL     = 0,
-    CAPTURE_MODE_SELFIE_2S  = 2,
-    CAPTURE_MODE_SELFIE_10S =10
+    CAPTURE_MODE_BURST      = -1,               //連拍
+    CAPTURE_MODE_NORMAL     = 0,                //一般拍照
+    CAPTURE_MODE_SELFIE_2S  = 2,                //2S自拍
+    CAPTURE_MODE_SELFIE_10S =10                 //10S自拍
 };
 int mCaptureMode = CAPTURE_MODE_NORMAL;         /** CaptureMode */
-int mCaptureCnt = 3;            	            // 連拍: 1 3 5 10 ...                           /** CaptureCnt */
-int mCaptureIntervalTime = 160;    	            // 連拍間隔時間: 500ms 1000ms ...               /** CaptureSpaceTime */
-int mSelfieTime = 0;            	            // 0: none 2: 2秒自拍 10: 10秒自拍              /** SelfTimer */
+int mCaptureCnt = 3;            	            // 連拍: 1 3 5 10 ...                 /** CaptureCnt */
+int mCaptureIntervalTime = 160;    	            // 連拍間隔時間: 500ms 1000ms ...     /** CaptureSpaceTime */
+int mSelfieTime = 0;            	            // 0: none 2: 2秒自拍 10: 10秒自拍    /** SelfTimer */
+int checkSelfieTimeOut = 0;                     /** mSelfTimerSec */
 
 enum {
     TIMELAPSE_MODE_NONE  = 0,
@@ -200,19 +201,23 @@ int mWhiteBalanceMode = WHITE_BALANCE_MODE_AUTO;    /** WB_Mode */
 int mWifiChannel = 6;                           /** WifiChannel */
 int mAegEpFreq = 60;                            // 60:60Hz 50:50Hz  /** AEG_EP_Freq */
 
-//#define FAN_CTRL_TIME   2                       /* 幾秒做一次FanCtrl, 單位:秒 */    /** FanCtrlCounter */
-//#define CPU_TEMPERATURE_MAX     105             /* Cpu最高溫度 */   /** CpuTempMax */
+//#define FAN_CTRL_TIME   2                     /* 幾秒做一次FanCtrl, 單位:秒 */    /** FanCtrlCounter */
+//#define CPU_TEMPERATURE_MAX     105           /* Cpu最高溫度 */   /** CpuTempMax */
 //enum {
 //    FAN_CTRL_OFF    = 0,
 //    FAN_CTRL_FAST   = 1,
 //    FAN_CTRL_MEDIAN = 2,
 //    FAN_CTRL_SLOW   = 3
 //};
-//int mCpuTempThreshold = 70;                     // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整   /** CpuTempThreshold */             
-//int mCpuTempDownClose = -5;                     // Cpu降幾度關風扇  /** CpuTempDownClose */
-//int mFanCtrl = FAN_CTRL_MEDIAN;                 /** FanCtrl */
-//int mFanSpeed = 0, mFanSpeedLst = -1;           /** FanSpeed, FanLstLv */
-//int mFanCtrlCount = 0;                          /** FanCtrlCount */
+//int mFanCtrl = FAN_CTRL_MEDIAN;               /** FanCtrl */
+//int cpuTempThreshold = 70;                    // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整   /** CpuTempThreshold */             
+//int cpuTempDownClose = -5;                    // Cpu降幾度關風扇  /** CpuTempDownClose */
+//int fanSpeed = 0, fanSpeedLst = -1;           /** FanSpeed, FanLstLv */
+//int fanCtrlCount = 0;                         /** FanCtrlCount */
+//#define FAN_PRE_RANGE   10                    /** fanPreRange */
+//int fanAlwaysOn = 0;
+//int fanPreData = 0;
+//int fanAvgCnt = 0;                            /** fanAvgFlag */                     
 
 enum {
     COLOR_STITCHING_MODE_OFF  = 0,
@@ -287,18 +292,37 @@ int mBottomMode = BOTTOM_MODE_IMAGE_DEFAULT;			/** BottomMode */
 int mBottomSize = 50;	                                //10~100 /** BottomSize */
 int mBottomTextMode = BOTTOM_TEXT_MODE_OFF;		        /** BottomTextMode */
     
+int mHttpPort = 8080;                                   /** definePort */
+char mHttpAccount[32] = "admin\0";                      /** httpAccount */
+char mHttpPassword[32] = "admin\0";                     /** httpPassword */
     
+enum {
+    FPGA_VIDEO_ENCODE_TYPE_JPEG = 0,
+    FPGA_VIDEO_ENCODE_TYPE_H264 = 1
+}
+int mFpgaEncodeType = FPGA_VIDEO_ENCODE_TYPE_H264;		/** FPGA_Encode_Type */   
     
-    
-    
+#define POWER_SAVING_INIT_OVERTIME      35000   /* 35s */
+#define POWER_SAVING_CMD_OVERTIME_5S    5000    /* 5s */
+#define POWER_SAVING_CMD_OVERTIME_15S   15000  	/* 15s */
+enum {
+    POWER_SAVING_MODE_OFF = 0,
+    POWER_SAVING_MODE_ON
+};
+int mPowerSavingMode = POWER_SAVING_MODE_OFF;							            //省電模式, 0:Off 1:On  /** Power_Saving_Mode */
+unsigned long powerSavingInitTime1 = 0, powerSavingInitTime2 = 0;                   /** Power_Saving_Init_t1, Power_Saving_Init_t2*/
+unsigned long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start, Cap_Rec_Finish_t*/
+unsigned long powerSavingSendDataStateTime = 0;								        /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
+unsigned long powerSavingOvertime = 0;                                              /** Power_Saving_Overtime */
+unsigned long powerSavingSetingUiTime1=0, powerSavingSetingUiTime2=0;               /** Seting_UI_t1, Seting_UI_t2 */
+int fpgaStandbyEn = 0;								                                //FPGA休眠狀態, 0:Off 1:On  /** FPGA_Sleep_En */
+int powerSavingInit = 0;							                                //開機 / 休眠起來一段時間FPGA才進入休眠  /** Power_Saving_Init */
+int powerSavingSetingUiState = 0;								                    //手機Seting列的狀態, 0:close 	1:open  /** Seting_UI_State */
+
+char mPcbVersion[8] = "V0.0\0";                                                     /** PCB_Ver */
 
 
 
-
-char mPcbVersion[8] = "V0.0\0";
-
-char mHttpAccount[32] = "admin\0";
-char mHttpPassword[32] = "admin\0";
 
 char mEthernetIP[64];
 char mEthernetMask[64];
@@ -337,7 +361,10 @@ enum {
     WIFI_STA_CHANGE
 };
 int wifiModeState = WIFI_AP;                    /** mWifiModeState */
-//int wifiConnectState = 0;                     // 0:no 1:yes   /** Connect_State_lst */
+//int wifiConnectState = 0;                     // 0:no 1:yes   /** Connect_State_lst */ // WIFI連線狀態
+int wifiAPEn=0;                                 /** wifi_connected */
+int wifiAPRestartCount = 0;                     /** systemRestartCount */
+int wifiConnectIsAlive = 0;                     /** Wifi_Connect_isAlive */
 
 int hdmiState = 0, hdmiStateLst = -1;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
 int hdmiStateChange = 0;                        /** HDMI_State_Change */
@@ -363,6 +390,7 @@ int batteryPower = 0;                           /** power */
 int batteryPowerLst = 10;                       /** powerRang */
 int batteryVoltage = 0;                         /** voltage */
 int dcState = 0;
+int batteryLogCnt = 0;
 
 unsigned long systemTime = 0;
 int writeUS360DataBinFlag = 0;                  /** writeUS360DataBin_flag */
@@ -371,6 +399,18 @@ int lidarState = 0;
 int lidarCode = 0;
 char lidarVersion[8];
 long lidarDelay = -1;
+
+#define LIDAR_BUFFER_MAX    0x400000            /* 4MB */
+int lidarCanBeFind = 1;                         // 0禁止使用 1:正常
+int lidarCycleTime = 10;                        /** timerLidarCycle */
+int lidarPtrEnable = 0;                         /** LidarPtrEnable */
+int lidarBufMod = 1;	                        /** LidarBufMod */   // 0:512x256, 1:1Kx512, 2:2Kx1K
+int lidarBufEnd = 2000000;			            /** LidarBufEnd */   // 設定讀取的總數量
+int lidarBufPtr = 0;				            /** LidarBufPtr */   // 目前已讀取的數量
+int lidarScanCnt = 0;                           /** lidarScanCnt */
+int lidarBuffer[LIDAR_BUFFER_MAX];		        /** LidarBuffer */   // 最大 2M 筆資料 (1K x 2K) x 2 (sin & cos)
+unsigned long lidarTime1;                       /** lidarT1 */
+int lidarError = 0;                             /** lidarErr */
 
 int chooseModeFlag = 0;                         /** choose_mode_flag */
 int fpgaCtrlPower = 0;                          /** FPGA_Ctrl_Power */
@@ -402,6 +442,7 @@ int defectGaniLst  = 0;                         /** Defect_Gani_lst */
 
 #define ETHERNET_CONNECT_MAX    3               /** EthCounter */
 int ethernetConnectCount = 0;                   /** EthCount */
+int ethernetConnectFlag;                        /** ethConnect */
 
 int drivingRecordMode = 1;                      // 行車紀錄模式 0:off 1:on   /** DrivingRecord_Mode */
 int debugLogSaveToSDCard = 0;	 	            // 系統資料是否存入SD卡 0:off 1:on   /** DebugLog_Mode */
@@ -428,6 +469,62 @@ int smoothShow = -1;                            //debug
 int stitchShow = -1;                            //debug
 
 char updateFileName[128];                       /** zip */
+int sendColorTemperatureTime = 2;               // 幾秒送一次色溫, 單位:秒    /** KelvinCounter */
+
+enum {
+    RTMP_SWITCH_ON = 0,
+    RTMP_SWITCH_OFF
+};
+int sendRtmpEn = 0;                             /** canSendRtmp */
+char rtmpUrl[128] = "rtmp://localhost/live/stream";
+int liveStreamWidth  = mResolutionWidthHeight[RESOLUTION_MODE_4K][0];       /** outWidth */
+int liveStreamHeight = mResolutionWidthHeight[RESOLUTION_MODE_4K][1];       /** outHeight */
+int rtmpSwitch = RTMP_SWITCH_OFF;               /** rtmp_switch */
+char oledRtmpBitrate[32] = "0 kbps";            /** oled_rtmp_bitrate */
+int rtmpConnectCount = 0;
+unsigned long sendRtmpVideoTime = 0;            /** rtmpVideoPushTimer */   //用來計算距離前一次送資料多久
+unsigned long sendRtmpAudioTime = 0;            /** rtmpAudioPushTimer */
+int rtmpVideoPushReady = 0;
+int rtmpAudioPushReady = 0;
+
+int doAutoStitchingFlag = 0;                    /** doAutoStitch_flag */
+int mcuUpdateFlag = 0;                          /** mcuUpdate_flag */
+
+int focusSensor2 = -1;                          /** Focus2_Sensor */
+int focusSensor = 0;                            /** Focus_Sensor */
+int focusIdx = 0;                               /** Focus_Idx */
+int focusToolNum = 0;                           /** Focus_Tool_Num */
+
+int downloadFileState = 0;                      /** downloadLevel */    //download 狀態
+int playSoundId = 0;                            /** soundId */  //播放音效ID
+int captureWaitTime = 30;                       /** captureWaitTime */  //拍照預估等待時間(最大值)
+
+#define CHOOSE_MODE_AFTER_TIME   1000           /* 切換模式後1秒才可拍照 */
+unsigned long chooseModeTime = 0;               /** choose_mode_time */ 
+
+int doCheckStitchingCmdDdrFlag = 0;             /** check_st_cmd_ddr_flag */
+int test3DHorizontalFlag = 0;                   /** testHonz */ 
+
+#define RTSP_BUFFER_MAX     0x100000            /* 1MB */
+char rtspBuffer[RTSP_BUFFER_MAX];               /** rtsp_buff */
+int rtspFps = 0, rtspSendLength = 0;            /** rtsp_fps, rtsp_send */
+
+unsigned long checkTimeoutPowerTime1 = 0;       /** toutPowerT1*/
+unsigned long checkTimeoutBurstTime1 = 0;       /** toutBurstT1*/
+unsigned long checkTimeoutSelfieTime1 = 0;      /** toutSelfT1*/
+unsigned long checkTimeoutSaveTime1 = 0;        /** toutSaveT1*/
+unsigned long checkTimeoutTakeTime1 = 0;        /** toutTakeT1*/
+unsigned long checkTimeoutLongKeyTime = 0;      /** toutLongKey*/
+
+int burstCount = 0;          /** mBurstCount */
+int takePicture = 0;          /** mTakePicture */
+
+unsigned long curTimeThread1s = 0, lstTimeThread1s = 0;         /** curTime_run1s, lstTime_run1s */
+unsigned long curTimeThreadSt = 0, lstTimeThreadSt = 0;         /** curTime_runSt, lstTime_runSt */
+unsigned long curTimeThread10ms = 0, lstTimeThread10ms = 0;     /** curTime_run10ms, lstTime_run10ms */
+
+
+
 
 
 
