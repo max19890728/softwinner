@@ -323,20 +323,13 @@ char mPcbVersion[8] = "V0.0\0";                                                 
 int mSaturation = 0;                                                                /** Saturation */
 int saturationInitFlag = 0;                                                         /** Saturation_Init_Flag */
 
-
-
-
-
-
-
-
-
-
 char mEthernetIP[64];
 char mEthernetMask[64];
 char mEthernetGway[64];
 char mEthernetDns[64];
 
+int mDrivingRecordMode = 1;                     // 行車紀錄模式 0:off 1:on   /** DrivingRecord_Mode */
+int mDebugLogSaveToSDCard = 0;	 	            // 系統資料是否存入SD卡 0:off 1:on   /** DebugLog_Mode */
 
 //==================== variable ====================
 #define BOTTOM_S_WIDTH      1024                    
@@ -455,9 +448,6 @@ unsigned long defectDelayTime1=0, defectDelayTime2=0;       /** Defect_T1, Defec
 int ethernetConnectCount = 0;                   /** EthCount */
 int ethernetConnectFlag;                        /** ethConnect */
 
-int drivingRecordMode = 1;                      // 行車紀錄模式 0:off 1:on   /** DrivingRecord_Mode */
-int debugLogSaveToSDCard = 0;	 	            // 系統資料是否存入SD卡 0:off 1:on   /** DebugLog_Mode */
-    
 int isStandby = 0;
 //int uvcErrCount = 0;                          /** UVCErrCount */
 
@@ -612,10 +602,6 @@ int live360State = LIVE360_STATE_STOP;          /** Live360_State */    // 0:sta
 long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
 
 
-
-
-
-
 //==================== get/set =====================
 void getUS363Version(char *version) {
     sprintf(version, "%s\0", mUS363Version);
@@ -757,15 +743,15 @@ void databinInit(int country, int customer)
 	int readVer = Get_DataBin_Version();
     if(readVer != nowVer) {
         Set_DataBin_Version(nowVer);
-        writeUS360DataBin_flag = 1;
+        writeUS360DataBinFlag = 1;
     }
 	
     //TagDemoMode = 		1;
-    char readUS363Ver[16];
-    Get_DataBin_US360Version(&readUS363Ver[0], sizeof(readUS363Ver) );
-    if(strcmp(readUS363Ver, mUS363Version) != 0) {
+    char us360_ver[16];
+    Get_DataBin_US360Version(&us360_ver[0], sizeof(us360_ver) );
+    if(strcmp(us360_ver, mUS363Version) != 0) {
         Set_DataBin_US360Version(&mUS363Version[0]);
-        writeUS360DataBin_flag = 1;
+        writeUS360DataBinFlag = 1;
     }
 	
 	//TagCamPositionMode = 	2;
@@ -802,27 +788,27 @@ void databinInit(int country, int customer)
     else          setExposureTimeWifiCmd(1, exp);
 	
 	//TagWBMode = 			10;
-    mWB_Mode = Get_DataBin_WBMode();
-    setWBMode(mWB_Mode);
+    mWhiteBalanceMode = Get_DataBin_WBMode();
+    setWBMode(mWhiteBalanceMode);
 	
 	//TagCaptureMode = 		11;
-    CaptureMode = Get_DataBin_CaptureMode();
+    mCaptureMode = Get_DataBin_CaptureMode();
 	
 	//TagCaptureCnt = 		12;
-    CaptureCnt = Get_DataBin_CaptureCnt();
+    mCaptureCnt = Get_DataBin_CaptureCnt();
 	
 	//TagCaptureSpaceTime = 13;
-    CaptureSpaceTime = Get_DataBin_CaptureSpaceTime();
+    mCaptureIntervalTime = Get_DataBin_CaptureSpaceTime();
 	
 	//TagSelfTimer = 		14;
-    SelfTimer = Get_DataBin_SelfTimer();
+    mSelfieTime = Get_DataBin_SelfTimer();
 	
 	//TagTimeLapseMode = 	15;
-    Time_Lapse_Mode = Get_DataBin_TimeLapseMode();
+    mTimeLapseMode = Get_DataBin_TimeLapseMode();
 	
 	//TagSaveToSel = 		16;
 	//TagWifiDisableTime = 	17;
-    wifiDisableTime = Get_DataBin_WifiDisableTime();
+    mWifiDisableTime = Get_DataBin_WifiDisableTime();
 	
 	//TagEthernetMode = 	18;
 	//TagEthernetIP = 		19;
@@ -834,14 +820,14 @@ void databinInit(int country, int customer)
 	
 	//TagDrivingRecord = 	24;
     if(customer == CUSTOMER_CODE_PIIQ)
-    	DrivingRecord_Mode = 0;	//databin.getDrivingRecord();
+    	mDrivingRecordMode = 0;	//databin.getDrivingRecord();
     else
-    	DrivingRecord_Mode = 1;	//Get_DataBin_DrivingRecord();
+    	mDrivingRecordMode = 1;	//Get_DataBin_DrivingRecord();
 	
 	//TagUS360Versin = 		25;
 	//TagWifiChannel = 		26;
-    WifiChannel = Get_DataBin_WifiChannel();
-    WriteWifiChannel(WifiChannel);
+    mWifiChannel = Get_DataBin_WifiChannel();
+    WriteWifiChannel(mWifiChannel);
 	
 	//TagExposureFreq = 	27;
     int freq = Get_DataBin_ExposureFreq();
@@ -855,7 +841,7 @@ void databinInit(int country, int customer)
     setStrengthWifiCmd(Get_DataBin_Sharpness() );
 	
 	//TagUserCtrl30Fps = 	30;
-    //User_Ctrl = Get_DataBin_UserCtrl30Fps();
+    //mUserCtrl = Get_DataBin_UserCtrl30Fps();
 	
 	//TagCameraMode = 		31;
     SetCameraMode(Get_DataBin_CameraMode() );
@@ -864,14 +850,14 @@ void databinInit(int country, int customer)
     SetColorSTSW(1);		//SetColorSTSW(Get_DataBin_ColorSTMode() );
 	
 	//TagAutoGlobalPhiAdjMode = 33;
-    doAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
-    setSmoothParameter(3, doAutoGlobalPhiAdjMode);
+    mAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
+    setSmoothParameter(3, mAutoGlobalPhiAdjMode);
 	
 	//TagHDMITextVisibility = 34;
-    HDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
+    mHDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
 	
 	//TagSpeakerMode = 		35;
-    speakerMode = Get_DataBin_SpeakerMode();
+    mSpeakerMode = Get_DataBin_SpeakerMode();
 	
 	//TagLedBrightness = 	36;
 //tmp    SetLedBrightness(Get_DataBin_LedBrightness() );
@@ -881,15 +867,15 @@ void databinInit(int country, int customer)
 
 	//TagDelayValue = 		38;
 	//TagImageQuality = 	39;
-    JPEGQualityMode = Get_DataBin_ImageQuality();
-    set_A2K_JPEG_Quality_Mode(JPEGQualityMode);
+    mJpegQualityMode = Get_DataBin_ImageQuality();
+    set_A2K_JPEG_Quality_Mode(mJpegQualityMode);
 	
 	//TagPhotographReso = 	40;
 	//TagRecordReso = 		41;
 	//TagTimeLapseReso = 	42;
 	//TagTranslucent = 		43;
-    Translucent_Mode = 1;			//Translucent_Mode = Get_DataBin_Translucent();
-    SetTransparentEn(Translucent_Mode);
+    mTranslucentMode = 1;			//mTranslucentMode = Get_DataBin_Translucent();
+    SetTransparentEn(mTranslucentMode);
 	
 	//TagCompassMaxx = 		44;
 	//TagCompassMaxy = 		45;
@@ -898,7 +884,7 @@ void databinInit(int country, int customer)
 	//TagCompassMiny = 		48;
 	//TagCompassMinz = 		49;
 	//TagDebugLogMode = 	50;
-    DebugLog_Mode = Get_DataBin_DebugLogMode();
+    mDebugLogSaveToSDCard = Get_DataBin_DebugLogMode();
 	
 	//TagBottomMode = 		51;
     mBottomMode = Get_DataBin_BottomMode();
@@ -908,22 +894,26 @@ void databinInit(int country, int customer)
 //tmp    SetBottomValue(mBottomMode, mBottomSize);
 
 	//TagHdrEvMode = 		53;
-    int wdr_mode=1;
-    int hdr_mode = Get_DataBin_hdrEvMode();
-    HdrEvMode = hdr_mode;
-    setSensorHdrLevel(hdr_mode);
-	if(hdr_mode == 2)      wdr_mode = 2;	//弱
-	else if(hdr_mode == 4) wdr_mode = 1;	//中
-	else if(hdr_mode == 8) wdr_mode = 0;	//強
-    SetWDRLiveStrength(wdr_mode);
+    mHdrIntervalEvMode = Get_DataBin_hdrEvMode();
+    switch(mHdrIntervalEvMode) {
+    case HDR_INTERVAL_EV_MODE_LOW: 
+        mWdrMode = WDR_MODE_LOW; 
+        break;
+    case HDR_INTERVAL_EV_MODE_MIDDLE:
+        mWdrMode = WDR_MODE_MIDDLE; 
+        break;
+    case HDR_INTERVAL_EV_MODE_HIGHT:
+        mWdrMode = WDR_MODE_HIGHT; 
+        break;
+    }
+    setSensorHdrLevel(mHdrIntervalEvMode);
+    SetWDRLiveStrength(mWdrMode);
 	
     //TagBitrate = 			54;
 //tmp    SetBitrateMode(Get_DataBin_Bitrate() );
 
     //TagHttpAccount =      55;
-	//HttpAccount = new byte[32];				// 網頁/RTSP帳號
 	//TagHttpPassword =     56;
-	//HttpPassword = new byte[32];			// 網頁/RTSP密碼
 	//TagHttpPort =         57;
     Set_DataBin_HttpPort(Get_DataBin_HttpPort()); //檢測自己數值是否正常
 	
@@ -944,7 +934,7 @@ void databinInit(int country, int customer)
 	//TagBottomTLoop =		65;
 	//TagBottomText =		66;
 	//TagFpgaEncodeType =	67;
-	mFPGA_Encode_Type = Get_DataBin_FpgaEncodeType();
+	mFpgaEncodeType = Get_DataBin_FpgaEncodeType();
 
 	//TagWbRGB =			68;
 	//TagContrast =			69;
@@ -953,32 +943,32 @@ void databinInit(int country, int customer)
 	
 	//TagSaturation =		70;
 	int sv = Get_DataBin_Saturation();
-	Saturation = GetSaturationValue(sv);
+	mSaturation = GetSaturationValue(sv);
 	
 	//TagFreeCount
-	getSDFreeSize(&sd_freesize);
-//tmp    getRECTimes(sd_freesize);
-    freeCount = Get_DataBin_FreeCount();
-    if(freeCount == -1){
+	getSDFreeSize(&sdFreeSize);
+//tmp    getRECTimes(sdFreeSize);
+    mFreeCount = Get_DataBin_FreeCount();
+    if(mFreeCount == -1){
 //tmp    	Set_DataBin_FreeCount(GetSpacePhotoNum() );
-    	freeCount = Get_DataBin_FreeCount();
-    	writeUS360DataBin_flag = 1;
+    	mFreeCount = Get_DataBin_FreeCount();
+    	writeUS360DataBinFlag = 1;
     }else{
-//tmp    	int de = freeCount - GetSpacePhotoNum();
-		int de = freeCount;
+//tmp    	int de = mFreeCount - GetSpacePhotoNum();
+		int de = mFreeCount;
     	if(de > 100 || de < -100){
 //tmp    		freeCount = GetSpacePhotoNum();
     	}else if(de > 10){
-    		freeCount = freeCount + 10;
+    		mFreeCount += 10;
     	}else if(de > 0){
-    		freeCount = freeCount + de;
+    		mFreeCount += de;
     	}else if(de < -10){
-    		freeCount = freeCount - 10;
+    		mFreeCount -= 10;
     	}else if(de < -9){
-    		freeCount = freeCount - de;
+    		mFreeCount -= de;
     	}
     	Set_DataBin_FreeCount(freeCount);
-    	writeUS360DataBin_flag = 1;
+    	writeUS360DataBinFlag = 1;
     }
 	
     //TagBmodeSec
