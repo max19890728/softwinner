@@ -139,11 +139,11 @@ Fbm* FbmCreateBuffer(FbmCreateInfo* pFbmCreateInfo, VideoFbmInfo* pFbmInfo)
     }
 #endif
 
-    logd("FbmCreate, total fbm number: %d, decoder needed: %d,  \
-nWidth=%d, nHeight=%d nAlignStride = %d",
-           pFbmCreateInfo->nFrameNum,
-           pFbmCreateInfo->nDecoderNeededMiniFrameNum,
-           nWidth, nHeight, nAlignStride);
+    //logd("FbmCreate, total fbm number: %d, decoder needed: %d,  \
+    //        nWidth=%d, nHeight=%d nAlignStride = %d",
+    //       pFbmCreateInfo->nFrameNum,
+    //       pFbmCreateInfo->nDecoderNeededMiniFrameNum,
+    //       nWidth, nHeight, nAlignStride);
     if(nWidth >= 7680 || nHeight >= 4320)
     {
         loge("width or height too large , can not create fbm buffer.");
@@ -241,7 +241,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
         {
             if(!pFbmCreateInfo->bThumbnailMode || i==0)
             {
-                logd("** call allocate pic buf, i = %d, maxNum = %d",i,p->nMaxFrameNum);
+                //logd("** call allocate pic buf, i = %d, maxNum = %d",i,p->nMaxFrameNum);
                 if(FbmAllocatePictureBuffer(p, \
                     &pFrameNode->vpicture, &nAlignStride, nWidth, nHeight) != 0)
                     break;
@@ -394,7 +394,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
         p->pFbmInfo = (void*)pFbmInfo;
     }
 
-    logd("*** finish fbmCreateBuffer");
+    //logd("*** finish fbmCreateBuffer");
     return p;
 }
 
@@ -1438,7 +1438,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
                     nMemSizeY + nMemSizeC*2);
                 return -1;
             }
-            logd("pPicture->bEnableAfbcFlag = %d",pPicture->bEnableAfbcFlag);
+            //logd("pPicture->bEnableAfbcFlag = %d",pPicture->bEnableAfbcFlag);
             if(pPicture->bEnableAfbcFlag == 1)
             {
                 memset(pMem, 0, nTotalPicPhyBufSize);

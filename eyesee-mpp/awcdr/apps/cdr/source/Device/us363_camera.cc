@@ -67,7 +67,7 @@ int mUserCtrl = 1, mUserCtrlLst = 0;            //使用者控制FPS,  0: auto 1
 
 int mWifiDisableTime = 180;                     /** wifiDisableTime */
 
-//int mFreeCount = 0;                             //DataBin, 剩餘拍攝張數/錄影時間 /** freeCount */
+int mFreeCount = 0;                             //DataBin, 剩餘拍攝張數/錄影時間 /** freeCount */
 
 enum {
     PLAY_MODE_GLOBAL = 0,
@@ -967,7 +967,7 @@ void databinInit(int country, int customer)
     	}else if(de < -9){
     		mFreeCount -= de;
     	}
-    	Set_DataBin_FreeCount(freeCount);
+    	Set_DataBin_FreeCount(mFreeCount);
     	writeUS360DataBinFlag = 1;
     }
 	
@@ -985,8 +985,8 @@ void databinInit(int country, int customer)
     setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
 	
     //TagLiveQualityMode
-    mLiveQualityMode = Get_DataBin_LiveQualityMode();
-    set_A2K_JPEG_Live_Quality_Mode(mLiveQualityMode);
+    mJpegLiveQualityMode = Get_DataBin_LiveQualityMode();
+    set_A2K_JPEG_Live_Quality_Mode(mJpegLiveQualityMode);
 	
     //TagWbTemperature
     //TagWbTint
@@ -1019,7 +1019,7 @@ void databinInit(int country, int customer)
 //tmp    SetLiveBitrateMode(Get_DataBin_LiveBitrate() );
 
     //TagLiveBitrate = 			95;
-    Power_Saving_Mode = Get_DataBin_PowerSaving();
+    mPowerSavingMode = Get_DataBin_PowerSaving();
 }
 
 void onCreate() 
@@ -1126,9 +1126,9 @@ void onCreate()
 //tmp    showOLEDDelayValue(Get_DataBin_DelayValue());
         
     char path[64]; 
-	if(Get_DataBin_SaveToSel() == 0)
-		sprintf(sd_path, "/mnt/sdcard\0");
-    else if(Get_DataBin_SaveToSel() == 1) 
+	//if(Get_DataBin_SaveToSel() == 0)
+	//	sprintf(sd_path, "/mnt/sdcard\0");
+    //else if(Get_DataBin_SaveToSel() == 1) 
         getSDPath();       	
 		
     setStitchingOut(GetCameraMode(), GetPlayMode2(), GetResolutionMode(), GetmFPS() ); 

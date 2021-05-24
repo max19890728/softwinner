@@ -287,6 +287,8 @@ void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpg
 
 void us360_init();
 
+void getSDFreeSize(unsigned long long *size);
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif
