@@ -3192,14 +3192,12 @@ void setStrengthWifiCmd(int offset)
 ////  x0.224, x0.412, x0.364, x0.030, x0.460, x0.490, x0.592, x0.501, x0.091	// miller, 140701, adjust, excel計算值, 夜間濛濛的
 ////   0x395,  0x699,  0x5D2,   0x7A,  0x75C,  0x7D6,  0x978,  0x804,  0x174	// 係數x0.6
 //};
-/*
- *  idx: 0:60Hz 1:50Hz
- */
-void setEPFreq(int idx)
+
+void setFpgaEpFreq(int freq)
 {
 	int input_mode = Get_Input_Scale();
 	int ep_d_line = EP_FRM_LENGTH_60Hz_D3_DEFAULT;
-	if(idx == 50) {
+	if(freq == 50) {
 		ISP_AEG_EP_IMX222_Freq = 1;
 		AEG_EP_FRM_LENGTH = 0;
 	}
@@ -3208,7 +3206,7 @@ void setEPFreq(int idx)
 		AEG_EP_FRM_LENGTH = 0;
 	}
 	set_AEG_System_Freq_NP(ISP_AEG_EP_IMX222_Freq);
-	db_debug("setEPFreq() Freq=%d  AEG_EP_FRM_LENGTH=0x%x\n", ISP_AEG_EP_IMX222_Freq, AEG_EP_FRM_LENGTH);
+	db_debug("setFpgaEpFreq() Freq=%d  AEG_EP_FRM_LENGTH=0x%x\n", ISP_AEG_EP_IMX222_Freq, AEG_EP_FRM_LENGTH);
 }
 
 /*

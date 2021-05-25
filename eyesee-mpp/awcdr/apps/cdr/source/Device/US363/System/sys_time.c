@@ -2,6 +2,8 @@
  * Copyright (c), 2021, Ultracker Tech. All rights reserved.
  ******************************************************************************/
 
+#include "Device/US363/System/sys_time.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +17,6 @@
 #include <math.h>
 #include <time.h>
 
-#include "Device/US363/System/sys_time.h"
 #include "device_model/system/rtc.h"
 #include "common/app_log.h"
 

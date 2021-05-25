@@ -11,6 +11,9 @@ extern "C" {
 
 int initCamera();
 void startPreview();
+
+//==================== get/set =====================
+void getSdPath(char *path);
 void getUS363Version(char *version);
 	
 	

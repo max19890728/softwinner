@@ -51,13 +51,13 @@ char mWifiStaDns1[32], mWifiStaDns2[32];        /** wifiDns1, wifiDns2 */
 #define COUNTRY_CODE_JAPAN          392
 #define COUNTRY_CODE_CHINA          156
 #define COUNTRY_CODE_USA            840
-int mCountryCode = COUNTRY_CODE_USA;            /** customerCode */
+int mCountryCode = COUNTRY_CODE_USA;            /** LangCode */
 
 #define CUSTOMER_CODE_ULTRACKER     0
 #define CUSTOMER_CODE_LETS          10137
 #define CUSTOMER_CODE_ALIBABA       2067001   
 #define CUSTOMER_CODE_PIIQ   	    20141	    /* 客戶後來更名為PEEK */
-int mCustomerCode = CUSTOMER_CODE_ULTRACKER;    /** LangCode */
+int mCustomerCode = CUSTOMER_CODE_ULTRACKER;    /** customerCode */
 
 //int mLensCode = 0;			                //新舊鏡頭 0:old 1:new  /** LensCode */
 //int mVersionDate = 190507;                    /** versionDate */
@@ -78,8 +78,8 @@ enum {
     PLAY_MODE_4SPLIT = 5,
     PLAY_MODE_PIP    = 6
 };
-int mPlayMode     = PLAY_MODE_GLOBAL;           /** PlayMode2 */                              
-int mPlayMode2Tmp = PLAY_MODE_GLOBAL;           /** PlayMode2_tmp */   
+int mPlayMode    = PLAY_MODE_GLOBAL;            /** PlayMode2 */                              
+int mPlayModeTmp = PLAY_MODE_GLOBAL;            /** PlayMode2_tmp */   
 
 #define RESOLUTION_WIDTH_12K    11520
 #define RESOLUTION_WIDTH_4K     3840
@@ -125,7 +125,7 @@ enum {
     RESOLUTION_MODE_2K  = 14
 };
 int mResolutionMode    = RESOLUTION_MODE_4K;    /** ResolutionMode */
-int mResolutionModeLst = RESOLUTION_MODE_4K;    /** ResolutionMode_lst */
+//int mResolutionModeLst = RESOLUTION_MODE_4K;    /** ResolutionMode_lst */
 int mResolutionWidth   = mResolutionWidthHeight[RESOLUTION_MODE_4K][0];     /** ResolutionWidth */
 int mResolutionHeight  = mResolutionWidthHeight[RESOLUTION_MODE_4K][1];     /** ResolutionHeight */
 
@@ -309,11 +309,11 @@ enum {
     POWER_SAVING_MODE_ON
 };
 int mPowerSavingMode = POWER_SAVING_MODE_OFF;							            //省電模式, 0:Off 1:On  /** Power_Saving_Mode */
-unsigned long powerSavingInitTime1 = 0, powerSavingInitTime2 = 0;                   /** Power_Saving_Init_t1, Power_Saving_Init_t2*/
-unsigned long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start, Cap_Rec_Finish_t*/
-unsigned long powerSavingSendDataStateTime = 0;								        /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
-unsigned long powerSavingOvertime = 0;                                              /** Power_Saving_Overtime */
-unsigned long powerSavingSetingUiTime1=0, powerSavingSetingUiTime2=0;               /** Seting_UI_t1, Seting_UI_t2 */
+unsigned long long powerSavingInitTime1 = 0, powerSavingInitTime2 = 0;                   /** Power_Saving_Init_t1, Power_Saving_Init_t2*/
+unsigned long long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start, Cap_Rec_Finish_t*/
+unsigned long long powerSavingSendDataStateTime = 0;								        /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
+unsigned long long powerSavingOvertime = 0;                                              /** Power_Saving_Overtime */
+unsigned long long powerSavingSetingUiTime1=0, powerSavingSetingUiTime2=0;               /** Seting_UI_t1, Seting_UI_t2 */
 int fpgaStandbyEn = 0;								                                //FPGA休眠狀態, 0:Off 1:On  /** FPGA_Sleep_En */
 int powerSavingInit = 0;							                                //開機 / 休眠起來一段時間FPGA才進入休眠  /** Power_Saving_Init */
 int powerSavingSetingUiState = 0;								                    //手機Seting列的狀態, 0:close 	1:open  /** Seting_UI_State */
@@ -368,7 +368,7 @@ int wifiAPRestartCount = 0;                     /** systemRestartCount */
 int wifiConnectIsAlive = 0;                     /** Wifi_Connect_isAlive */
 int wifiChangeStop = 0;
 
-int hdmiState = 0, hdmiStateLst = -1;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
+int hdmiState = 0/*, hdmiStateLst = -1*/;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
 int hdmiStateChange = 0;                        /** HDMI_State_Change */
     
 int fpgaCheckSum = 0;
@@ -376,11 +376,11 @@ int skipWatchDog = 0, skipWatchDogLst = -1;     /**  , skipWatchDog_lst */
 int dnaCheck = 0, dnaCheckLst = -1;             //0:err 1:ok  /** dna_check_ok, dna_check_ok_lst */
 
 char thmPath[128];                              /** THM_path */
-char driPath[128];                              /** DIR_path */
+char dirPath[128];                              /** DIR_path */
 char sdPath[128] = "/mnt/extsd";                /** sd_path */
 int sdState = 0, sdStateLst = -1;               /** sd_state, lst_sd_state */
-unsigned long sdFreeSize = 0;                   /** sd_freesize */
-unsigned long sdAllSize = 0;                    /** sd_allsize */
+unsigned long long sdFreeSize = 0;                   /** sd_freesize */
+unsigned long long sdAllSize = 0;                    /** sd_allsize */
 
 char capNumStr[64];                             //還可以拍幾張  /** cap_num */
 char recTimeStr[64];                            //還可以錄多久 /** rec_time */
@@ -394,7 +394,7 @@ int batteryVoltage = 0;                         /** voltage */
 int dcState = 0;
 int batteryLogCnt = 0;
 
-unsigned long systemTime = 0;
+unsigned long long systemTime = 0;
 int writeUS360DataBinFlag = 0;                  /** writeUS360DataBin_flag */
 int writeUS360DataBinStep = 0;                  /** saveBinStep */
 
@@ -412,7 +412,7 @@ int lidarBufEnd = 2000000;			            /** LidarBufEnd */   // 設定讀取的
 int lidarBufPtr = 0;				            /** LidarBufPtr */   // 目前已讀取的數量
 int lidarScanCnt = 0;                           /** lidarScanCnt */
 int lidarBuffer[LIDAR_BUFFER_MAX];		        /** LidarBuffer */   // 最大 2M 筆資料 (1K x 2K) x 2 (sin & cos)
-unsigned long lidarTime1;                       /** lidarT1 */
+unsigned long long lidarTime1;                       /** lidarT1 */
 int lidarError = 0;                             /** lidarErr */
 
 int chooseModeFlag = 0;                         /** choose_mode_flag */
@@ -437,7 +437,7 @@ int defectCameraModeLst = 0;                    /** Defect_CMode_lst */
 int defectResolutionModeLst   = 0;              /** Defect_Res_lst */       
 int defectEpLst    = 30;                        /** Defect_Ep_lst */       
 int defectGaniLst  = 0;                         /** Defect_Gani_lst */    
-unsigned long defectDelayTime1=0, defectDelayTime2=0;       /** Defect_T1, Defect_T2 */   
+unsigned long long defectDelayTime1=0, defectDelayTime2=0;       /** Defect_T1, Defect_T2 */   
 
 #define CPU_FULL_SPEED      1152000
 #define CPU_HIGH_SPEED      600000     	        /* 2核 x 600Mhz*/
@@ -464,7 +464,7 @@ int smoothOIdx = 0;                             //debug /** Smooth_O_Idx */
 
 int gpsState = 0;					            /** mGps */
 int bmm050Start = 0;					        //手機校正電子羅盤  /** mBmm050Start */
-unsigned long standbyTime = 0;                  /** sleepTime */
+unsigned long long standbyTime = 0;                  /** sleepTime */
 
 int smoothShow = -1;                            //debug
 int stitchShow = -1;                            //debug
@@ -483,8 +483,8 @@ int liveStreamHeight = mResolutionWidthHeight[RESOLUTION_MODE_4K][1];       /** 
 int rtmpSwitch = RTMP_SWITCH_OFF;               /** rtmp_switch */
 char oledRtmpBitrate[32] = "0 kbps";            /** oled_rtmp_bitrate */
 int rtmpConnectCount = 0;
-unsigned long sendRtmpVideoTime = 0;            /** rtmpVideoPushTimer */   //用來計算距離前一次送資料多久
-unsigned long sendRtmpAudioTime = 0;            /** rtmpAudioPushTimer */
+unsigned long long sendRtmpVideoTime = 0;            /** rtmpVideoPushTimer */   //用來計算距離前一次送資料多久
+unsigned long long sendRtmpAudioTime = 0;            /** rtmpAudioPushTimer */
 int rtmpVideoPushReady = 0;
 int rtmpAudioPushReady = 0;
 
@@ -503,7 +503,7 @@ int playSoundId = 0;                            /** soundId */  //播放音效ID
 int captureWaitTime = 30;                       /** captureWaitTime */  //拍照預估等待時間(最大值)
 
 #define CHOOSE_MODE_AFTER_TIME   1000           /* 切換模式後1秒才可拍照 */
-unsigned long chooseModeTime = 0;               /** choose_mode_time */ 
+unsigned long long chooseModeTime = 0;               /** choose_mode_time */ 
 
 int doCheckStitchingCmdDdrFlag = 0;             /** check_st_cmd_ddr_flag */
 int test3DHorizontalFlag = 0;                   /** testHonz */ 
@@ -512,34 +512,34 @@ int test3DHorizontalFlag = 0;                   /** testHonz */
 char rtspBuffer[RTSP_BUFFER_MAX];               /** rtsp_buff */
 int rtspFps = 0, rtspSendLength = 0;            /** rtsp_fps, rtsp_send */
 
-unsigned long checkTimeoutPowerTime1 = 0;       /** toutPowerT1*/
-unsigned long checkTimeoutBurstTime1 = 0;       /** toutBurstT1*/
-unsigned long checkTimeoutSelfieTime1 = 0;      /** toutSelfT1*/
-unsigned long checkTimeoutLongKeyTime = 0;      /** toutLongKey*/
-unsigned long checkTimeoutSaveTime1 = 0;        /** toutSaveT1*/
-unsigned long checkTimeoutTakeTime1 = 0;        /** toutTakeT1*/
+unsigned long long checkTimeoutPowerTime1 = 0;       /** toutPowerT1*/
+unsigned long long checkTimeoutBurstTime1 = 0;       /** toutBurstT1*/
+unsigned long long checkTimeoutSelfieTime1 = 0;      /** toutSelfT1*/
+unsigned long long checkTimeoutLongKeyTime = 0;      /** toutLongKey*/
+unsigned long long checkTimeoutSaveTime1 = 0;        /** toutSaveT1*/
+unsigned long long checkTimeoutTakeTime1 = 0;        /** toutTakeT1*/
 
 int checkTimeoutSelfieSec = 0;                  /** mSelfTimerSec */
 int checkTimeoutBurstCount = 0;                 /** mBurstCount */
 int checkTimeoutTakePicture = 0;                /** mTakePicture */
 
-unsigned long curTimeThread1s = 0, lstTimeThread1s = 0;         /** curTime_run1s, lstTime_run1s */
-unsigned long curTimeThreadSt = 0, lstTimeThreadSt = 0;         /** curTime_runSt, lstTime_runSt */
-unsigned long curTimeThread10ms = 0, lstTimeThread10ms = 0;     /** curTime_run10ms, lstTime_run10ms */
-unsigned long curTimeThread20ms = 0, lstTimeThread20ms = 0;     /** curTime_run20ms, lstTime_run20ms */
-unsigned long curTimeThread100ms = 0, lstTimeThread100ms = 0;   /** curTime_run100ms, lstTime_run100ms */
-unsigned long curTimeThread5ms = 0, lstTimeThread5ms = 0, runTimeThread5ms = 0;      /** curTime, lstTime, runTime*/
-unsigned long curTimeThread1 = 0, lstTimeThread1 = 0;           /** curTime_run1, lstTime_run1 */
+unsigned long long curTimeThread1s = 0, lstTimeThread1s = 0;         /** curTime_run1s, lstTime_run1s */
+unsigned long long curTimeThreadSt = 0, lstTimeThreadSt = 0;         /** curTime_runSt, lstTime_runSt */
+unsigned long long curTimeThread10ms = 0, lstTimeThread10ms = 0;     /** curTime_run10ms, lstTime_run10ms */
+unsigned long long curTimeThread20ms = 0, lstTimeThread20ms = 0;     /** curTime_run20ms, lstTime_run20ms */
+unsigned long long curTimeThread100ms = 0, lstTimeThread100ms = 0;   /** curTime_run100ms, lstTime_run100ms */
+unsigned long long curTimeThread5ms = 0, lstTimeThread5ms = 0, runTimeThread5ms = 0;      /** curTime, lstTime, runTime*/
+unsigned long long curTimeThread1 = 0, lstTimeThread1 = 0;           /** curTime_run1, lstTime_run1 */
 
 int mjpegFps = 0, mjpegSendLength = 0;          /** int mjpeg_fps, mjpeg_send */
 
 #define SEND_MAIN_CMD_PIPE_DELAY_TIME       50                      /* 50ms */
-unsigned long sendMainCmdPipeTime1 = 0, sendMainCmdPipeTime2 = 0;   /** SendMainCmdPipeT1, SendMainCmdPipeT2 */ //send main cmd delay time
+unsigned long long sendMainCmdPipeTime1 = 0, sendMainCmdPipeTime2 = 0;   /** SendMainCmdPipeT1, SendMainCmdPipeT2 */ //send main cmd delay time
 #define ADJUST_SENSOR_SYNC_INTERVAL_TIME    3000                    /* 3000ms */
-unsigned long adjSensorSyncTime1 = 0, adjSensorSyncTime2 = 0;       /** AdjSensorSyncT1, AdjSensorSyncT2 */
+unsigned long long adjSensorSyncTime1 = 0, adjSensorSyncTime2 = 0;       /** AdjSensorSyncT1, AdjSensorSyncT2 */
 #define READ_SENSOR_STATE_INTERVAL_TIME     1000                    /* 1000ms */
-unsigned long sensorStateTime1 = 0, sensorStateTime2 = 0;           /** SensorStateT1, SensorStateT2 */
-unsigned long testtoolDelayTime1 = 0, testtoolDelayTime2 = 0;       /** TestTool_D_t1, TestTool_D_t2 */
+unsigned long long sensorStateTime1 = 0, sensorStateTime2 = 0;           /** SensorStateT1, SensorStateT2 */
+unsigned long long testtoolDelayTime1 = 0, testtoolDelayTime2 = 0;       /** TestTool_D_t1, TestTool_D_t2 */
 
 int sendFpgaCmdStep = 0;                        /** Send_ST_Flag */
 #define READ_SENSOR_STATE_ERROR_COUNT_MAX   3
@@ -603,6 +603,60 @@ long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
 
 
 //==================== get/set =====================
+
+void getSdPath(char *path) { sprintf(path, "%s\0", sdPath); }
+
+void setDoAutoStitchFlag(int flag) { doAutoStitchingFlag = flag; }
+int getDoAutoStitchFlag() { return doAutoStitchingFlag; }
+
+void setResolutionMode(int resolution) { mResolutionMode = resolution; }
+int getResolutionMode() { return mResolutionMode; }
+
+void setPlayMode(int play_mode) { mPlayMode = play_mode; }
+int getPlayMode() { return mPlayMode; }
+
+void setPlayModeTmp(int play_mode) { mPlayModeTmp = play_mode; }
+int getPlayModeTmp() { return mPlayModeTmp; }
+
+void setFPS(int fps) { mFPS = fps; }
+int getFPS() { return mFPS; }
+
+void setAegEpFreq(int freq) {
+	mAegEpFreq = freq;
+	setFpgaEpFreq(freq);
+}
+int getAegEpFreq() { return mAegEpFreq; }
+
+void setResolutionWidthHeight(int resolution) {
+    mResolutionWidth   = mResolutionWidthHeight[resolution][0];
+    mResolutionHeight  = mResolutionWidthHeight[resolution][1];
+}
+void getResolutionWidthHeight(int *width, int *height) { 
+    *width  = mResolutionWidth;
+    *height = mResolutionHeight;
+}
+
+void setChooseModeTime(unsigned long long time) { chooseModeTime = time; }
+void getChooseModeTime(unsigned long long *time) { *time = chooseModeTime; }
+
+void setHdmiState(int state) { hdmiState = state; }
+int getHdmiState() { return hdmiState; }
+
+//void setHdmiStateLst(int state) { hdmiStateLst = state; }
+//int getHdmiStateLst() { return hdmiStateLst; }
+
+void setHdmiStateChange(int en) { hdmiStateChange = en; }
+int getHdmiStateChange() { return hdmiStateChange; }
+
+
+
+
+
+
+
+
+
+
 void getUS363Version(char *version) {
     sprintf(version, "%s\0", mUS363Version);
 }
@@ -632,7 +686,6 @@ int getCameraPositionMode(void) {
 int getCameraPositionModeChange(void) {
 	return mCameraPositionModeChange;
 }
-
 
 
 //==================== fucntion ====================
@@ -1036,19 +1089,19 @@ void onCreate()
         
 //tmp    int led_mode = GetLedControlMode();
 //tmp    ChangeLedMode(led_mode);
-//tmp    readMcuUpdate();
+//tmp    readMcuUpdate();      //max+ S3 沒有mcu
         
     TestToolCmdInit();
     memset(&audioRecEmptyBytes[0], 0, sizeof(audioRecEmptyBytes));
-    for(i = 0; i< 8; i++) 
+    for(i = 0; i < 8; i++) 
 		doResize_mode[i] = -1;
         
 //tmp    setVersionOLED(mUS363Version.getBytes());
 
-    setCpuFreq(4, CpuFullSpeed);
+    setCpuFreq(4, CPU_FULL_SPEED);
         
-    unsigned long long defaultSysTime = 1420041600000L;                     // 2015/01/01 00:00:00
-    unsigned long long nowSysTime;
+    unsigned long long long defaultSysTime = 1420041600000L;                     // 2015/01/01 00:00:00
+    unsigned long long long nowSysTime;
 	get_current_usec(&nowSysTime);
     if(defaultSysTime > nowSysTime){										// lester+ 180207
 		setSysTime(defaultSysTime);
@@ -1057,14 +1110,14 @@ void onCreate()
 	
     ret = ReadTestResult();
     if(ret != 0) 
-		SetDoAutoStitchFlag(1);
+		setDoAutoStitchFlag(1);
 
     readWifiConfig(&mWifiApSsid[0], &mWifiApPassword[0]);
+    
     //CreatCountryList();
     initCountryFunc();
-    initCustomerFunc();
-        
-    databinInit(LangCode, customerCode);
+    initCustomerFunc(); 
+    databinInit(mCountryCode, mCustomerCode);
         
 //tmp    ControllerServer.changeDataToDataBin();
     Get_DataBin_HttpAccount(&mHttpAccount[0], sizeof(mHttpAccount) );
@@ -1119,23 +1172,19 @@ void onCreate()
 
     ModeTypeSelectS2(Get_DataBin_PlayMode(), Get_DataBin_ResoultMode(), GetHdmiState(), Get_DataBin_CameraMode() );
 
-    int kpixel = ResolutionModeToKPixel(GetResolutionMode() );
-//tmp    setOLEDMainModeResolu(GetPlayMode2Tmp(), kpixel);
+    int kpixel = ResolutionModeToKPixel(getResolutionMode() );
+//tmp    setOLEDMainModeResolu(getPlayModeTmp(), kpixel);
 
 //tmp    SetOLEDMainType(GetCameraMode(), GetCaptureCnt(), GetCaptureMode(), getTimeLapseMode(), 0);
 //tmp    showOLEDDelayValue(Get_DataBin_DelayValue());
         
-    char path[64]; 
-	//if(Get_DataBin_SaveToSel() == 0)
-	//	sprintf(sd_path, "/mnt/sdcard\0");
-    //else if(Get_DataBin_SaveToSel() == 1) 
-        getSDPath();       	
+    //getSDPath();       	
 		
-    setStitchingOut(GetCameraMode(), GetPlayMode2(), GetResolutionMode(), GetmFPS() ); 
+    setStitchingOut(GetCameraMode(), getPlayMode(), getResolutionMode(), GetmFPS() ); 
     LineTableInit();  
         
     for(i = 0; i < 8; i++) 
-        writeCmdTable(i, GetResolutionMode(), GetmFPS(), 0, 1, 0); 
+        writeCmdTable(i, getResolutionMode(), GetmFPS(), 0, 1, 0); 
         
     getPath();		//取得 THMPath / DirPath
  
@@ -1169,7 +1218,7 @@ void onCreate()
             }
         };*/
 
-    Show_Now_Mode_Message(GetPlayMode2(), GetResolutionMode(), GetmFPS(), 0);
+    Show_Now_Mode_Message(getPlayMode(), GetResolutionMode(), GetmFPS(), 0);
         
 //tmp        handler1 = new Handler();
 //tmp        handler1.post(runnable1);

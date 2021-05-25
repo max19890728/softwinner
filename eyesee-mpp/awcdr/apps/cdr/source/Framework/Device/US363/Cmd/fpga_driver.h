@@ -412,7 +412,7 @@ void FPGAdriverInit(void);
 void setAETergetRateWifiCmd(int y_idx);
 void setAEGGainWifiCmd(int manual_mode, int gain_idx);
 void setWBMode(int mode);
-void setEPFreq(int idx);
+void setFpgaEpFreq(int freq);
 void setStrengthWifiCmd(int offset);
 void setContrast(int val);
 void set_Init_Gamma_Table_En(void);

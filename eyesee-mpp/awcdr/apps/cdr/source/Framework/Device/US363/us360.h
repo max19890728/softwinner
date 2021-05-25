@@ -244,7 +244,7 @@ void *pcm_thread(void);
 void *rec_thread(void);
 int read_pcm_buf(pcm_buf_struct *buf, unsigned char *a_buf, int size);
 //int RecoderFillBlack(unsigned char *vbuf, int len, unsigned char *vbuf_tmp, int cnt);
-char *get_storage_path(void);
+//char *get_storage_path(void);
 //void set_read_proc(char *jpeg_proc, char *h264_proc);
 //void enable_debug_message(void);
 unsigned long long get_sd_free_size(char *path);
@@ -288,6 +288,8 @@ void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpg
 void us360_init();
 
 void getSDFreeSize(unsigned long long *size);
+int ResolutionModeToKPixel(int res_mode);
+void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_mdoe);
 
 #ifdef __cplusplus
 }   // extern "C"
