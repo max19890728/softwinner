@@ -9,6 +9,212 @@
 extern "C" {
 #endif
 
+//Country
+#define COUNTRY_CODE_TAIWAN         158
+#define COUNTRY_CODE_JAPAN          392
+#define COUNTRY_CODE_CHINA          156
+#define COUNTRY_CODE_USA            840
+
+//Customer
+#define CUSTOMER_CODE_ULTRACKER     0
+#define CUSTOMER_CODE_LETS          10137
+#define CUSTOMER_CODE_ALIBABA       2067001   
+#define CUSTOMER_CODE_PIIQ   	    20141	    /* 客戶後來更名為PEEK */
+
+//Resolution Width
+#define RESOLUTION_WIDTH_12K    11520
+#define RESOLUTION_WIDTH_4K     3840
+#define RESOLUTION_WIDTH_8K     7680
+#define RESOLUTION_WIDTH_10K    10240
+#define RESOLUTION_WIDTH_6K     6144
+#define RESOLUTION_WIDTH_3K     3072
+#define RESOLUTION_WIDTH_2K     2048
+
+//Resolution Height
+#define RESOLUTION_HEIGHT_12K   5760
+#define RESOLUTION_HEIGHT_4K    1920
+#define RESOLUTION_HEIGHT_8K    3840
+#define RESOLUTION_HEIGHT_10K   5120
+#define RESOLUTION_HEIGHT_6K    3072
+#define RESOLUTION_HEIGHT_3K    1536
+#define RESOLUTION_HEIGHT_2K    1024
+
+//Play Mode
+enum {
+    PLAY_MODE_GLOBAL = 0,
+    PLAY_MODE_FRONT  = 1,
+    PLAY_MODE_360    = 2,
+    PLAY_MODE_240    = 3,
+    PLAY_MODE_180X2  = 4,
+    PLAY_MODE_4SPLIT = 5,
+    PLAY_MODE_PIP    = 6
+};
+
+//Resolution
+enum {
+    RESOLUTION_MODE_FIX = 0,
+    RESOLUTION_MODE_12K = 1,
+    RESOLUTION_MODE_4K  = 2,
+    RESOLUTION_MODE_8K  = 7,
+    RESOLUTION_MODE_10K = 8,
+    RESOLUTION_MODE_6K  = 12,
+    RESOLUTION_MODE_3K  = 13,
+    RESOLUTION_MODE_2K  = 14
+};
+
+//Camera Mode
+enum {
+    CAMERA_MODE_CAP           = 0,
+    CAMERA_MODE_REC           = 1,
+    CAMERA_MODE_TIMELAPSE     = 2,
+    CAMERA_MODE_AEB           = 3,
+    CAMERA_MODE_RAW           = 4,
+    CAMERA_MODE_HDR           = 5,
+    CAMERA_MODE_NIGHT         = 6,
+    CAMERA_MODE_NIGHT_HDR     = 7,
+    CAMERA_MODE_SPORT         = 8,
+    CAMERA_MODE_SPORT_WDR     = 9,
+    CAMERA_MODE_REC_WDR       = 10,
+    CAMERA_MODE_TIMELAPSE_WDR = 11,
+    CAMERA_MODE_M_MODE        = 12,
+    CAMERA_MODE_REMOVAL       = 13,
+    CAMERA_MODE_3D_MODEL      = 14
+};
+
+//Capture Mode
+enum {
+    CAPTURE_MODE_BURST      = -1,               //連拍
+    CAPTURE_MODE_NORMAL     = 0,                //一般拍照
+    CAPTURE_MODE_SELFIE_2S  = 2,                //2S自拍
+    CAPTURE_MODE_SELFIE_10S =10                 //10S自拍
+};
+
+//Timelapse Mode
+enum {
+    TIMELAPSE_MODE_NONE  = 0,
+    TIMELAPSE_MODE_1S    = 1,
+    TIMELAPSE_MODE_2S    = 2,
+    TIMELAPSE_MODE_5S    = 3,
+    TIMELAPSE_MODE_10S   = 4,
+    TIMELAPSE_MODE_30S   = 5,
+    TIMELAPSE_MODE_60S   = 6,
+    TIMELAPSE_MODE_166MS = 7
+};
+
+//Camera Position Ctrl Mode
+enum {
+    CAMERA_POSITION_CTRL_MODE_MANUAL = 0,
+    CAMERA_POSITION_CTRL_MODE_AUTO
+};
+
+//Camera Position
+enum {
+    CAMERA_POSITION_0   = 0,
+    CAMERA_POSITION_180 = 1,
+    CAMERA_POSITION_90  = 2
+};
+
+//White Balance Mode
+enum {
+    WHITE_BALANCE_MODE_AUTO          = 0,         //自動
+    WHITE_BALANCE_MODE_FILAMENT_LAMP = 1,         //鎢絲燈
+    WHITE_BALANCE_MODE_DAYLIGHT_LAMP = 2,         //日光燈
+    WHITE_BALANCE_MODE_SUN           = 3,         //陽光
+    WHITE_BALANCE_MODE_CLOUDY        = 4,         //陰天
+    WHITE_BALANCE_MODE_RGB           = 5
+};
+
+//Fan Ctrl
+enum {
+    FAN_CTRL_OFF    = 0,
+    FAN_CTRL_FAST   = 1,
+    FAN_CTRL_MEDIAN = 2,
+    FAN_CTRL_SLOW   = 3
+};
+
+//Color Stitching Mode
+enum {
+    COLOR_STITCHING_MODE_OFF  = 0,
+    COLOR_STITCHING_MODE_ON   = 1,
+    COLOR_STITCHING_MODE_AUTO = 2
+};
+
+//Translucent Mode
+enum {
+    TRANSLUCENT_MODE_OFF  = 0,
+    TRANSLUCENT_MODE_ON   = 1,
+    TRANSLUCENT_MODE_AUTO = 2
+};
+
+//Jpeg Quality Mode
+enum {
+    JPEG_QUALITY_MODE_HIGH   = 0,
+    JPEG_QUALITY_MODE_MIDDLE = 1,
+    JPEG_QUALITY_MODE_LOW    = 2
+};
+
+//Jpeg Live Quality Mode
+enum {
+    JPEG_LIVE_QUALITY_MODE_HIGH = 0,                    //每秒全張數送給遠端, high quality, ex:4K = 10fps
+    JPEG_LIVE_QUALITY_MODE_LOW                          //每秒半張數送給遠端,  low quality, ex:4K =  5fps, 達到降低WIFI傳輸量
+};
+
+//Speaker Mode
+enum {
+    SPEAKER_MODE_ON = 0,
+    SPEAKER_MODE_OFF
+};
+
+//Oled Control
+enum {
+    OLED_CONTROL_ON = 0,
+    OLED_CONTROL_OFF
+};
+
+//HDR Interval Ev Mode
+enum {
+    HDR_INTERVAL_EV_MODE_LOW    = 2,                    //Ev:  0,-1,-2
+    HDR_INTERVAL_EV_MODE_MIDDLE = 4,                    //Ev: +1,-1,-3
+    HDR_INTERVAL_EV_MODE_HIGHT  = 8                     //Ev: +2,-1,-4
+};
+
+//WDR Mode
+enum {
+    WDR_MODE_HIGH   = 0,
+    WDR_MODE_MIDDLE = 1,
+    WDR_MODE_LOW    = 2
+};
+
+//Bottom Mode
+enum {
+    BOTTOM_MODE_OFF            = 0,                     //關閉
+    BOTTOM_MODE_EXTRND         = 1,                     //延伸
+    BOTTOM_MODE_IMAGE_DEFAULT  = 2,                     //加底圖(default)
+    BOTTOM_MODE_MIRROR         = 3,                     //鏡像
+    BOTTOM_MODE_IMAGE_USER     = 4                      //加底圖(user)
+};
+
+//Bottom Text Mode
+enum {
+    BOTTOM_TEXT_MODE_OFF = 0,
+    BOTTOM_TEXT_MODE_ON
+};
+
+//Fpga Video Encode Tyep
+enum {
+    TIMELAPSE_ENCODE_TYPE_JPEG = 0,
+    TIMELAPSE_ENCODE_TYPE_H264 = 1
+}
+
+//Power Saving Mode
+enum {
+    POWER_SAVING_MODE_OFF = 0,
+    POWER_SAVING_MODE_ON
+};
+
+
+
+
 int initCamera();
 void startPreview();
 

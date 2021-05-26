@@ -96,7 +96,6 @@ int uvc_err_flag = 0;
 int muxer_type = MUXER_TYPE_MP4;	//錄影封裝格式
 int de_fd = 0, init_de_fd = 0;
 int FPGA_Encode_Type = 0;		//0:JPEG 1:TimeLapse FPGA.H264, 2:TimeLapse FPGA.JPEG -> CPU.H264		setRecEn()&TimeLapse H264 才設為1, 結束錄影時設回0
-int mFPGA_Encode_Type = 0;		//User Para, Fpga_Enc_H264_En, 0:off(jpeg) 1:on(h264)
 static unsigned long long uvcWaitT=0;
 int skip_frame_cnt = 0;
 
@@ -167,7 +166,6 @@ int img_ready_flag = 0;	    // 0:尚未收到正常影像 1:已經收到過正常影像
 struct Cmd_Queue Cap_Cmd_Queue = {0};
 
 //int cap_en = 0;
-unsigned long long CaptureSpaceTime = 160L;
 
 char THMPath[128];
 char DirPath[128];
@@ -200,7 +198,6 @@ extern int get_AEB_Frame_Cnt();
 char *iconThmFile[6];       // 0:Cap, 1:Rec, 2:Lapse, 3:HDR, 4:RAW 5:Lapse H264
 int iconThmSize[6]={0,0,0,0,0,0};
 
-int Time_Lapse_Mode = 0;
 unsigned long long Time_Lapse_ms=0L;
 
 //tmp unsigned char decode_buf[2][UVC_BUF_MAX];
@@ -228,8 +225,6 @@ int rtmp_audio_irq_f=0;
 int mSelfTimerSec = 0;
 int mTakePicture = 0;
 int mBurstCount = 0;
-int SelfTimer = 0;		// 自拍倒數時間, 0: none	 2: 2sec  10: 10sec
-int wifiDisableTime = 180;			//休眠時間(sec)
 
 unsigned long long toutPowerT1=0, toutWifiT1=0, toutBurstT1=0;
 unsigned long long toutSelfT1=0, toutLongKey=0, toutSaveT1=0, toutTakeT1=0;
@@ -237,7 +232,6 @@ unsigned long long toutPowerKey=0;
 
 int RecordEn = 0;
 int mRecordCmd = 0;
-int CaptureCnt = 0;		//0:1次	 1:2次	2:3次
 int play_sound_flag = -1;
 
 int PowerMode = 3;
@@ -256,7 +250,6 @@ int downloadLevel = 0;
 int mBmm050Start = 0;
 
 int Power_Saving_Init = 0;		//開機 / 休眠起來一段時間FPGA才進入休眠
-unsigned long long Power_Saving_Init_t1=0;
 int Seting_UI_State = 0;
 unsigned long long Send_Data_State_t=0;
 
@@ -268,10 +261,6 @@ int Cmd_Idx = -1;
 int Cmd_P1 = -1;
 
 int choose_mode_flag = 0;
-int mBottomMode = 0;			// 底圖設定				0:關, 1:延伸, 2:加底圖(default), 3:鏡像, 4:加底圖(user)
-int mBottomTextMode = 0;		// 0:off 1:on
-int mBottomSize = 100;			// 底圖大小				30 ~ 100
-int HdrEvMode = 0;	 		// HDR模式EV設定
 int DebugLog_Mode = 0;	 	// 系統資料是否存入SD卡 0:off 1:on
 int isRecording = 0;
 
@@ -287,28 +276,14 @@ int wifiReboot = 0;
 int isNeedNewFreeCount = 0;
 unsigned long long sd_freesize = 0L;
 unsigned long long sd_allsize = 0L;
-int mjpeg_fps=0;
-int mjpeg_send=0;
-int rtsp_fps=0;
-int rtsp_send=0;
-int skipWatchDog = 0;
-int ShowFocusVisibilityMode = 0;	//Show Focus HDMI UI En
-int mFPS = 100;
-int Power_Saving_Mode = 0;							//省電模式, 0:Off 1:On
 
-int Focus2_Sensor = -1;
-unsigned long long TestTool_D_t1=0, TestTool_D_t2=0;
-int CaptureMode = 0;            	// weber+ 1221, -1:連拍, 0:一般拍照, 2:2秒自拍, 10:10秒自拍
 int doAutoStitch_flag = 0;
-int Saturation = 0;
 int WifiConnected = 0;
 unsigned long long choose_mode_time;		//切換模式後1秒才可拍照
 
 int task5s_lock_flag = 0;
 unsigned long long task5s_lock_schedule = 5000000;		//us, 5s
 unsigned long long task5s_lock_time;
-
-int Saturation_Init_Flag = 0;
 
 int rec_proc_en;
 
@@ -341,7 +316,6 @@ C_Mode_ROM_S C_Mode_ROM[15] =
 
 unsigned long long Save_Jpeg_StartTime=0, Save_Jpeg_OutTime=0;
 struct callback_func_entry callback_func;
-int WifiChannel = 6;
 
 #define LIVE264_MAX_BUFF    6
 //tmp char live264_buff[0x400000];
@@ -368,15 +342,6 @@ int sensorFlag = 0,sensorState = 0,sensorLogEnable = 1;
 char sensorLog[200][128];
 char sensorSavePath[128];
 
-int mWB_Mode = 0;    // 0:自動 1:鎢絲燈 2:日光燈 3:陽光 4:陰天
-int doAutoGlobalPhiAdjMode = 0;    //0:關閉,使用原本GlobalPhi1/Phi2 1:單次執行 2:循環執行(1s) 3:循環執行(5s)
-int HDMITextVisibilityMode = 1;
-int speakerMode = 0;				//喇叭控制
-int JPEGQualityMode = 0;			// 0:High 1:Middle 2:Low
-int Translucent_Mode = 1; // 0:off 1:on 2:Auto
-int mLiveQualityMode = 0;			// 0:High(10fps, High Quality)	1:Low(5fps, Low Quality)
-int freeCount = 0;
-
 int HDR_Default_Parameter[3][4] = {
     		{3,15,60,0},		//弱     frameCnt/EV/strength/tone
     		{5,10,80,0},		//中
@@ -385,8 +350,6 @@ int HDR_Default_Parameter[3][4] = {
 
 int doResize_flag = 0, doResize_flag_lst = 0;
 char doResize_path[8][64];
-
-int definePort = 8080;
 
 #define BOTTOM_S_WIDTH		1024                  
 #define BOTTOM_S_HEIGHT		1024                                                                      
@@ -604,7 +567,7 @@ int readframeonce(void)
     static int retry_cnt=0;
     struct v4l2_buffer buf;
     int timeout_cnt=1;
-    int c_mode = CameraMode;
+    int c_mode = getCameraMode();
     int step=0;
 
     if(Check_UVC_Fd() == -1){
@@ -638,17 +601,17 @@ int readframeonce(void)
         if(0 == r && GetDefectStep() == 0) {
         	step = Get_F_Cmd_In_Capture_Step();
             //資料如過超過10秒，會造成timeout
-            if(c_mode == 13 && d_cnt != 0){					// 13:Removal
+            if(c_mode == CAMERA_MODE_REMOVAL && d_cnt != 0){					// 13:Removal
                 timeout_cnt = 40;
             }
-            else if(c_mode == 12 && d_cnt != 0){         // 12:M-Mode
+            else if(c_mode == CAMERA_MODE_M_MODE && d_cnt != 0){         // 12:M-Mode
                 int bexp_1sec, bexp_gain;
                 get_AEG_B_Exp(&bexp_1sec, &bexp_gain);
                 if(bexp_1sec > 2){
                     timeout_cnt = (bexp_1sec + 10) / 2;
                 }
             }
-            else if(Time_Lapse_Mode != 0 && FPGA_Encode_Type == 1){		//縮時 FPGA.H264
+            else if(getTimeLapseMode() != 0 && FPGA_Encode_Type == 1){		//縮時 FPGA.H264
                 timeout_cnt = Time_Lapse_ms / 1000;
             }
             else{
@@ -743,6 +706,7 @@ int readframe(void)
 	int h264_buf_size = 0;
 	int live_q_m = get_A2K_JPEG_Live_Quality_Mode();
 	static int live_skip = 0;
+    int c_mode = getCameraMode();
 
     get_Stitching_Out(&mode, &res);
 
@@ -809,7 +773,7 @@ int readframe(void)
            			else
            				jpeg_size = buf.bytesused - sizeof(H_File_Head_rec);
            			key_f = !(H264_Head->IP_M);
-               	    if(get_copy_h264_to_rec_en(CameraMode, res, FPGA_Encode_Type) == 1) {
+               	    if(get_copy_h264_to_rec_en(c_mode, res, FPGA_Encode_Type) == 1) {
                	    		size_tmp = 4;	//去掉 start code
                	    		Get_FPGA_H264_SPS_PPS(&sps_len, &sps[0], &pps_len, &pps[0]);
 //tmp               	    		Set_MP4_H264_Profile_Level(VENC_H264ProfileBaseline, VENC_H264Level3);		//FPGA固定參數
@@ -880,7 +844,6 @@ int readframe(void)
 				int tool_cmd = get_TestToolCmd();
 				int dbg_jpg = get_DebugJPEGMode();
 				int isp2_sen = get_ISP2_Sensor();
-				int c_mode = CameraMode;
 				if((tool_cmd&0xff) == 5) {
 					img_ok_flag = (JPEG_Width == 1536 && JPEG_Height == 1152)? 1: 0;
 					stream_flag = 1;
@@ -1355,6 +1318,7 @@ void *uvc_thread(void)
 
             unsigned char *brgb;
             brgb = &byte_rgb[0];
+            c_mode = getCameraMode();
             if(IMG_Pixelformat == V4L2_PIX_FMT_MJPEG && img_ok_flag == 1)
             {
                 get_Stitching_Out(&mode, &res);
@@ -1375,7 +1339,6 @@ void *uvc_thread(void)
                     db_error("uvc_thread: buffer_length(%x) >= UVC_BUF_MAX err!\n", buffer_length);
 
                 if( (stream_flag == 1 || stream_flag == 3) && img_ok_flag == 1) {
-                    c_mode = CameraMode;
                     err = Get_F_Cmd_In_Capture_Lose_Flag();
                     save_jpeg_func(brgb, buffer_length, stream_flag, c_mode, err, real_length);
                     //if(stream_flag == 1 || stream_flag == 2)          // rex- 150515
@@ -1385,14 +1348,14 @@ void *uvc_thread(void)
                 if(callback_func.read_jpeg != NULL)
                     callback_func.read_jpeg(brgb, buffer_length, stream_flag);
 
-                if(get_copy_jpeg_to_rec_en(CameraMode, res, stream_flag, FPGA_Encode_Type) == 1) {
+                if(get_copy_jpeg_to_rec_en(c_mode, res, stream_flag, FPGA_Encode_Type) == 1) {
                     copy_to_rec_buf(brgb, buffer_length, 1, NULL, 0, NULL, 0, FPGA_Encode_Type, 0);
                 }
 
             } // if(IMG_Pixelformat == V4L2_PIX_FMT_MJPEG)
 
             //check cap state
-            Check_Cap_State(CameraMode, img_ok_flag, uvc_err_flag);
+            Check_Cap_State(c_mode, img_ok_flag, uvc_err_flag);
         }
         else if(FPGA_Ctrl_Power == 1) {
             FPGA_Ctrl_Power = 2;
@@ -1439,7 +1402,7 @@ void *st_thread(void)
             lstTime = curTime;
         }
 
-		if(CameraMode == 14)
+		if(getCameraMode() == CAMERA_MODE_3D_MODEL)
 			SendSTCmd3DModel(0);
 
         get_current_usec(&runTime);
@@ -1657,7 +1620,7 @@ int get_save_jpeg_en(int cap_en, int s_flag)
 			break;
 		case 2: // 連拍
 			get_current_usec(&capture_t);
-			if( ( (capture_t - capture_t_lst) / 1000L) >= CaptureSpaceTime) {
+			if( ( (capture_t - capture_t_lst) / 1000L) >= getCaptureIntervalTime()) {
 				capture_t_lst = capture_t;
 				return 1;
 			}
@@ -2119,13 +2082,6 @@ void save_jpeg_tmp_func(char *img, int size)
     }
 }
 
-void setTimeLapseMode(int mode) {
-	Time_Lapse_Mode = mode;
-}
-int getTimeLapseMode(void) {
-	return Time_Lapse_Mode;
-}
-
 /*
  *    取得影像, value[2]
  *    video_buf: JPEG DATA
@@ -2500,17 +2456,6 @@ void SetBurstCount(int cnt) {
 	mBurstCount = cnt;
 }
 
-void SetSelfTimer(int time) {
-	SelfTimer = time;
-}
-
-void SetWifiDisableTime(int time) {
-	wifiDisableTime = time;
-}
-int GetWifiDisableTime(void) {
-	return wifiDisableTime;
-}
-
 /*
  *  input
  *    sel --  0:power, 1:wifi
@@ -2520,7 +2465,7 @@ void set_timeout_start(int sel)
 {
     switch(sel){
     case 0: get_current_usec(&toutPowerT1);
-//tmp      		if(getMcuVersion() > 12 && wifiDisableTime > 0){
+//tmp      		if(getMcuVersion() > 12 && getWifiDisableTime() > 0){
 //tmp      			setMCULedSetting(MCU_SLEEP_TIMER_START, 0);
 //tmp      		}
       		break;    // POWER
@@ -2610,13 +2555,6 @@ int GetRecordCmd(void) {
 	return mRecordCmd;
 }
 
-void SetCaptureCnt(int cnt) {
-	CaptureCnt = cnt;
-}
-int GetCaptureCnt(void) {
-	return CaptureCnt;
-}
-
 void SetPlaySoundFlag(int flag) {
 	play_sound_flag = flag;
 }
@@ -2633,6 +2571,7 @@ void SetWifi_mGetEstimateEn_jni(int en) {
 {
     static unsigned long long curTime, lstTime=0, runTime, nowTime;
     static int selfTimeMode = 0;
+    int selfie_time;
     //nice(-6);    // 調整thread優先權
 
     while(thread_20ms_en)
@@ -2644,6 +2583,7 @@ void SetWifi_mGetEstimateEn_jni(int en) {
             lstTime = curTime;
         }
 
+        selfie_time = getSelfieTime();
         if(mTakePicture > 0){                    // 單張模式
             if(check_timeout_start(6, 500) == 1){
                 db_debug("mTakePucture = 0\n");
@@ -2651,13 +2591,13 @@ void SetWifi_mGetEstimateEn_jni(int en) {
             }
         }
         else if(mBurstCount > 0){                // 連拍模式
-            if(check_timeout_start(2, mBurstCount*CaptureSpaceTime) == 1){
+            if(check_timeout_start(2, mBurstCount*getCaptureIntervalTime()) == 1){
                 mBurstCount = 0;
             }
         }
-        else if(SelfTimer > 0){                    // 自拍模式
-        	mSelfTimerSec = SelfTimer - 1;
-            SelfTimer = 0;
+        else if(selfie_time > 0){                    // 自拍模式
+        	mSelfTimerSec = selfie_time - 1;
+            setSelfieTime(0);
 //tmp            paintOLEDSelfTime(mSelfTimerSec);
             db_debug("selfmode selfTime:%d\n", mSelfTimerSec);
             set_timeout_start(3);
@@ -2669,7 +2609,7 @@ void SetWifi_mGetEstimateEn_jni(int en) {
                 selfTimeMode = 0;
 //tmp                ChangeLedMode(ledControlMode);
                 if(sd_state == 1){
-                	Ctrl_Rec_Cap(CameraMode, CaptureCnt, RecordEn);
+                	Ctrl_Rec_Cap(getCameraMode(), getCaptureCnt(), RecordEn);
                 	SetWifi_mGetEstimateEn_jni(1);		//wifiSerThe.mGetEstimateEn = 1;
                 }
                 else{
@@ -2772,7 +2712,7 @@ int checkDoRecovery(char *path, char *zipName) {
 				sprintf(zipName, "%s\0", pEntry->d_name);
 				ret = updateRecovery(zipName);
 		    	if(ret == 1) {
-		    		wifiDisableTime = -2;
+		    		setWifiDisableTime(-2);
 //tmp		            setMCULedSetting(MCU_SLEEP_TIMER_START, 0);
 //tmp		            setMCULedSetting(MCU_WATCHDOG_FLAG, 1);
 		            setSendMcuA64Version(&mSSID[0], &mPwd[0], &empty_ver[0]);
@@ -2968,13 +2908,6 @@ int GetPowerSavingInit(void) {
 	return Power_Saving_Init;
 }
 
-void SetPowerSavingInitT1(void) {
-	get_current_usec(&Power_Saving_Init_t1);
-}
-unsigned long long GetPowerSavingInitT1(void) {
-	return Power_Saving_Init_t1;
-}
-
 void SetSetingUIState(int state) {
 	Seting_UI_State = state;
 }
@@ -3043,42 +2976,6 @@ int GetChooseModeFlag(void) {
 	return choose_mode_flag;
 }
 
-void SetmBottomMode(int mode) {
-	mBottomMode = mode;
-}
-int GetmBottomMode(void) {
-	return mBottomMode;
-}
-
-void SetmBottomTextMode(int mode) {
-	mBottomTextMode = mode;
-}
-int GetmBottomTextMode(void) {
-	return mBottomTextMode;
-}
-
-void SetmBottomSize(int size) {
-	mBottomSize = size;
-}
-int GetmBottomSize(void) {
-	return mBottomSize;
-}
-
-void SetHdrEvMode(int mode) {
-	HdrEvMode = mode;
-}
-int GetHdrEvMode(void) {
-	return HdrEvMode;
-}
-
-/*int WdrMode = 0;	 			// WDR模式設定
-void SetWdrMode(int mode) {
-	WdrMode = mode;
-}
-int GetWdrMode(void) {
-	return WdrMode;
-}*/
-
 void SetDebugLogMode(int mode) {
 	DebugLog_Mode = mode;
 }
@@ -3103,8 +3000,8 @@ void AletaS2Init(void)
     Power_Saving_Init = 0;
     SetDefectStep(0);
     SetDefectState(0);
-//tmp   	SetLedBrightness(Get_DataBin_LedBrightness() );
-//tmp   	setOledControl(Get_DataBin_OledControl() );
+   	setLedBrightness(Get_DataBin_LedBrightness());
+   	setOledControl(Get_DataBin_OledControl());
    	SetPowerSavingInitT1();
 }
 
@@ -3131,7 +3028,7 @@ void ReStart_Init_Func(int ctrl_pow)
 {
 	Load_Parameter_Tmp_Proc();
     FPGAdriverInit();
-    Check_Bottom_File_jni(mBottomMode, mBottomTextMode, 1);
+    Check_Bottom_File_jni(getBottomMode(), mBottomTextMode, 1);
     Cmd_P1 = 0;
     setPlayModeTmp(getPlayMode());
     choose_mode_flag = 1;
@@ -3390,15 +3287,30 @@ void timerLidar_jni() {
 	return;
 }
 
+int checkTypesOfCaptureMode() {
+    int c_mode = getCameraMode();
+    if(c_mode == CAMERA_MODE_CAP || c_mode == CAMERA_MODE_AEB || c_mode == CAMERA_MODE_RAW || 
+       c_mode == CAMERA_MODE_HDR || c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR ||
+	   c_mode == CAMERA_MODE_SPORT || c_mode == CAMERA_MODE_SPORT_WDR || c_mode == CAMERA_MODE_M_MODE || 
+       c_mode == CAMERA_MODE_REMOVAL || c_mode == CAMERA_MODE_3D_MODEL) {		//拍照模式
+        return 1;
+	}
+    else
+        return 0;
+}
+
 void *thread_1s(void)
 {
 	int state = 0;
 	int do_recovery = 0;
+    int wifi_disable_time;
+    int camera_position_mode;
 	static int lst_sd_state = -1;
 	static int keepSleep = 0;
 	static int fan_ctrl_cnt = 0;
 	static int kelvin_cnt = 2;
 	static int cp_cnt = 0;
+    static int camera_position_mode_lst = CAMERA_POSITION_0;
 	char zip_name[128], sd_path[128];
 	static unsigned long long curTime, lstTime=0, runTime, nowTime, live360Time;
     //nice(-6);    // 調整thread優先權
@@ -3548,17 +3460,18 @@ void *thread_1s(void)
 		}
 
 		if(PowerMode == 3){
-			if(wifiDisableTime > 0){
+            wifi_disable_time = getWifiDisableTime();
+			if(wifi_disable_time > 0){
 //tmp           if(getMcuVersion() > 12){
-//tmp               setMCULedSetting(MCU_SET_SLEEP_TIMER, wifiDisableTime);
+//tmp               setMCULedSetting(MCU_SET_SLEEP_TIMER, wifi_disable_time);
 //tmp           }
-//tmp           else if(check_timeout_start(0, wifiDisableTime*1000) == 1){
-				if(check_timeout_start(0, wifiDisableTime*1000) == 1){
+//tmp           else if(check_timeout_start(0, wifi_disable_time*1000) == 1){
+				if(check_timeout_start(0, wifi_disable_time*1000) == 1){
 					do_power_standby();
 //tmp               disableShutdown(0);
 				}
 			}
-			else if(wifiDisableTime == -2) {
+			else if(wifi_disable_time == -2) {
 //tmp           if(getMcuVersion() > 12){
 //tmp               setMCULedSetting(MCU_SET_SLEEP_TIMER, 0);
 //tmp               setMCULedSetting(MCU_SLEEP_TIMER_START, 0);
@@ -3657,7 +3570,7 @@ void *thread_1s(void)
 		}
 #endif	//__CLOSE_CODE__	
 
-		if(mCtrlCameraPositionMode == 1){			//Auto
+		if(getCtrlCameraPositionMode() == 1){			//Auto
 			float sensorData2[3];
 //tmp    	getBma2x2_orientation_data(&sensorData2[0], 1);
 			if(mCameraPositionMode == 0) {			//正置
@@ -3678,11 +3591,12 @@ void *thread_1s(void)
 				if(mCameraPositionMode == 0)mCameraPositionMode = 1;
 				else					    mCameraPositionMode = 0;
 			}
-
-			if(mCameraPositionMode != mCameraPositionModelst) {
+            
+            camera_position_mode = getCameraPositionMode();
+			if(camera_position_mode != camera_position_mode_lst) {
 				get_current_usec(&nowTime);
-				mCameraPositionModeChange = 1;
-				mCameraPositionModelst = mCameraPositionMode;
+				setCameraPositionModeChange(1);
+				camera_position_mode_lst = camera_position_mode;
 				Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 35);
 				do_Test_Mode_Func_jni(TestToolCmd.MainCmd, TestToolCmd.SubCmd);
 			}
@@ -3718,18 +3632,16 @@ void *thread_1s(void)
 			}
 
 			if(Cap_Rec_Start_t != 0 || Cap_Rec_Finish_t != 0) {
-
-				if(CameraMode == 0 || CameraMode == 3 || CameraMode == 4 || CameraMode == 5 || CameraMode == 6 ||
-					CameraMode == 7 || CameraMode == 8 || CameraMode == 9 || CameraMode == 12 || CameraMode == 13 || CameraMode == 14) {		//拍照模式
+				if(checkTypesOfCaptureMode()) {		//拍照模式
 					if(Cap_Rec_Start_t != 0 && Cap_Rec_Finish_t == 0 && CheckSaveJpegCnt() == 0) {		//拍照結束
 						Set_Cap_Rec_Finish_Time(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 5);
 					}
 				}
 
 				if(nowTime < Cap_Rec_Finish_t) Cap_Rec_Finish_t = nowTime;
-//tmp        	if(Cap_Rec_Finish_t != 0 && Send_ST_Flag == 3 && mCameraPositionModeChange == 0 && GetDecBottomStep() == 0 &&
+//tmp        	if(Cap_Rec_Finish_t != 0 && Send_ST_Flag == 3 && getCameraPositionModeChange() == 0 && GetDecBottomStep() == 0 &&
 //tmp        			getHdmiState() == 0 && check_st_cmd_ddr_flag == 1 && (nowTime - Cap_Rec_Finish_t) > Power_Saving_Overtime) {
-				if(Cap_Rec_Finish_t != 0 && Send_ST_Flag == 3 && mCameraPositionModeChange == 0 /*&& GetDecBottomStep() == 0*/ &&
+				if(Cap_Rec_Finish_t != 0 && Send_ST_Flag == 3 && getCameraPositionModeChange() == 0 /*&& GetDecBottomStep() == 0*/ &&
 						getHdmiState() == 0 && check_st_cmd_ddr_flag == 1 && (nowTime - Cap_Rec_Finish_t) > Power_Saving_Overtime) {
 					Set_Cap_Rec_Start_Time(0, 2);
 					Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S, 6);
@@ -3778,115 +3690,6 @@ void audio_record_thread_release_jni() {
 void audio_record_thread_start_jni() {
 	//audio_record_thread_start
 	return;
-}
-
-void SetMJPEGFps(int fps) {
-	mjpeg_fps = fps;
-}
-int GetMJPEGFps(void) {
-	return mjpeg_fps;
-}
-
-void SetMJPEGSend(int value) {
-	mjpeg_send = value;
-}
-int GetMJPEGSend(void) {
-	return mjpeg_send;
-}
-
-void SetRTSPFps(int fps) {
-	rtsp_fps = fps;
-}
-int GetRTSPFps(void) {
-	return rtsp_fps;
-}
-
-void SetRTSPSend(int value) {
-	rtsp_send = value;
-}
-int GetRTSPSend(void) {
-	return rtsp_send;
-}
-
-void SetSkipWatchDog(int flag) {
-	skipWatchDog = flag;
-}
-int GetSkipWatchDog(void) {
-	return skipWatchDog;
-}
-
-void SetShowFocusVisibilityMode(int mode) {
-	ShowFocusVisibilityMode = mode;
-}
-int GetShowFocusVisibilityMode(void) {
-	return ShowFocusVisibilityMode;
-}
-
-void SetPowerSavingMode(int mode) {
-	Power_Saving_Mode = mode;
-}
-int GetPowerSavingMode(void) {
-	return Power_Saving_Mode;
-}
-
-/*int User_Ctrl = 1;            //weber+160913, 使用者控制FPS,  0: auto 1: 30fps
-void SetUserCtrl(int ctrl) {
-	User_Ctrl = ctrl;
-}
-int GetUserCtrl(void) {
-	return User_Ctrl;
-}*/
-
-void SetFocus2Sensor(int sensor) {
-	Focus2_Sensor = sensor;
-}
-int GetFocus2Sensor(void) {
-	return Focus2_Sensor;
-}
-
-void SetTestToolDTime(int idx) {
-	if(idx == 1)
-		get_current_usec(&TestTool_D_t1);
-	else if(idx == 2)
-		get_current_usec(&TestTool_D_t2);
-}
-unsigned long long GetTestToolDTime(int idx) {
-	unsigned long long time;
-	if(idx == 1)
-		time = TestTool_D_t1;
-	else if(idx == 2)
-		time = TestTool_D_t2;
-	return time;
-}
-
-void SetCaptureMode(int mode) {
-	CaptureMode = mode;
-}
-int GetCaptureMode(void) {
-	return CaptureMode;
-}
-
-//unsigned long long Send_ST_T1=0, Send_ST_T2=0;
-//void SetSendSTTime(int idx) {
-//	if(idx == 1)
-//		get_current_usec(&Send_ST_T1);
-//	else if(idx == 2)
-//		get_current_usec(&Send_ST_T2);
-//}
-//unsigned long long GetSendSTTime(int idx) {
-//	unsigned long long time;
-//	if(idx == 1)
-//		time = Send_ST_T1;
-//	else if(idx == 2)
-//		time = Send_ST_T2;
-//	return time;
-//}
-
-void SetSaturation(int value) {
-	Saturation = value;
-}
-int GetSaturation(void) {
-	return Saturation;
 }
 
 void SetWifiConnected(int en) {
@@ -3946,7 +3749,7 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
 //        if(DebugLog_Mode == 1){
 //            systemlog.writeDebugLogFile();
 //        }
-        doRecordVideo(RecordEn, getPlayMode(), getResolutionMode(), Time_Lapse_Mode, hdmi_state);
+        doRecordVideo(RecordEn, getPlayMode(), getResolutionMode(), getTimeLapseMode(), hdmi_state);
     }
 
     //強制設成Global模式
@@ -4062,7 +3865,7 @@ void choose_mode(int c_mode, int mode, int res_mode, int fps)
         writeCmdTable(i, res_tmp, fps, 0, 0, 0);
     //PlayMode = 0;
 
-    if(c_mode == 12 && GetDefectState() == 1)
+    if(c_mode == CAMERA_MODE_M_MODE && GetDefectState() == 1)
     	set_A2K_ISP2_Defect_En(1);
     else
     	set_A2K_ISP2_Defect_En(0);
@@ -4157,25 +3960,33 @@ void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode, int d
 
 void Change_Cap_12K_Mode()
 {
-    if(CameraMode != 0 || ResolutionMode != 1 || getPlayModeTmp() !=0) {	//Change Mode: Cap 12K Mode
-        CameraMode = 0;
-        Set_OLED_MainType(CameraMode, CaptureCnt, CaptureMode, Time_Lapse_Mode, 13);
-        ResolutionMode = 1;
+    int c_mode = getCameraMode();
+    int resolution = getResolutionMode();
+    if(c_mode != 0 || resolution != RESOLUTION_MODE_12K || getPlayModeTmp() !=0) {	//Change Mode: Cap 12K Mode
+        c_mode = 0;
+        resolution = 1;
+        setCameraMode(c_mode);
+        setResolutionMode(resolution);
+        Set_OLED_MainType(c_mode, getCaptureCnt(), getCaptureMode(), getTimeLapseMode(), 13);
         setPlayModeTmp(0);
-        ModeTypeSelectS2(getPlayModeTmp(), ResolutionMode, getHdmiState(), CameraMode);
-        choose_mode(CameraMode, getPlayModeTmp(), ResolutionMode, getFPS());
+        ModeTypeSelectS2(getPlayModeTmp(), resolution, getHdmiState(), c_mode);
+        choose_mode(c_mode, getPlayModeTmp(), resolution, getFPS());
     }
 }
 
 void Change_Raw_12K_Mode()
 {
-    if(CameraMode != 4 || ResolutionMode != 1 || getPlayModeTmp() !=0) {	//Change Mode: Raw 12K Mode
-        CameraMode = 4;
-        Set_OLED_MainType(CameraMode, CaptureCnt, CaptureMode, Time_Lapse_Mode, 14);
-        ResolutionMode = 1;
+    int c_mode = getCameraMode();
+    int resolution = getResolutionMode();
+    if(c_mode != 4 || resolution != RESOLUTION_MODE_12K || getPlayModeTmp() !=0) {	//Change Mode: Raw 12K Mode
+        c_mode = 4;
+        resolution = 1;
+        setCameraMode(c_mode);
+        setResolutionMode(resolution);
+        Set_OLED_MainType(c_mode, getCaptureCnt(), getCaptureMode(), getTimeLapseMode(), 14);
         setPlayModeTmp(0);
-        ModeTypeSelectS2(getPlayModeTmp(), ResolutionMode, getHdmiState(), CameraMode);
-        choose_mode(CameraMode, getPlayModeTmp(), ResolutionMode, getFPS());
+        ModeTypeSelectS2(getPlayModeTmp(), resolution, getHdmiState(), c_mode);
+        choose_mode(c_mode, getPlayModeTmp(), resolution, getFPS());
     }
 }
 
@@ -4212,8 +4023,11 @@ int do_Auto_Stitch_Proc(int debug)
 void *thread_5ms(void)
 {
 	int ret, state;
+    int skip_watchdog;
+    int focus_sensor2;
+    unsigned long long now_time;
+    static int skip_watchdog_lst = -1;
 	static int saveBinStep=0;
-	static int skipWatchDog_lst = -1;
 	static int dna_check_ok_lst = -1;
 	static int hdmi_state = 0, hdmi_state_lst = -1;
 	static int Sensor_State_Cnt = 0;
@@ -4230,12 +4044,12 @@ void *thread_5ms(void)
         if(curTime < lstTime) lstTime = curTime;
         else if((curTime - lstTime) >= 1000000){
 			db_debug("task5ms: runTime=lld rtsp: fps=%d sand=%dkb mjpeg: fps=%d send=%dkb\n",
-        		runTime, rtsp_fps, rtsp_send/1024, mjpeg_fps, mjpeg_send/1024);
+        		runTime, getRtspFps(), getRtspSendLength()/1024, getMjpegFps(), getMjpegSendLength()/1024);
 			lstTime = curTime;
-			mjpeg_fps = 0;
-			mjpeg_send = 0;
-			rtsp_fps = 0;
-			rtsp_send = 0;
+			setMjpegFps(0);
+			setMjpegSendLength(0);
+			setRtspFps(0);
+			setRtspSendLength(0);
         }
 
 		if(writeUS360DataBin_flag == 1){
@@ -4251,14 +4065,15 @@ void *thread_5ms(void)
 		}
 		//wifiSerThe_proc_jni();
 
-		if(skipWatchDog_lst != skipWatchDog){
-			skipWatchDog_lst = skipWatchDog;
+        skip_watchdog = getSkipWatchDog();
+		if(skip_watchdog_lst != skip_watchdog){
+			skip_watchdog_lst = skip_watchdog;
 
-			if(skipWatchDog == 0)
+			if(skip_watchdog == 0)
 				deleteSkipWatchDogFile();
-			else if(skipWatchDog == 1)
+			else if(skip_watchdog == 1)
 				createSkipWatchDogFile();
-			else if(skipWatchDog == 2)
+			else if(skip_watchdog == 2)
 				System_Exit_jni();
 		}
 
@@ -4273,7 +4088,7 @@ void *thread_5ms(void)
 //tmp       SetRenderEn(hdmi_state);
 
 			if(hdmi_state == 1) {				//HDMI插上, 喚醒省電狀態
-				if(Power_Saving_Mode == 1) {
+				if(getPowerSavingMode() == 1) {
 					if(GetFPGASleepEn() == 1) {
 						SetFPGASleepEn(0);
 						Adj_Sensor_Sync_Flag = 2;
@@ -4283,7 +4098,7 @@ void *thread_5ms(void)
 				}
 			}
 			else {								//HDMI拔出, 進入省電狀態
-				if(Power_Saving_Mode == 1 && GetFPGASleepEn() == 0)
+				if(getPowerSavingMode() == 1 && GetFPGASleepEn() == 0)
 					Set_Cap_Rec_Finish_Time(curTime, 0, 17);
 			}
 
@@ -4297,7 +4112,7 @@ void *thread_5ms(void)
 			if(Cmd_P1 != Cmd_Idx) {
 
 				if(choose_mode_flag == 1) {        // 切換模式
-					choose_mode(CameraMode, getPlayModeTmp(), ResolutionMode, getFPS());
+					choose_mode(getCameraMode(), getPlayModeTmp(), getResolutionMode(), getFPS());
 					isNeedNewFreeCount = 1;
 					choose_mode_flag = 0;
 //                	mHandler.obtainMessage(REC_SHOW_NOW_MODE).sendToTarget();
@@ -4316,16 +4131,17 @@ void *thread_5ms(void)
 					case 2:        //Focus
 						if(TestToolCmd.SubCmd >= 0 && TestToolCmd.SubCmd <= 4) {			//Show Focus
 							if(TestToolCmd.Step == 1) {
-								Focus2_Sensor = TestToolCmd.SubCmd;
+                                focus_sensor2 = TestToolCmd.SubCmd;
+								setFocusSensor2(focus_sensor2);
 								Change_Cap_12K_Mode();
 								FocusScanTableTranInit();
 								FocusResultInit();
-								ReadTestToolFocusAdjFile(Focus2_Sensor);
-//								if(ShowFocusVisibilityMode == 0) {
-//									ShowFocusVisibilityMode = 1;
-//									mHandler.obtainMessage(SHOW_FOCUS_VISIBILITY).sendToTarget();
-//								}
-								set_A2K_Debug_Focus(Focus2_Sensor);
+								ReadTestToolFocusAdjFile(focus_sensor2);
+//tmp								if(getFocusVisibilityMode() == 0) {
+//tmp									setFocusVisibilityMode(1);
+//tmp									mHandler.obtainMessage(SHOW_FOCUS_VISIBILITY).sendToTarget();
+//tmp								}
+								set_A2K_Debug_Focus(focus_sensor2);
 								Set_ISP2_Addr(1, 0, -6);
 								do2DNR(1);		//銳利度調至最低
 
@@ -4334,16 +4150,18 @@ void *thread_5ms(void)
 						}
 						else if(TestToolCmd.SubCmd == 99) {							//Save Focus File
 							if(TestToolCmd.Step == 1) {
-								if(Focus2_Sensor >= 0 && Focus2_Sensor <= 4)
-									WriteFocusResult(Focus2_Sensor);
+                                focus_sensor2 = getFocusSensor2();
+								if(focus_sensor2 >= 0 && focus_sensor2 <= 4)
+									WriteFocusResult(focus_sensor2);
 								TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 						}
 						else if(TestToolCmd.SubCmd == 100) {							//Exit Focus
-							Focus2_Sensor = -1;
-							set_A2K_Debug_Focus(Focus2_Sensor);
+							focus_sensor2 = -1;
+                            setFocusSensor2(focus_sensor2);
+							set_A2K_Debug_Focus(focus_sensor2);
 							do2DNR(0);
-							ShowFocusVisibilityMode = 0;
+							setFocusVisibilityMode(0);
 							choose_mode_flag = 1;
 							TestToolCmdInit();
 						}
@@ -4366,10 +4184,12 @@ void *thread_5ms(void)
 							Change_Cap_12K_Mode();
 						}
 						else if(TestToolCmd.SubCmd == 1 || TestToolCmd.SubCmd == 2 || TestToolCmd.SubCmd == 3 || TestToolCmd.SubCmd == 4 || TestToolCmd.SubCmd == 5) {
-							get_current_usec(&TestTool_D_t2);
+							get_current_usec(&now_time);
+                            setTesttoolDelayTime(2, now_time);
 							if(TestToolCmd.Step == 1) {        //delay 1s
-								if(TestTool_D_t2 < TestTool_D_t1) TestTool_D_t2 = TestTool_D_t1;
-								if( (TestTool_D_t2 - TestTool_D_t1) > 2000000)
+								if(getTesttoolDelayTime(2) < getTesttoolDelayTime(1))   //預防錯誤
+                                    setTesttoolDelayTime(2, getTesttoolDelayTime(1));
+								if((getTesttoolDelayTime(2) - getTesttoolDelayTime(1)) > 2000000)
 									TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 							else if(TestToolCmd.Step == 2) {    //take picture
@@ -4389,10 +4209,12 @@ void *thread_5ms(void)
 						break;
 					case 6:
 						if(TestToolCmd.SubCmd == 1 || TestToolCmd.SubCmd == 2 || TestToolCmd.SubCmd == 3 || TestToolCmd.SubCmd == 4) {
-							get_current_usec(&TestTool_D_t2);
+							get_current_usec(&now_time);
+                            setTesttoolDelayTime(2, now_time);
 							if(TestToolCmd.Step == 1) {        //delay 1s
-								if(TestTool_D_t2 < TestTool_D_t1) TestTool_D_t2 = TestTool_D_t1;
-								if( (TestTool_D_t2 - TestTool_D_t1) > 1000000)
+								if(getTesttoolDelayTime(2) < getTesttoolDelayTime(1))   //預防錯誤 
+                                    setTesttoolDelayTime(2, getTesttoolDelayTime(1));
+								if((getTesttoolDelayTime(2) - getTesttoolDelayTime(1)) > 1000000)
 									TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 							else if(TestToolCmd.Step == 2) {    //take picture
@@ -4413,18 +4235,20 @@ void *thread_5ms(void)
 						if(TestToolCmd.SubCmd == 0) {
 							if(TestToolCmd.Step == 1) {
 								Set_ISP2_Addr(2, 0, -1);
-								writeCmdTable(4, ResolutionMode, getFPS(), 3, 0, 1);
+								writeCmdTable(4, getResolutionMode, getFPS(), 3, 0, 1);
 //                            	AutoGlobalPhiInit(1);
 								TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 //                          AutoGlobalPhiAdj(1, 1);
 						}
 						else if(TestToolCmd.SubCmd == 1) {
-							get_current_usec(&TestTool_D_t2);
+							get_current_usec(&now_time);
+                            setTesttoolDelayTime(2, now_time);
 							if(TestToolCmd.Step == 1) {        //delay 1s
 //                              AutoGlobalPhiAdj(1, 1);
-								if(TestTool_D_t2 < TestTool_D_t1) TestTool_D_t2 = TestTool_D_t1;
-								if( (TestTool_D_t2 - TestTool_D_t1) > 1000000)
+								if(getTesttoolDelayTime(2) < getTesttoolDelayTime(1))   //預防錯誤 
+                                    setTesttoolDelayTime(2, getTesttoolDelayTime(1));
+								if((getTesttoolDelayTime(2) - getTesttoolDelayTime(1)) > 1000000)
 									TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 							else if(TestToolCmd.Step == 2) {    //take picture
@@ -4438,10 +4262,12 @@ void *thread_5ms(void)
 						break;
 					case 100: 	// S2 sensor*5 auto st
 						if(TestToolCmd.SubCmd == 1 || TestToolCmd.SubCmd == 2 || TestToolCmd.SubCmd == 3 || TestToolCmd.SubCmd == 4 || TestToolCmd.SubCmd == 5) {
-							get_current_usec(&TestTool_D_t2);
+							get_current_usec(&now_time);
+                            setTesttoolDelayTime(2, now_time);
 							if(TestToolCmd.Step == 1) {		//delay 1s
-								if(TestTool_D_t2 < TestTool_D_t1) TestTool_D_t2 = TestTool_D_t1;
-								if( (TestTool_D_t2 - TestTool_D_t1) > 1000000)
+								if(getTesttoolDelayTime(2) < getTesttoolDelayTime(1))   //預防錯誤 
+                                    setTesttoolDelayTime(2, getTesttoolDelayTime(1));
+								if((getTesttoolDelayTime(2) - getTesttoolDelayTime(1)) > 1000000)
 									TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
 							else if(TestToolCmd.Step == 2) {	//take picture
@@ -4464,11 +4290,11 @@ void *thread_5ms(void)
 						break;
 					}
 				}
-				else if(mCameraPositionModeChange == 1) {
+				else if(getCameraPositionModeChange() == 1) {
                     set_A2K_DMA_CameraPosition(mCameraPositionMode);
 					AdjFunction();
 					Send_ST_Cmd_Proc();
-					mCameraPositionModeChange = 0;
+					setCameraPositionModeChange(0);
 				}
 				else {
 					if(get_ISP2_Sensor() == -5) {
@@ -4484,7 +4310,7 @@ void *thread_5ms(void)
 					get_current_usec(&task5s_lock_time);
 					task5s_lock_flag = 1;
 				}
-				doRecordVideo(RecordEn, getPlayMode(), ResolutionMode, Time_Lapse_Mode, getHdmiState());
+				doRecordVideo(RecordEn, getPlayMode(), getResolutionMode, getTimeLapseMode(), getHdmiState());
 				mRecordCmd = 2;
 			}
 
@@ -4518,8 +4344,8 @@ void *thread_5ms(void)
 				if(SendMainCmdPipeT1 < SendMainCmdPipeT2) SendMainCmdPipeT1 = SendMainCmdPipeT2;
 				if( (SendMainCmdPipeT1 - SendMainCmdPipeT2) > 50000) {
 					SendMainCmdPipeT2 = SendMainCmdPipeT1;
-					choose_mode(CameraMode, getPlayModeTmp(), ResolutionMode, getFPS());
-					SendMainCmdPipe(CameraMode, Time_Lapse_Mode, 1);
+					choose_mode(getCameraMode(), getPlayModeTmp(), getResolutionMode(), getFPS());
+					SendMainCmdPipe(getCameraMode(), getTimeLapseMode(), 1);
 					MainCmdStart();
 
 					SendH264EncodeTable();
@@ -4531,12 +4357,12 @@ void *thread_5ms(void)
 					set_A2K_ISP2_Defect_En(0);
 					SetDefectState(0);
 					ret = DefectInit();
-					if(ret == 0 && CameraMode == 12) {
+					if(ret == 0 && getCameraMode() == CAMERA_MODE_M_MODE) {
 						set_A2K_ISP2_Defect_En(1);
 						SetDefectState(1);
 					}
 
-					Saturation_Init_Flag = 1;
+					setSaturationInitFlag(1);
 					Send_ST_Flag = 3;
 					UVCErrCount = 0;
 					Adj_Sensor_Sync_Flag = 0;
@@ -4577,9 +4403,9 @@ void *thread_5ms(void)
 					Adj_Sensor_Sync_Flag = 2;
 				}
 
-				if(Saturation_Init_Flag == 1) {
-					Saturation_Init_Flag = 0;
-					SetSaturationValue(0, Saturation);
+				if(getSaturationInitFlag() == 1) {
+					setSaturationInitFlag(0);
+					SetSaturationValue(0, getSaturation());
 				}
 
 				get_current_usec(&SendMainCmdPipeT1);
@@ -4587,11 +4413,11 @@ void *thread_5ms(void)
 				if( (SendMainCmdPipeT1 - SendMainCmdPipeT2) > 50000) {
 					SendMainCmdPipeT2 = SendMainCmdPipeT1;
 					if(Adj_Sensor_Sync_Flag != 0) {
-						SendMainCmdPipe(CameraMode, Time_Lapse_Mode, Adj_Sensor_Sync_Flag);
+						SendMainCmdPipe(getCameraMode(), getTimeLapseMode(), Adj_Sensor_Sync_Flag);
 						Adj_Sensor_Sync_Flag = 0;
 					}
 					else {
-						SendMainCmdPipe(CameraMode, Time_Lapse_Mode, 0);
+						SendMainCmdPipe(getCameraMode(), getTimeLapseMode(), 0);
 					}
 				}
 				break;
@@ -4642,7 +4468,7 @@ int get_RecFPS(void)
     int fps = 100;
     int freq = get_ISP_AEG_EP_IMX222_Freq();
 
-    if(Time_Lapse_Mode != 0) {
+    if(getTimeLapseMode() != 0) {
         if(freq == 0) fps = 300;
         else          fps = 250;
         return fps;
@@ -4689,7 +4515,7 @@ int get_LiveFPS(void)
     get_Stitching_Out(&mode, &res);
     switch(res){
     case 1:         //12K
-    	if(Time_Lapse_Mode != 0)
+    	if(getTimeLapseMode() != 0)
     		fps = 10;
     	else {
 			if(freq == 0) fps = 100;
@@ -4701,7 +4527,7 @@ int get_LiveFPS(void)
     	else		  fps = 100;
         break;
     case 7:         //8K
-    	if(Time_Lapse_Mode != 0)
+    	if(getTimeLapseMode() != 0)
     		fps = 20;
     	else {
 			if(freq == 0) fps = 100;
@@ -4709,7 +4535,7 @@ int get_LiveFPS(void)
     	}
         break;
     case 12:        //6K
-    	if(Time_Lapse_Mode != 0)
+    	if(getTimeLapseMode() != 0)
     		fps = 30;
     	else {
 			if(freq == 0) fps = 100;
@@ -4952,8 +4778,8 @@ int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
 {
     static unsigned long long curTime;
     int i, ret=-1, cmd_p1, cmd_p2, step=0;
-    int c_mode = CameraMode;
-    CaptureSpaceTime = 160;    //capStime;
+    int c_mode = getCameraMode();
+    setCaptureIntervalTime(160);    //capStime;
     sd_freesize = freesize;
     char sd_path[128];
 
@@ -4974,19 +4800,19 @@ int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
         db_debug("setCapEn.1: en=%d cnt=%d ret=%d freesize=%lldmb\n", capEn, capCnt, ret, freesize/1000000);
       
         if(ret == 1){
-            if(c_mode == 3 || c_mode == 5 || c_mode == 7 || BSmooth_Function != 0)   // 3:HDR 5:WDR 6:Night 7:Night+WDR, 使用大圖YUV縫合
+            if(c_mode == CAMERA_MODE_AEB || c_mode == CAMERA_MODE_HDR || c_mode == CAMERA_MODE_NIGHT_HDR || BSmooth_Function != 0)   // 3:HDR 5:WDR 6:Night 7:Night+WDR, 使用大圖YUV縫合
                 set_run_big_smooth(1);
             else
                 set_run_big_smooth(0);
             save_sensor_data();
             
             switch(c_mode){
-            case 3:                                             // 3:AEB(3p,5p,7p)
+            case CAMERA_MODE_AEB:                                             // 3:AEB(3p,5p,7p)
                     Save_Jpeg_End_Cnt = get_AEB_Frame_Cnt();
                     capEn = 6;
                     break;
-            case 4: Save_Jpeg_End_Cnt = 5; capEn = 6; break;    // 4:RAW
-            case 12:
+            case CAMERA_MODE_RAW: Save_Jpeg_End_Cnt = 5; capEn = 6; break;    // 4:RAW
+            case CAMERA_MODE_M_MODE:
             	if(GetDefectStep() != 0)
             		Save_Jpeg_End_Cnt = 5;
             	else {
@@ -5006,12 +4832,12 @@ int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
             Save_Jpeg_Now_Cnt = 0;
             Save_Jpeg_StartTime = curTime;
             //Save_Jpeg_OutTime = 6000000*Save_Jpeg_End_Cnt;            // 設定單張6s timeout, 4s曝光+2s存檔
-            if(c_mode == 12){         // 12:M-Mode
+            if(c_mode == CAMERA_MODE_M_MODE){         // 12:M-Mode
             	int bexp_1sec, bexp_gain;
                 get_AEG_B_Exp(&bexp_1sec, &bexp_gain);
                 Save_Jpeg_OutTime = bexp_1sec * 1000000 + 30000000;
             }
-            else if(c_mode == 13)
+            else if(c_mode == CAMERA_MODE_REMOVAL)
             	Save_Jpeg_OutTime = 60000000;
             else
             	Save_Jpeg_OutTime = 30000000;            // 設定單張30s timeout
@@ -5062,6 +4888,7 @@ void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpg
 {
     int cmd_p1, cmd_p2, exp_max;
     int mode, res;
+    int c_mode = getCameraMode();
 
     get_Stitching_Out(&mode, &res);
     cmd_p1 = get_rec_cmd_queue_p1();
@@ -5069,13 +4896,12 @@ void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpg
     set_rec_cmd_queue_state(cmd_p1, recState);
     set_rec_cmd_queue_p1(++cmd_p1);
 
-    //Time_Lapse_Mode = time_lapse;
-    Set_Smooth_Speed_Mode(Time_Lapse_Mode);
+    Set_Smooth_Speed_Mode(getTimeLapseMode());
     sd_freesize = freesize;
     db_debug("setRecEn: state=%d lapse=%d freesize=%d\n", recState, time_lapse, freesize);
 
     if(recState == 0) {
-        if(CameraMode == 2 || CameraMode == 11) {			//TimeLapse
+        if(c_mode == CAMERA_MODE_TIMELAPSE || c_mode == CAMERA_MODE_TIMELAPSE_WDR) {			//TimeLapse
         	if(fpga_enc == 1) {
             	if(res == 2) {
             		FPGA_Encode_Type = 2;					//CPU H264
@@ -5163,7 +4989,7 @@ int doTakePicture(int enable)
 //    	systemlog.addLog("info", System.currentTimeMillis(), "machine", "doTakePicture", "---");
 
         if(checkCanTakePicture())
-        	ret = setCapEn(enable, CaptureCnt, CaptureSpaceTime, free);
+        	ret = setCapEn(enable, getCaptureCnt(), getCaptureIntervalTime(), free);
         else
         	ret = -1;
 
@@ -5278,7 +5104,7 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
         		//audioChannel = getMicChannel();
         		//audioBit     = getMicBit();
             }
-            setRecEn(0, time_lapse, free, mFPGA_Encode_Type);
+            setRecEn(0, time_lapse, free, getTimelapseEncodeType());
 //tmp            paintOLEDRecording(1);                    // rex+ 151221
             get_current_usec(&nowTime);
             Set_Cap_Rec_Start_Time(nowTime, 1);
@@ -5290,7 +5116,7 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
         }
     }
     else{
-    	setRecEn(-1, time_lapse, free, mFPGA_Encode_Type);
+    	setRecEn(-1, time_lapse, free, getTimelapseEncodeType());
 //        systemlog.addLog("info", System.currentTimeMillis(), "machine", "stop REC.", "---");
         if(time_lapse == 0 || isRecording == 1){
             isRecording = 0;
@@ -5324,7 +5150,7 @@ void Ctrl_Rec_Cap(int c_mode, int cap_cnt, int rec_en) {
     case 14: // 3D Model
     	if(cap_cnt > 0){
     		SetBurstCount(cap_cnt);		//mBurstCount = cap_cnt;
-            CaptureSpaceTime = 200;        // 每秒5張
+            setCaptureIntervalTime(200);        // 每秒5張
             set_timeout_start(2);
             ret = doTakePicture(2);
             if(ret < 0)
@@ -5628,13 +5454,6 @@ unsigned long long get_sd_free_size(char *path)
     return size_tmp;
 }
 
-void SetWifiChannel(int ch) {
-	WifiChannel = ch;
-}
-int GetWifiChannel(void) {
-	return WifiChannel;
-}
-
 /*
  * 設定 wifi channel
  */
@@ -5866,18 +5685,18 @@ int getLive264buff(char *buf, int max, char *key)
 
 int get_copy_h264_to_rec_en(int c_mode, int res, int enc_type)
 {
-	if(enc_type == 0) {				//JPEG
-		if(c_mode == 2 || c_mode == 11)
+	if(enc_type == FPGA_VIDEO_ENCODE_TYPE_JPEG) {				//JPEG
+		if(c_mode == CAMERA_MODE_TIMELAPSE || c_mode == CAMERA_MODE_TIMELAPSE_WDR)
 			return 0;
 		else
 			return 1;
 	}
-	else if(enc_type == 1) {		//TimeLaps FPGA.H264
-		if(c_mode == 2 || c_mode == 11)
+	else if(enc_type == FPGA_VIDEO_ENCODE_TYPE_FPGA_H264) {		//TimeLaps FPGA.H264
+		if(c_mode == CAMERA_MODE_TIMELAPSE || c_mode == CAMERA_MODE_TIMELAPSE_WDR)
 			return 1;
 	}
-	else if(enc_type == 2) {		//TimeLaps CPU.H264
-		if(c_mode == 2 || c_mode == 11)
+	else if(enc_type == FPGA_VIDEO_ENCODE_TYPE_CPU_H264) {		//TimeLaps CPU.H264
+		if(c_mode == CAMERA_MODE_TIMELAPSE || c_mode == CAMERA_MODE_TIMELAPSE_WDR)
 			return 1;
 	}
 	return 0;
@@ -5905,12 +5724,11 @@ void copy_H264_buf(char* buf, int size, int key_f, int width, int height,
     copy_to_live_264_buff(buf, size, key_f);
 
     // max+ 存H.264  先將資料存至BUF內, 由 rec_thread 存檔
-    if(get_copy_h264_to_rec_en(CameraMode, res, FPGA_Encode_Type) == 1) {
-        //if(Time_Lapse_Mode == 0 || (Time_Lapse_Mode != 0 && key_f == 1) )
-			if(key_f == 1 || rtmp_sw == 0) size_tmp = sps_len+pps_len+12;
-			else           				   size_tmp = 4;
-			//size_tmp = sps_len+pps_len+12;	//ios mp4 需去掉 sps & pps & start code
-			copy_to_rec_buf(&buf[size_tmp], (size-size_tmp), key_f, sps, sps_len, pps, pps_len, FPGA_Encode_Type, 0);
+    if(get_copy_h264_to_rec_en(getCameraMode(), res, FPGA_Encode_Type) == 1) {
+		if(key_f == 1 || rtmp_sw == 0) size_tmp = sps_len+pps_len+12;
+		else           				   size_tmp = 4;
+		//size_tmp = sps_len+pps_len+12;	//ios mp4 需去掉 sps & pps & start code
+		copy_to_rec_buf(&buf[size_tmp], (size-size_tmp), key_f, sps, sps_len, pps, pps_len, FPGA_Encode_Type, 0);
     }
 
     if(callback_func.read_h264 != NULL)
@@ -6109,7 +5927,7 @@ void set_first_Azimuth(int val) {
 }
 
 int read_sensor_data(void) {
-	if(get_CtrlCameraPositionMode() == 0){		//手動
+	if(getCtrlCameraPositionMode() == 0){		//手動
 		return -1;
 	}else{										//Auto
 		return 0;
@@ -6331,63 +6149,6 @@ void setSensorLogEnable(int enable){
 	sensorLogEnable = enable;
 //tmp	setBmg160_radCal(sensorLogEnable);
 }
-
-void SetmWBMode(int mode) {
-	mWB_Mode = mode;
-}
-int GetmWBMode(void) {
-	return mWB_Mode;
-}
-
-void SetdoAutoGlobalPhiAdjMode(int mode) {
-	doAutoGlobalPhiAdjMode = mode;
-}
-int GetdoAutoGlobalPhiAdjMode(void) {
-	return doAutoGlobalPhiAdjMode;
-}
-
-void SetHDMITextVisibilityMode(int mode) {
-	HDMITextVisibilityMode = mode;
-}
-int GetHDMITextVisibilityMode(void) {
-	return HDMITextVisibilityMode;
-}
-
-void SetspeakerMode(int mode) {
-	speakerMode = mode;
-}
-int GetspeakerMode(void) {
-	return speakerMode;
-}
-
-void SetJPEGQualityMode(int mode) {
-	JPEGQualityMode = mode;
-}
-int GetJPEGQualityMode(void) {
-	return JPEGQualityMode;
-}
-
-void SetTranslucentMode(int mode) {
-	Translucent_Mode = mode;
-}
-int GetTranslucentMode(void) {
-	return Translucent_Mode;
-}
-
-void SetmLiveQualityMode(int mode) {
-	mLiveQualityMode = mode;
-}
-int GetmLiveQualityMode(void) {
-	return mLiveQualityMode;
-}
-
-void SetFreeCount(int cnt) {
-	freeCount = cnt;
-}
-int GetFreeCount(void) {
-	return freeCount;
-}
-
 
 int GetSaturationValue(int value) {
 	return ( (value + 7) * 1000 / 7);

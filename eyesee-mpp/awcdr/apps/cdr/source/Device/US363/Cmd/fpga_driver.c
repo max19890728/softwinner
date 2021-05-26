@@ -128,16 +128,15 @@ int GetColorSTYThMin(void)
 	return Color_ST_Y_Th_Min;
 }
 
-int WB_Mode = 0;		//0: AUTO	1: Filament Lamp	2: Daylight Lamp	3: Sun	4: Cloudy,	5: 色溫
 float Adj_WB_R=0.0, Adj_WB_G=0.0, Adj_WB_B=0.0;
 float WB_Mode_Table2[6][3] = {
 		// R    G    B
-		{  1.0, 1.0, 1.0},	// Auto
+		{  1.0,   1.0, 1.0},	// Auto
 		{  1.543, 1.0, 2.195},	// Filament Lamp (2500K)
 		{  1.647, 1.0, 1.721},	// Daylight Lamp (4500K)
 		{  1.715, 1.0, 1.422},	// Sun (6000K)
 		{  1.876, 1.0, 1.28},	// Cloudy (7000K)
-		{  1.0, 1.0, 1.0}	// rgb
+		{  1.0,   1.0, 1.0}	    // rgb
 };
 
 
@@ -408,7 +407,7 @@ int get_avg_rgby(void)
     //if(Get_HDR7P_Auto_Read_En() == 1)
     //	Copy_to_HDR7P_Sensor_Y(&Sensor_Y[0][0]);
 
-//tmp    if(rec_state < 0 && WB_Mode == 0)
+//tmp    if(rec_state < 0 && getWhiteBalanceMode() == 0)
     	Do_Next_Color_T();
 
     if(TsumP > 0)
@@ -1168,6 +1167,7 @@ int ISP_AEG_IMX222( int c_mode, int m_mode)
     int i, n, quick=0, temp, temp1=0, temp2=0, chang_en=0;
     int exp_max=(120*64), exp_min=(-160*64), gain_max=(120*64), gain_min=0;
     int d_cnt = read_F_Com_In_Capture_D_Cnt();
+    int fps = getFPS();
 
     ISP_Command_Struct *ISP_All_Command = &ISP_All_Command_D;       // &isp_cmd_tmp[0];
     ISP_Stati_Struct *ISP_All_State = &ISP_All_State_D;             // &isp_state_tmp[0];
@@ -1184,7 +1184,7 @@ int ISP_AEG_IMX222( int c_mode, int m_mode)
     
     int iso, exp_n, exp_m;
     int freq = ISP_AEG_EP_IMX222_Freq;                              // 0:60Hz 1:50Hz
-    int sflash = (((60-(10*freq))*2)*10)/MainFPS;                   // ((60-(10*freq))*2)=120(or 100), freq: 0->60Hz, 1->50Hz
+    int sflash = (((60-(10*freq))*2)*10)/fps;                       // ((60-(10*freq))*2)=120(or 100), freq: 0->60Hz, 1->50Hz
                                                                     // sflash: 4 = 30fps, 120/30=4
     int qmax=12;                                                    //         12 = 10fps, 120/10=12
                                                                     //         120 = 1fps, 120/1=120
@@ -1388,11 +1388,11 @@ again0:
         ep_init_change++;
         db_debug("03 chang_en == 1\n");
     }
-    else if(m_mode_lst != m_mode || c_mode_lst != c_mode || m_fps_lst != MainFPS){
+    else if(m_mode_lst != m_mode || c_mode_lst != c_mode || m_fps_lst != fps){
         chang_en = 1;
         m_mode_lst = m_mode;
         c_mode_lst = c_mode;
-        m_fps_lst = MainFPS;
+        m_fps_lst = fps;
         db_debug("04 chang_en == 1\n");
     }
     else if((aeg_time - aeg_time_lst) > 1000000){       // rex+ 190114, 每秒下一次AE
@@ -1430,9 +1430,9 @@ again0:
 
     AEG_gain_H = gain_tmp_idx;
     int ep_ln_33ms = get_ep_ln_default_33ms(freq);
-    int fps_us = 10000000 / MainFPS;
+    int fps_us = 10000000 / fps;
     //int shuter_sp = (AEG_EP_FRM_LENGTH + 1) * fps_us - AEG_EP_INTEG_TIME * fps_us / (ep_ln_33ms * fps_us / 33333);
-    int exp_us = cal_sensor_exp_us(freq, MainFPS, AEG_EP_FRM_LENGTH, AEG_EP_INTEG_TIME);
+    int exp_us = cal_sensor_exp_us(freq, fps, AEG_EP_FRM_LENGTH, AEG_EP_INTEG_TIME);
     int send_cmd = 0;
     static int lst_d_cnt = 0;
     if(d_cnt != lst_d_cnt){
@@ -1703,7 +1703,7 @@ void ISP_Command_Porcess(int c_mode)
     else if( (curTime - lstTime) >= delay) {
             lstTime = curTime;
             int next = get_Pipe_Next_Cmd_Delay();
-    	    if(tool_cmd == 0 && WB_Mode == 0 && DebugJPEGMode == 0 && d_cnt == 0 && next == 0)
+    	    if(tool_cmd == 0 && getWhiteBalanceMode() == 0 && DebugJPEGMode == 0 && d_cnt == 0 && next == 0)
     	        ISP_AWB();
 
             if(c_mode == 3 || c_mode == 5 || c_mode == 7){  // 避免AEB/HDR模式造成LIVE變黑閃一下
@@ -1737,7 +1737,6 @@ void ISP_Command_Porcess(int c_mode)
             Do_RGB_Gain();
 
     		if(Block2_2DNR_ready != -1){
-    			//if(focus_sensor != -1)
     			if(do_Focus_2DNR == 1)
     				Set_ISP_Block2_2DNR(Cap_Gain_Idx, (Block2_2DNR_ready & 0x1), c_mode, M_Mode, 10);
     			else
@@ -2006,11 +2005,13 @@ int Do_RGB_Gain(void)
     int GR, GG, GB;
     int d_cnt = read_F_Com_In_Capture_D_Cnt();
     int min;
+    int wb_mode;
     float rate;
     if(S2_RGB_Debug_En != 0 || d_cnt != 0) return 0;
 
     if(GetDefectStep() == 0) {
-        if(WB_Mode == 0) {
+        wb_mode = getWhiteBalanceMode();
+        if(wb_mode == 0) {
             /*//if(ISP_All_Command->AWB_en_do != 0){                            // AWB才進入計算
                 set_ISP_Block1_Limit(0, &ISP_All_Set_Reg.ISP_Block1.MR, &ISP_All_Set_Reg.ISP_Block1.Gain_R, 
                                      &ISP_All_State_D.AWB_Gain.gain_R, &change);
@@ -2055,14 +2056,14 @@ int Do_RGB_Gain(void)
                     ISP_All_Set_Reg.ISP_Block1.Gain_B = 0x4000;
                 }*/
 
-            ISP_All_Set_Reg.ISP_Block1.Gain_R    = 0x4000 * WB_Mode_Table2[WB_Mode][0];
-            ISP_All_Set_Reg.ISP_Block1.Gain_G    = 0x4000 * WB_Mode_Table2[WB_Mode][1];
-            ISP_All_Set_Reg.ISP_Block1.Gain_B    = 0x4000 * WB_Mode_Table2[WB_Mode][2];
+            ISP_All_Set_Reg.ISP_Block1.Gain_R    = 0x4000 * WB_Mode_Table2[wb_mode][0];
+            ISP_All_Set_Reg.ISP_Block1.Gain_G    = 0x4000 * WB_Mode_Table2[wb_mode][1];
+            ISP_All_Set_Reg.ISP_Block1.Gain_B    = 0x4000 * WB_Mode_Table2[wb_mode][2];
         }
         else {
-            ISP_All_Set_Reg.ISP_Block1.Gain_R    = 0x4000 * (WB_Mode_Table2[WB_Mode][0] + Adj_WB_R);
-            ISP_All_Set_Reg.ISP_Block1.Gain_G    = 0x4000 * (WB_Mode_Table2[WB_Mode][1] + Adj_WB_G);
-            ISP_All_Set_Reg.ISP_Block1.Gain_B    = 0x4000 * (WB_Mode_Table2[WB_Mode][2] + Adj_WB_B);
+            ISP_All_Set_Reg.ISP_Block1.Gain_R    = 0x4000 * (WB_Mode_Table2[wb_mode][0] + Adj_WB_R);
+            ISP_All_Set_Reg.ISP_Block1.Gain_G    = 0x4000 * (WB_Mode_Table2[wb_mode][1] + Adj_WB_G);
+            ISP_All_Set_Reg.ISP_Block1.Gain_B    = 0x4000 * (WB_Mode_Table2[wb_mode][2] + Adj_WB_B);
 //            ISP_All_Set_Reg.ISP_Block1.MR        = 0x4000;
 //            ISP_All_Set_Reg.ISP_Block1.MG        = 0x4000;
 //            ISP_All_Set_Reg.ISP_Block1.MB        = 0x4000;
@@ -2873,6 +2874,7 @@ void Do_Next_Color_T(void)
   static int wb_m_lst=-1;
   int count_tmp, temp;
   int start, end;
+  int wb_mode = getWhiteBalanceMode();
 
   Ctrl = &color_temp_ctrl;
   r_step = Read_Color_Temperature(Ctrl);
@@ -2957,13 +2959,13 @@ void Do_Next_Color_T(void)
       return;
   }
   if(r_step == 0) {
-	  if(Para->P0 != P0_lst || WB_Mode != wb_m_lst) {
+	  if(Para->P0 != P0_lst || wb_mode != wb_m_lst) {
 		  db_debug("Do_Next_Color_T: Now=%dK Lst=%dK\n", Para->T_Gain[Para->P0].T, Para->T_Gain[P0_lst].T);
 		  P0_lst = Para->P0;
-		  wb_m_lst = WB_Mode;
+		  wb_m_lst = wb_mode;
 		  *ch_flag = 1;
 	  }
-	  if(WB_Mode == 0) set_A2K_JPEG_Color(Para->T_Gain[Para->P0].T);
+	  if(wb_mode == 0) set_A2K_JPEG_Color(Para->T_Gain[Para->P0].T);
   }
   else {
 	  WB_Mode_Table2[0][0] = Para->T_Gain[Para->P0].R / 100.0;
@@ -2971,7 +2973,7 @@ void Do_Next_Color_T(void)
 	  WB_Mode_Table2[0][2] = Para->T_Gain[Para->P0].B / 100.0;
 	  Tint_Idx = Para->P0 - 16;
 	  Tint_Rate = Get_Delta_G_Rate(Para->P0);
-	  if(WB_Mode == 0) set_A2K_JPEG_Tint( (int)(Tint_Rate * 1000) );
+	  if(wb_mode == 0) set_A2K_JPEG_Tint( (int)(Tint_Rate * 1000) );
 
 	  if(Para->P0 != P0_G_lst) {
 		  db_debug("Do_Next_Color_T() G: Now=%d Tint=%.2f Lst=%d Tint_Lst=%.2f Tint_Idx=%d\n", Para->P0, Tint_Rate, P0_G_lst, Get_Delta_G_Rate(P0_G_lst), Tint_Idx);
@@ -2998,35 +3000,33 @@ int GetTint(void) {
  * 	設定 WB 模式
  * 	mode: 0:Auto 1:Filament Lamp 2:Daylight Lamp 3:Sun 4:Cloudy
  */
-void setWBMode(int mode)
+void setWBMode(int wb_mode)
 {
 	Color_Temperature_Struct colStruct;
 
-	if(mode > 1000){
-		WB_Mode = 5;
+	if(wb_mode > 1000){
+		setWhiteBalanceMode(WHITE_BALANCE_MODE_RGB);
 	}else{
-		WB_Mode = mode;
-
 		int trgTemp = 2700;
-		switch(WB_Mode){
+		switch(wb_mode){
 		case 1: trgTemp = 2700; break;
 		case 2: trgTemp = 4000; break;
 		case 3: trgTemp = 5600; break;
 		case 4: trgTemp = 8000; break;
 		}
-		if(WB_Mode > 0 && WB_Mode < 5){
+		if(wb_mode > 0 && wb_mode < 5){
 			Temperature2RGB_Gain(trgTemp, &colStruct);
-			WB_Mode_Table2[WB_Mode][0] = colStruct.R / 100;
-			WB_Mode_Table2[WB_Mode][1] = colStruct.G / 100;
-			WB_Mode_Table2[WB_Mode][2] = colStruct.B / 100;
+			WB_Mode_Table2[wb_mode][0] = colStruct.R / 100;
+			WB_Mode_Table2[wb_mode][1] = colStruct.G / 100;
+			WB_Mode_Table2[wb_mode][2] = colStruct.B / 100;
 			set_A2K_JPEG_Color(trgTemp);
 			set_A2K_JPEG_Tint(0);
 			Tint_Idx = 0;
-			db_debug("setWB_Mode %d: R=%f G=%f B=%f\n", WB_Mode, WB_Mode_Table2[WB_Mode][0],
-					WB_Mode_Table2[WB_Mode][1], WB_Mode_Table2[WB_Mode][2]);
+			db_debug("setWB_Mode %d: R=%f G=%f B=%f\n", wb_mode, WB_Mode_Table2[wb_mode][0],
+					WB_Mode_Table2[wb_mode][1], WB_Mode_Table2[wb_mode][2]);
 		}
 	}
-	set_A2K_JPEG_WB_Mode(WB_Mode);
+	set_A2K_JPEG_WB_Mode(wb_mode);
 }
 
 /*
@@ -3255,12 +3255,13 @@ void setAdjWB(int idx, int value)
 
 void getAdjWB(int *val)
 {
+    int wb_mode = getWhiteBalanceMode();
 	*val     = (int)(Adj_WB_R * 1000);
 	*(val+1) = (int)(Adj_WB_G * 1000);
 	*(val+2) = (int)(Adj_WB_B * 1000);
-	*(val+3) = (int)(WB_Mode_Table2[WB_Mode][0] * 1000);
-	*(val+4) = (int)(WB_Mode_Table2[WB_Mode][1] * 1000);
-	*(val+5) = (int)(WB_Mode_Table2[WB_Mode][2] * 1000);
+	*(val+3) = (int)(WB_Mode_Table2[wb_mode][0] * 1000);
+	*(val+4) = (int)(WB_Mode_Table2[wb_mode][1] * 1000);
+	*(val+5) = (int)(WB_Mode_Table2[wb_mode][2] * 1000);
 }
 
 void getAEGParameters(int *val)
@@ -3287,7 +3288,7 @@ int getBaseIntensity(void)
 	int gain_max,exp_max,exp_min,DT_Gain,freq = 0;
 
 	freq = ISP_AEG_EP_IMX222_Freq;
-	int sflash = (((60-(10*freq))*2)*10)/MainFPS;       // freq: 0->60Hz, 1->50Hz
+	int sflash = (((60-(10*freq))*2)*10)/getFPS();       // freq: 0->60Hz, 1->50Hz
                                                             // sflash: 4 = 30fps, 120/30=4
                                                             //         12 = 10fps, 120/10=12
                                                             //         120 = 1fps, 120/1=120

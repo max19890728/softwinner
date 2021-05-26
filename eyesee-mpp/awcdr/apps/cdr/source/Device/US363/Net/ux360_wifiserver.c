@@ -602,7 +602,7 @@ void runLiveMode(float *fval) {
 		if(touch_pan_tilt_init == 0) {		//連線一開始 init touch_pan touch_tilt
 			touch_pan_tilt_init = 1;
 			mModeSelectEn = 2;
-//			mPlayMode = Main.PlayMode2;
+			mPlayMode = getPlayMode();
 		}
 	    if(mModeSelectEn == 2) mModeSelectEn = 0;
 		    
@@ -2531,7 +2531,7 @@ db_wifi_cmd("new_sock_command1: 'AUDO'\n");
 				}
 			    			
     			// record audio
-    			if(Main.Time_Lapse_Mode == 0){
+    			if(getTimeLapseMode() == 0){
     				//if(Main.ls_audioTS.size() >= 200 && mAudioEn == 0){
 					//	Main.ls_audioTS.clear();
     				//	Main.ls_readBufSize.clear();
@@ -5590,6 +5590,8 @@ db_wifi_cmd("process_output_stream: 'RMDT'\n");
 		int tid = getSockCmdSta_tId_Record();
 		int f_sta = getSockCmdSta_f_recStatus();
 		int p_sta = getSockCmdSta_p_recStatus();
+        int camera_mode = getCameraMode();
+        int timelapse_mode = getTimeLapseMode();
 		if(getSockCmdSta_recStatus() == 0){
 			setSockCmdSta_sId_Record(sid+1);
 			setSockCmdSta_recStatus(1);
@@ -5600,19 +5602,19 @@ db_wifi_cmd("process_output_stream: 'CAMO'\n");
 		set_sock_cmd_sta_header2(&cmd[0], 20, sid, tid, &cmdHeader2);
 		if(mw){
 			send_data(mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			send_data(mSocket, (char*)&Main.databin.getCameraMode(), sizeof(Main.databin.getCameraMode()));
+			send_data(mSocket, (char*)&camera_mode, sizeof(camera_mode));
 			send_data(mSocket, (char*)&f_sta, sizeof(f_sta));
 			send_data(mSocket, (char*)&p_sta, sizeof(p_sta));
 //			send_data(mSocket, (char*)&Main.recTime, sizeof(Main.recTime));
-//			send_data(mSocket, (char*)&Main.Time_Lapse_Mode, sizeof(Main.Time_Lapse_Mode));
+			send_data(mSocket, (char*)&timelapse_mode, sizeof(timelapse_mode));
 		}
 		if(gw){
 			send_data(gSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			send_data(gSocket, (char*)&Main.databin.getCameraMode(), sizeof(Main.databin.getCameraMode()));
+			send_data(gSocket, (char*)&camera_mode, sizeof(camera_mode));
 			send_data(gSocket, (char*)&f_sta, sizeof(f_sta));
 			send_data(gSocket, (char*)&p_sta, sizeof(p_sta));
 //			send_data(gSocket, (char*)&Main.recTime, sizeof(Main.recTime));
-//			send_data(gSocket, (char*)&Main.Time_Lapse_Mode, sizeof(Main.Time_Lapse_Mode));
+			send_data(gSocket, (char*)&timelapse_mode, sizeof(timelapse_mode));
 		}
 		printf("SCmd:'CAMO' [Cmd Status2] send CAMO\n");
 	}
@@ -5655,6 +5657,8 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 //		getBma2x2orientationdata(sensorData, 1); 
 		int pitch = (int)(sensorData[1] * 100);
 		int roll = (int)(sensorData[2] * 100);
+        int free_cnt = getFreeCount();
+        int fps = getFPS();
 //		get_current_usec(&Main.systemTime);
 		if(mw){
 			send_data(mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
@@ -5665,8 +5669,8 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 //			send_data(mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
 //			send_data(mSocket, (char*)&Main.power, sizeof(Main.power));
 //			send_data(mSocket, (char*)&Main.systemTime, sizeof(Main.systemTime));
-//			send_data(mSocket, (char*)&Main.FPS, sizeof(Main.FPS));
-//			send_data(mSocket, (char*)&Main.freeCount, sizeof(Main.freeCount));
+			send_data(mSocket, (char*)&fps, sizeof(fps));
+			send_data(mSocket, (char*)&free_cnt, sizeof(free_cnt));
 			send_data(mSocket, (char*)&currentValue[0], sizeof(currentValue[0]));
 			send_data(mSocket, (char*)&currentValue[1], sizeof(currentValue[1]));
 			send_data(mSocket, (char*)&currentValue[2], sizeof(currentValue[2]));
@@ -5687,8 +5691,8 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 //			send_data(gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
 //			send_data(gSocket, (char*)&Main.power, sizeof(Main.power));
 //			send_data(gSocket, (char*)&Main.systemTime, sizeof(Main.systemTime));
-//			send_data(gSocket, (char*)&Main.FPS, sizeof(Main.FPS));
-//			send_data(gSocket, (char*)&Main.freeCount, sizeof(Main.freeCount));
+			send_data(gSocket, (char*)&fps, sizeof(fps));
+			send_data(gSocket, (char*)&free_cnt, sizeof(free_cnt));
 			send_data(gSocket, (char*)&currentValue[0], sizeof(currentValue[0]));
 			send_data(gSocket, (char*)&currentValue[1], sizeof(currentValue[1]));
 			send_data(gSocket, (char*)&currentValue[2], sizeof(currentValue[2]));

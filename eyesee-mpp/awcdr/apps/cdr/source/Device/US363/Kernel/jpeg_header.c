@@ -1320,7 +1320,7 @@ void set_panorama_head(int width, int height, int Top) {
     sprintf(hstr2, "%04d\0", height2);
 
     // 影像起始位址
-    posi = get_CameraPositionMode();
+    posi = getCameraPositionMode();
     if(posi == 1) {
         if( (width == 3072 && height == 576) || (width == 6144 && height == 1152) )
             sprintf(topstr, "%04d\0", (int)( (height2 / 2) - ( (15.0 / 180.0) * height2) ) );

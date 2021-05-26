@@ -230,8 +230,10 @@ void MakeH264DataHeader(unsigned width, unsigned height, char *cT_Buf, unsigned 
 
 void MakeH264DataHeaderProc() {
 	int i, Header_Size;
+    int width, height;
 	char Header_Buf[64];
-	MakeH264DataHeader(ResolutionWidth/16, ResolutionHeight/16, &Header_Buf[0], &Header_Size, 1);
+    getResolutionWidthHeight(&width, &height);
+	MakeH264DataHeader(width/16, height/16, &Header_Buf[0], &Header_Size, 1);
 	Set_FPGA_H264_SPS_PPS(&Header_Buf[0]);
 }
 

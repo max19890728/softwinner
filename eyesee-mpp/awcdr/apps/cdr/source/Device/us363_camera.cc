@@ -47,55 +47,17 @@ int mWifiStaType = 0, mWifiStaLinkType = 0, mWifiStaReboot = 0;     /** wifiType
 char mWifiStaIP[32], mWifiStaGateway[32], mWifiStaPrefix[32];       /** wifiIP, wifiGateway, wifiPrefix */
 char mWifiStaDns1[32], mWifiStaDns2[32];        /** wifiDns1, wifiDns2 */
 
-#define COUNTRY_CODE_TAIWAN         158
-#define COUNTRY_CODE_JAPAN          392
-#define COUNTRY_CODE_CHINA          156
-#define COUNTRY_CODE_USA            840
 int mCountryCode = COUNTRY_CODE_USA;            /** LangCode */
-
-#define CUSTOMER_CODE_ULTRACKER     0
-#define CUSTOMER_CODE_LETS          10137
-#define CUSTOMER_CODE_ALIBABA       2067001   
-#define CUSTOMER_CODE_PIIQ   	    20141	    /* 客戶後來更名為PEEK */
 int mCustomerCode = CUSTOMER_CODE_ULTRACKER;    /** customerCode */
 
-//int mLensCode = 0;			                //新舊鏡頭 0:old 1:new  /** LensCode */
-//int mVersionDate = 190507;                    /** versionDate */
 //int mMcuVersion = 45;                         /** mcuVersion */
-
 int mUserCtrl = 1, mUserCtrlLst = 0;            //使用者控制FPS,  0: auto 1: 30fps   /** User_Ctrl, User_Ctrl_lst */
-
 int mWifiDisableTime = 180;                     /** wifiDisableTime */
-
 int mFreeCount = 0;                             //DataBin, 剩餘拍攝張數/錄影時間 /** freeCount */
 
-enum {
-    PLAY_MODE_GLOBAL = 0,
-    PLAY_MODE_FRONT  = 1,
-    PLAY_MODE_360    = 2,
-    PLAY_MODE_240    = 3,
-    PLAY_MODE_180X2  = 4,
-    PLAY_MODE_4SPLIT = 5,
-    PLAY_MODE_PIP    = 6
-};
 int mPlayMode    = PLAY_MODE_GLOBAL;            /** PlayMode2 */                              
 int mPlayModeTmp = PLAY_MODE_GLOBAL;            /** PlayMode2_tmp */   
 
-#define RESOLUTION_WIDTH_12K    11520
-#define RESOLUTION_WIDTH_4K     3840
-#define RESOLUTION_WIDTH_8K     7680
-#define RESOLUTION_WIDTH_10K    10240
-#define RESOLUTION_WIDTH_6K     6144
-#define RESOLUTION_WIDTH_3K     3072
-#define RESOLUTION_WIDTH_2K     2048
-
-#define RESOLUTION_HEIGHT_12K   5760
-#define RESOLUTION_HEIGHT_4K    1920
-#define RESOLUTION_HEIGHT_8K    3840
-#define RESOLUTION_HEIGHT_10K   5120
-#define RESOLUTION_HEIGHT_6K    3072
-#define RESOLUTION_HEIGHT_3K    1536
-#define RESOLUTION_HEIGHT_2K    1024
 int mResolutionWidthHeight[15][2] = {
 /* 0*/    { 0, 0 },
 /* 1*/    { RESOLUTION_WIDTH_12K, RESOLUTION_HEIGHT_12K },
@@ -113,180 +75,53 @@ int mResolutionWidthHeight[15][2] = {
 /*13*/    { RESOLUTION_WIDTH_3K,  RESOLUTION_HEIGHT_3K  },
 /*14*/    { RESOLUTION_WIDTH_2K,  RESOLUTION_HEIGHT_2K  }
 };
-
-enum {
-    RESOLUTION_MODE_FIX = 0,
-    RESOLUTION_MODE_12K = 1,
-    RESOLUTION_MODE_4K  = 2,
-    RESOLUTION_MODE_8K  = 7,
-    RESOLUTION_MODE_10K = 8,
-    RESOLUTION_MODE_6K  = 12,
-    RESOLUTION_MODE_3K  = 13,
-    RESOLUTION_MODE_2K  = 14
-};
 int mResolutionMode    = RESOLUTION_MODE_4K;    /** ResolutionMode */
 //int mResolutionModeLst = RESOLUTION_MODE_4K;    /** ResolutionMode_lst */
 int mResolutionWidth   = mResolutionWidthHeight[RESOLUTION_MODE_4K][0];     /** ResolutionWidth */
 int mResolutionHeight  = mResolutionWidthHeight[RESOLUTION_MODE_4K][1];     /** ResolutionHeight */
 
-enum {
-    CAMERA_MODE_CAP           = 0,
-    CAMERA_MODE_REC           = 1,
-    CAMERA_MODE_TIMELAPSE     = 2,
-    CAMERA_MODE_AEB           = 3,
-    CAMERA_MODE_RAW           = 4,
-    CAMERA_MODE_HDR           = 5,
-    CAMERA_MODE_NIGHT         = 6,
-    CAMERA_MODE_NIGHT_HDR     = 7,
-    CAMERA_MODE_SPORT         = 8,
-    CAMERA_MODE_SPORT_WDR     = 9,
-    CAMERA_MODE_REC_WDR       = 10,
-    CAMERA_MODE_TIMELAPSE_WDR = 11,
-    CAMERA_MODE_M_MODE        = 12,
-    CAMERA_MODE_REMOVAL       = 13,
-    CAMERA_MODE_3D_MODEL      = 14
-};
 int mCameraMode = CAMERA_MODE_HDR;              /** CameraMode */       	
 int mFPS = 100;                                 /** FPS */
 
-enum {
-    CAPTURE_MODE_BURST      = -1,               //連拍
-    CAPTURE_MODE_NORMAL     = 0,                //一般拍照
-    CAPTURE_MODE_SELFIE_2S  = 2,                //2S自拍
-    CAPTURE_MODE_SELFIE_10S =10                 //10S自拍
-};
 int mCaptureMode = CAPTURE_MODE_NORMAL;         /** CaptureMode */
 int mCaptureCnt = 3;            	            // 連拍: 1 3 5 10 ...                 /** CaptureCnt */
 int mCaptureIntervalTime = 160;    	            // 連拍間隔時間: 500ms 1000ms ...     /** CaptureSpaceTime */
 int mSelfieTime = 0;            	            // 0: none 2: 2秒自拍 10: 10秒自拍    /** SelfTimer */
 
-enum {
-    TIMELAPSE_MODE_NONE  = 0,
-    TIMELAPSE_MODE_1S    = 1,
-    TIMELAPSE_MODE_2S    = 2,
-    TIMELAPSE_MODE_5S    = 3,
-    TIMELAPSE_MODE_10S   = 4,
-    TIMELAPSE_MODE_30S   = 5,
-    TIMELAPSE_MODE_60S   = 6,
-    TIMELAPSE_MODE_166MS = 7
-};
 int mTimeLapseMode = TIMELAPSE_MODE_NONE;        /** Time_Lapse_Mode */
 
-enum {
-    CAMERA_POSITION_CTRL_MODE_MANUAL = 0,
-    CAMERA_POSITION_CTRL_MODE_AUTO
-};
-enum {
-    CAMERA_POSITION_0   = 0,
-    CAMERA_POSITION_180 = 1,
-    CAMERA_POSITION_90  = 2
-};
 #define CAMERA_POSITION_OVER_COUNT      4
 int mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_AUTO;   /** CtrlCameraPositionMode */    
 int mCameraPositionMode     = CAMERA_POSITION_0;                /** CameraPositionMode */  
-int mCameraPositionModeLst  = CAMERA_POSITION_0;                /** CameraPositionModelst */
 int mCameraPositionModeChange = 0;               /** CameraPositionModeChange */
 int mCameraPositionCnt = 0;                      //連續幾次才變化, 解震盪現象 /** CameraPositionCnt */
 
-enum {
-    WHITE_BALANCE_MODE_AUTO        = 0,         //自動
-    WHITE_BALANCE_MODE_TUNGSTEN    = 1,         //鎢絲燈
-    WHITE_BALANCE_MODE_FLUORESCENT = 2,         //日光燈
-    WHITE_BALANCE_MODE_SUN         = 3,         //陽光
-    WHITE_BALANCE_MODE_CLOUDY      = 4          //陰天
-};
 int mWhiteBalanceMode = WHITE_BALANCE_MODE_AUTO;    /** WB_Mode */
 
 int mWifiChannel = 6;                           /** WifiChannel */
 int mAegEpFreq = 60;                            // 60:60Hz 50:50Hz  /** AEG_EP_Freq */
 
-//#define FAN_CTRL_TIME   2                     /* 幾秒做一次FanCtrl, 單位:秒 */    /** FanCtrlCounter */
-//#define CPU_TEMPERATURE_MAX     105           /* Cpu最高溫度 */   /** CpuTempMax */
-//enum {
-//    FAN_CTRL_OFF    = 0,
-//    FAN_CTRL_FAST   = 1,
-//    FAN_CTRL_MEDIAN = 2,
-//    FAN_CTRL_SLOW   = 3
-//};
-//int mFanCtrl = FAN_CTRL_MEDIAN;               /** FanCtrl */
-//int cpuTempThreshold = 70;                    // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整   /** CpuTempThreshold */             
-//int cpuTempDownClose = -5;                    // Cpu降幾度關風扇  /** CpuTempDownClose */
-//int fanSpeed = 0, fanSpeedLst = -1;           /** FanSpeed, FanLstLv */
-//int fanCtrlCount = 0;                         /** FanCtrlCount */
-//#define FAN_PRE_RANGE   10                    /** fanPreRange */
-//int fanAlwaysOn = 0;
-//int fanPreData = 0;
-//int fanAvgCnt = 0;                            /** fanAvgFlag */                     
+int mFanCtrl = FAN_CTRL_MEDIAN;                 /** FanCtrl */     
+//#define FAN_CTRL_TIME   2                     /* 幾秒做一次FanCtrl, 單位:秒 */    /** FanCtrlCounter */      
+//int fanCtrlCount = 0;                         /** FanCtrlCount */                    
 
-enum {
-    COLOR_STITCHING_MODE_OFF  = 0,
-    COLOR_STITCHING_MODE_ON   = 1,
-    COLOR_STITCHING_MODE_AUTO = 2
-};
 int mColorStitchingMode = COLOR_STITCHING_MODE_ON;      /** Color_ST_Mode */
-
-enum {
-    TRANSLUCENT_MODE_OFF  = 0,
-    TRANSLUCENT_MODE_ON   = 1,
-    TRANSLUCENT_MODE_AUTO = 2
-};
 int mTranslucentMode = TRANSLUCENT_MODE_ON;             /** Translucent_Mode */
 
 int mAutoGlobalPhiAdjMode = 0;                          //0~100  /** doAutoGlobalPhiAdjMode */ 
 int mHDMITextVisibilityMode = 1;                        /** HDMITextVisibilityMode */
 
-enum {
-    JPEG_QUALITY_MODE_HIGH   = 0,
-    JPEG_QUALITY_MODE_MIDDLE = 1,
-    JPEG_QUALITY_MODE_LOW    = 2
-};
-enum {
-    JPEG_LIVE_QUALITY_MODE_HIGH = 0,                    //每秒全張數送給遠端, high quality, ex:4K = 10fps
-    JPEG_LIVE_QUALITY_MODE_LOW                          //每秒半張數送給遠端,  low quality, ex:4K =  5fps, 達到降低WIFI傳輸量
-};
 int mJpegQualityMode = JPEG_QUALITY_MODE_HIGH;			//照片的Quality    /** JPEGQualityMode */
 int mJpegLiveQualityMode = JPEG_LIVE_QUALITY_MODE_HIGH; //Live時JPEG的Quality    /** LiveQualityMode */
 
 #define LED_BRIGHTNESS_AUTO     -1
 int mLedBrightness = LED_BRIGHTNESS_AUTO;			    //-1:自動,亮度:0~100   /** ledBrightness */
-
-enum {
-    SPEAKER_MODE_ON = 0,
-    SPEAKER_MODE_OFF
-};
 int mSpeakerMode = SPEAKER_MODE_ON;				        /** speakerMode */
-
-enum {
-    OLED_CONTROL_ON = 0,
-    OLED_CONTROL_OFF
-};
 int mOledControl = OLED_CONTROL_ON;				        /** oledControl */
 
-enum {
-    HDR_INTERVAL_EV_MODE_LOW    = 2,                    //Ev:  0,-1,-2
-    HDR_INTERVAL_EV_MODE_MIDDLE = 4,                    //Ev: +1,-1,-3
-    HDR_INTERVAL_EV_MODE_HIGHT  = 8                     //Ev: +2,-1,-4
-};
 int mHdrIntervalEvMode = HDR_INTERVAL_EV_MODE_MIDDLE;   /** HdrEvMode */
-
-enum {
-    WDR_MODE_HIGH   = 0,
-    WDR_MODE_MIDDLE = 1,
-    WDR_MODE_LOW    = 2
-};
 int mWdrMode = WDR_MODE_MIDDLE;	 			            /** WdrMode */
 
-enum {
-    BOTTOM_MODE_OFF            = 0,                     //關閉
-    BOTTOM_MODE_EXTRND         = 1,                     //延伸
-    BOTTOM_MODE_IMAGE_DEFAULT  = 2,                     //加底圖(default)
-    BOTTOM_MODE_MIRROR         = 3,                     //鏡像
-    BOTTOM_MODE_IMAGE_USER     = 4                      //加底圖(user)
-};
-enum {
-    BOTTOM_TEXT_MODE_OFF = 0,
-    BOTTOM_TEXT_MODE_ON
-};
 int mBottomMode = BOTTOM_MODE_IMAGE_DEFAULT;			/** BottomMode */
 int mBottomSize = 50;	                                //10~100 /** BottomSize */
 int mBottomTextMode = BOTTOM_TEXT_MODE_OFF;		        /** BottomTextMode */
@@ -295,22 +130,14 @@ int mHttpPort = 8080;                                   /** definePort */
 char mHttpAccount[32] = "admin\0";                      /** httpAccount */
 char mHttpPassword[32] = "admin\0";                     /** httpPassword */
     
-enum {
-    FPGA_VIDEO_ENCODE_TYPE_JPEG = 0,
-    FPGA_VIDEO_ENCODE_TYPE_H264 = 1
-}
-int mFpgaEncodeType = FPGA_VIDEO_ENCODE_TYPE_H264;		/** FPGA_Encode_Type */   
+int mTimelapseEncodeType = TIMELAPSE_ENCODE_TYPE_H264;		/** FPGA_Encode_Type */   
     
 #define POWER_SAVING_INIT_OVERTIME      35000   /* 35s */
 #define POWER_SAVING_CMD_OVERTIME_5S    5000    /* 5s */
 #define POWER_SAVING_CMD_OVERTIME_15S   15000  	/* 15s */
-enum {
-    POWER_SAVING_MODE_OFF = 0,
-    POWER_SAVING_MODE_ON
-};
 int mPowerSavingMode = POWER_SAVING_MODE_OFF;							            //省電模式, 0:Off 1:On  /** Power_Saving_Mode */
 unsigned long long powerSavingInitTime1 = 0, powerSavingInitTime2 = 0;                   /** Power_Saving_Init_t1, Power_Saving_Init_t2*/
-unsigned long long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start, Cap_Rec_Finish_t*/
+unsigned long long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start_t, Cap_Rec_Finish_t*/
 unsigned long long powerSavingSendDataStateTime = 0;								        /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
 unsigned long long powerSavingOvertime = 0;                                              /** Power_Saving_Overtime */
 unsigned long long powerSavingSetingUiTime1=0, powerSavingSetingUiTime2=0;               /** Seting_UI_t1, Seting_UI_t2 */
@@ -372,7 +199,7 @@ int hdmiState = 0/*, hdmiStateLst = -1*/;           //0:off 1:on    /** HDMI_Sta
 int hdmiStateChange = 0;                        /** HDMI_State_Change */
     
 int fpgaCheckSum = 0;
-int skipWatchDog = 0, skipWatchDogLst = -1;     /**  , skipWatchDog_lst */
+int skipWatchDog = 0/*, skipWatchDogLst = -1*/;     /**  , skipWatchDog_lst */
 int dnaCheck = 0, dnaCheckLst = -1;             //0:err 1:ok  /** dna_check_ok, dna_check_ok_lst */
 
 char thmPath[128];                              /** THM_path */
@@ -494,7 +321,7 @@ int doAutoStitchingFlag = 0;                    /** doAutoStitch_flag */
 //int mcuAdcValue = 1000;                         /** adcValue */
 
 int focusSensor2 = -1;                          /** Focus2_Sensor */
-int focusSensor = 0;                            /** Focus_Sensor */
+//int focusSensor = 0;                            /** Focus_Sensor */
 int focusIdx = 0;                               /** Focus_Idx */
 int focusToolNum = 0;                           /** Focus_Tool_Num */
 
@@ -612,6 +439,15 @@ int getDoAutoStitchFlag() { return doAutoStitchingFlag; }
 void setResolutionMode(int resolution) { mResolutionMode = resolution; }
 int getResolutionMode() { return mResolutionMode; }
 
+void setResolutionWidthHeight(int resolution) {
+    mResolutionWidth   = mResolutionWidthHeight[resolution][0];
+    mResolutionHeight  = mResolutionWidthHeight[resolution][1];
+}
+void getResolutionWidthHeight(int *width, int *height) { 
+    *width  = mResolutionWidth;
+    *height = mResolutionHeight;
+}
+
 void setPlayMode(int play_mode) { mPlayMode = play_mode; }
 int getPlayMode() { return mPlayMode; }
 
@@ -627,15 +463,6 @@ void setAegEpFreq(int freq) {
 }
 int getAegEpFreq() { return mAegEpFreq; }
 
-void setResolutionWidthHeight(int resolution) {
-    mResolutionWidth   = mResolutionWidthHeight[resolution][0];
-    mResolutionHeight  = mResolutionWidthHeight[resolution][1];
-}
-void getResolutionWidthHeight(int *width, int *height) { 
-    *width  = mResolutionWidth;
-    *height = mResolutionHeight;
-}
-
 void setChooseModeTime(unsigned long long time) { chooseModeTime = time; }
 void getChooseModeTime(unsigned long long *time) { *time = chooseModeTime; }
 
@@ -648,44 +475,146 @@ int getHdmiState() { return hdmiState; }
 void setHdmiStateChange(int en) { hdmiStateChange = en; }
 int getHdmiStateChange() { return hdmiStateChange; }
 
+void setCameraMode(int camrea_mode) { mCameraMode = camrea_mode; }
+int getCameraMode() { return mCameraMode; }
 
+void setMjpegFps(int fps) { mjpegFps = fps; }
+int getMjpegFps() { return mjpegFps; }
 
+void setMjpegSendLength(int length) { mjpegSendLength = length; }
+int getMjpegSendLength() { return mjpegSendLength; }
 
+void setRtspFps(int fps) { rtspFps = fps; }
+int getRtspFps() { return rtspFps; }
 
+void setRtspSendLength(int value) { rtspSendLength = value; }
+int getRtspSendLength() { return rtspSendLength; }
 
+void setSkipWatchDog(int flag) { skipWatchDog = flag; }
+int getSkipWatchDog() { return skipWatchDog; }
 
+void setFocusVisibilityMode(int visibility_mode) { focusVisibilityMode = visibility_mode; }
+int getFocusVisibilityMode() { return focusVisibilityMode; }
 
+void setPowerSavingMode(int pw_save_mode) { mPowerSavingMode = pw_save_mode; }
+int getPowerSavingMode() { return mPowerSavingMode; }
 
+void setUserCtrl(int user_ctrl) { mUserCtrl = user_ctrl; }
+int getUserCtrl() { return mUserCtrl; }
 
-void getUS363Version(char *version) {
-    sprintf(version, "%s\0", mUS363Version);
+void setFocusSensor2(int sensor) { focusSensor2 = sensor; }
+int getFocusSensor2() { return focusSensor2; }
+
+void setCaptureMode(int capture_mode) { mCaptureMode = capture_mode; }
+int getCaptureMode() { return mCaptureMode; }
+
+void setSaturation(int saturation) { mSaturation = saturation; }
+int getSaturation() { return mSaturation; }
+
+void setSaturationInitFlag(int flag) { saturationInitFlag = flag; }
+int getSaturationInitFlag() { return SaturationInitFlag; }
+
+void setTesttoolDelayTime(int idx, unsigned long long time) {
+	if(idx == 1)      testtoolDelayTime1 = time;
+	else if(idx == 2) testtoolDelayTime2 = time;
+}
+unsigned long long getTesttoolDelayTime(int idx) {
+	unsigned long long time;
+	if(idx == 1)      time = testtoolDelayTime1;
+	else if(idx == 2) time = testtoolDelayTime2;
+	return time;
 }
 
-void setCtrlCameraPositionMode(int mode) {
-	mCtrlCameraPositionMode = mode;
-}
-int getCtrlCameraPositionMode(void) {
-	return mCtrlCameraPositionMode;
-}
+void getUS363Version(char *version) { sprintf(version, "%s\0", mUS363Version); }
 
-int setCameraPositionMode(int mode) {
-	mCameraPositionMode = mode;
-    if(mCameraPositionMode != mCameraPositionModelst) {
-        mCameraPositionModelst = mCameraPositionMode;
-        mCameraPositionModeChange = 1;
-    }
-    else {
-        mCameraPositionModeChange = 0;
-    }
-    return mCameraPositionModeChange;
-}
-int getCameraPositionMode(void) {
-	return mCameraPositionMode;
-}
+void setWifiDisableTime(int time) { mWifiDisableTime = time; }
+int getWifiDisableTime() { return mWifiDisableTime; }
 
-int getCameraPositionModeChange(void) {
-	return mCameraPositionModeChange;
+void setFreeCount(int cnt) { mFreeCount = cnt; }
+int getFreeCount() { return mFreeCount; }
+
+void setCaptureCnt(int cnt) { mCaptureCnt = cnt; }
+int getCaptureCnt() { return mCaptureCnt; }
+
+void setCaptureIntervalTime(int time) { mCaptureIntervalTime = time; }
+int getCaptureIntervalTime() { return mCaptureIntervalTime; }
+
+void setSelfieTime(int time) { mSelfieTime = time; }
+int getSelfieTime() { return mSelfieTime; }
+
+void setTimeLapseMode(int tl_mode) { mTimeLapseMode = tl_mode; }
+int getTimeLapseMode() { return mTimeLapseMode; }
+
+void setCtrlCameraPositionMode(int ctrl_mode) { mCtrlCameraPositionMode = ctrl_mode; }
+int getCtrlCameraPositionMode() { return mCtrlCameraPositionMode; }
+
+void setCameraPositionMode(int position_mode) { mCameraPositionMode = position_mode; }
+int getCameraPositionMode() { return mCameraPositionMode; }
+
+void setCameraPositionModeChange(int en) { mCameraPositionModeChange = en; }
+int getCameraPositionModeChange() { return mCameraPositionModeChange; }
+
+void setWhiteBalanceMode(int wb_mode) { mWhiteBalanceMode = wb_mode; }
+int getWhiteBalanceMode() { return mWhiteBalanceMode; }
+
+void setFanCtrl(int ctrl) { mFanCtrl = ctrl; }
+int getFanCtrl() { return mFanCtrl; }
+
+void setColorStitchingMode(int color_st_mode) { mColorStitchingMode = color_st_mode; }
+int getColorStitchingMode() { return mColorStitchingMode; }
+
+void setTranslucentMode(int tran_mode) { mTranslucentMode = tran_mode; }
+int getTranslucentMode() { return mTranslucentMode; }
+
+void setAutoGlobalPhiAdjMode(int adj_mode) { mAutoGlobalPhiAdjMode = adj_mode; }
+int getAutoGlobalPhiAdjMode() { return mAutoGlobalPhiAdjMode; }
+
+void setHDMITextVisibilityMode(int visibility_mode) { mHDMITextVisibilityMode = visibility_mode; }
+int getHDMITextVisibilityMode() { return mHDMITextVisibilityMode; }
+
+void setJpegQualityMode(int quality_mode) { 
+    mJpegQualityMode = quality_mode; 
+    set_A2K_JPEG_Quality_Mode(quality_mode);
 }
+int getJpegQualityMode() { return mJpegQualityMode; }
+
+void setJpegLiveQualityMode(int quality_mode) { mJpegLiveQualityMode = quality_mode; }
+int getJpegLiveQualityMode() { return mJpegLiveQualityMode; }
+
+void setLedBrightness(int led_brightness) { mLedBrightness = led_brightness; }
+int getLedBrightness() { return mLedBrightness; }
+
+void setSpeakerMode(int speaker_mode) { mSpeakerMode = speaker_mode; }
+int getSpeakerMode() { return mSpeakerMode; }
+
+void setOledControl(int oled_ctrl) { mOledControl = oled_ctrl; }
+int getOledControl() { return mOledControl; }
+
+void setHdrIntervalEvMode(int hdr_ev_mode) { mHdrIntervalEvMode = hdr_ev_mode; }
+int getHdrIntervalEvMode() { return mHdrIntervalEvMode; }
+
+void setWdrMode(int wdr_mode) { mWdrMode = mode; }
+int getWdrMode() { return mWdrMode; }
+
+void setBottomMode(int btm_mode) { mBottomMode = btm_mode; }
+int getBottomMode() { return mBottomMode; }
+
+void setBottomSize(int size) { mBottomSize = size; }
+int getBottomSize() { return mBottomSize; }
+
+void setBottomTextMode(int btm_text_mode) { 
+    mBottomTextMode = btm_text_mode; 
+    set_A2K_DMA_BottomTextMode(btm_text_mode);
+}
+int getBottomTextMode() { return mBottomTextMode; }
+
+void setTimelapseEncodeType(int enc_type) { mTimelapseEncodeType = enc_type; }
+int getTimelapseEncodeType() { return mTimelapseEncodeType; }
+
+void setPowerSavingMode(int mode) { mPowerSavingMode = mode; }
+int getPowerSavingMode() { return mPowerSavingMode; }
+
+
 
 
 //==================== fucntion ====================
@@ -809,11 +738,11 @@ void databinInit(int country, int customer)
 	
 	//TagCamPositionMode = 	2;
     switch(Get_DataBin_CamPositionMode() ) {
-    case 0:  setCtrlCameraPositionMode(1); break;
-    case 1:  setCtrlCameraPositionMode(0); setCameraPositionMode(0); break;
-    case 2:  setCtrlCameraPositionMode(0); setCameraPositionMode(1); break;
-    case 3:  setCtrlCameraPositionMode(0); setCameraPositionMode(2); break;
-    default: setCtrlCameraPositionMode(0); setCameraPositionMode(0); break;
+    case 0:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_AUTO); break;
+    case 1:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
+    case 2:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_180); break;
+    case 3:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_90);  break;
+    default: setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
     }
     set_A2K_DMA_CameraPosition(getCameraPositionMode());
 	
@@ -888,7 +817,7 @@ void databinInit(int country, int customer)
 	
 	//TagFanControl = 		28;
 	int ctrl = Get_DataBin_FanControl();
-	SetFanCtrl(ctrl);
+	setFanCtrl(ctrl);
 	
 	//TagSharpness = 		29;
     setStrengthWifiCmd(Get_DataBin_Sharpness() );
@@ -900,35 +829,35 @@ void databinInit(int country, int customer)
     SetCameraMode(Get_DataBin_CameraMode() );
 
 	//TagColorSTMode = 		32;
-    SetColorSTSW(1);		//SetColorSTSW(Get_DataBin_ColorSTMode() );
+    setColorStitchingMode(COLOR_STITCHING_MODE_ON);
+//tmp    SetColorSTSW(getColorStitchingMode());      //S2:smooth.c / us360_func.c
 	
 	//TagAutoGlobalPhiAdjMode = 33;
-    mAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
-    setSmoothParameter(3, mAutoGlobalPhiAdjMode);
+    setAutoGlobalPhiAdjMode(Get_DataBin_AutoGlobalPhiAdjMode());
+    setSmoothParameter(3, getAutoGlobalPhiAdjMode());
 	
 	//TagHDMITextVisibility = 34;
-    mHDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
+    setHDMITextVisibilityMode(Get_DataBin_HDMITextVisibility());
 	
 	//TagSpeakerMode = 		35;
-    mSpeakerMode = Get_DataBin_SpeakerMode();
+    setSpeakerMode(Get_DataBin_SpeakerMode());
 	
 	//TagLedBrightness = 	36;
-//tmp    SetLedBrightness(Get_DataBin_LedBrightness() );
+    setLedBrightness(Get_DataBin_LedBrightness());
 
 	//TagOledControl = 		37;
-//tmp    setOledControl(Get_DataBin_OledControl() );
+    setOledControl(Get_DataBin_OledControl());
 
 	//TagDelayValue = 		38;
 	//TagImageQuality = 	39;
-    mJpegQualityMode = Get_DataBin_ImageQuality();
-    set_A2K_JPEG_Quality_Mode(mJpegQualityMode);
+    setJpegQualityMode(Get_DataBin_ImageQuality());
 	
 	//TagPhotographReso = 	40;
 	//TagRecordReso = 		41;
 	//TagTimeLapseReso = 	42;
 	//TagTranslucent = 		43;
-    mTranslucentMode = 1;			//mTranslucentMode = Get_DataBin_Translucent();
-    SetTransparentEn(mTranslucentMode);
+    setTranslucentMode(TRANSLUCENT_MODE_ON);
+    SetTransparentEn(getTranslucentMode());
 	
 	//TagCompassMaxx = 		44;
 	//TagCompassMaxy = 		45;
@@ -940,27 +869,25 @@ void databinInit(int country, int customer)
     mDebugLogSaveToSDCard = Get_DataBin_DebugLogMode();
 	
 	//TagBottomMode = 		51;
-    mBottomMode = Get_DataBin_BottomMode();
-	
+    setBottomMode(Get_DataBin_BottomMode());
 	//TagBottomSize = 		52;
-    mBottomSize = Get_DataBin_BottomSize();
-//tmp    SetBottomValue(mBottomMode, mBottomSize);
+    setBottomSize(Get_DataBin_BottomSize());
+//tmp    SetBottomValue(getBottomMode(), getBottomSize());      //S2:awcodec.c
 
 	//TagHdrEvMode = 		53;
-    mHdrIntervalEvMode = Get_DataBin_hdrEvMode();
-    switch(mHdrIntervalEvMode) {
+    setHdrIntervalEvMode(Get_DataBin_hdrEvMode());
+    switch(getHdrIntervalEvMode()) {
     case HDR_INTERVAL_EV_MODE_LOW: 
-        mWdrMode = WDR_MODE_LOW; 
+        setWdrMode(WDR_MODE_LOW); 
         break;
     case HDR_INTERVAL_EV_MODE_MIDDLE:
-        mWdrMode = WDR_MODE_MIDDLE; 
+        setWdrMode(WDR_MODE_MIDDLE); 
         break;
     case HDR_INTERVAL_EV_MODE_HIGHT:
-        mWdrMode = WDR_MODE_HIGHT; 
+        setWdrMode(WDR_MODE_HIGHT); 
         break;
     }
-    setSensorHdrLevel(mHdrIntervalEvMode);
-    SetWDRLiveStrength(mWdrMode);
+    SetWDRLiveStrength(getWdrMode(());
 	
     //TagBitrate = 			54;
 //tmp    SetBitrateMode(Get_DataBin_Bitrate() );
@@ -978,8 +905,7 @@ void databinInit(int country, int customer)
 
 	//TagCapHdrMode =		60;
 	//TagBottomTMode =		61;
-	mBottomTextMode = Get_DataBin_BottomTMode();
-//tmp	SetBottomTextMode(mBottomTextMode);
+	setBottomTextMode(Get_DataBin_BottomTMode());
 
 	//TagBottomTColor =		62;
 	//TagBottomBColor =		63;
@@ -987,7 +913,7 @@ void databinInit(int country, int customer)
 	//TagBottomTLoop =		65;
 	//TagBottomText =		66;
 	//TagFpgaEncodeType =	67;
-	mFpgaEncodeType = Get_DataBin_FpgaEncodeType();
+	setTimelapseEncodeType(Get_DataBin_FpgaEncodeType());
 
 	//TagWbRGB =			68;
 	//TagContrast =			69;
@@ -1038,8 +964,8 @@ void databinInit(int country, int customer)
     setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
 	
     //TagLiveQualityMode
-    mJpegLiveQualityMode = Get_DataBin_LiveQualityMode();
-    set_A2K_JPEG_Live_Quality_Mode(mJpegLiveQualityMode);
+    setJpegLiveQualityMode(Get_DataBin_LiveQualityMode());
+    set_A2K_JPEG_Live_Quality_Mode(getJpegLiveQualityMode());
 	
     //TagWbTemperature
     //TagWbTint
@@ -1072,7 +998,7 @@ void databinInit(int country, int customer)
 //tmp    SetLiveBitrateMode(Get_DataBin_LiveBitrate() );
 
     //TagLiveBitrate = 			95;
-    mPowerSavingMode = Get_DataBin_PowerSaving();
+    setPowerSavingMode(Get_DataBin_PowerSaving());
 }
 
 void onCreate() 
@@ -1128,7 +1054,7 @@ void onCreate()
 //tmp    Init_OLED_Country();
 //tmp    Init_US360_OLED();
 //tmp    disableShutdown(1);  
-    //ReadLensCode();           //#old/new lens
+    ReadLensCode();           //#old/new lens
 //tmp    CreatBackgroundDir();
 //tmp    Copy_FPGA_File();
 //tmp    initThmFile();         //#thm icon
@@ -1158,7 +1084,7 @@ void onCreate()
 //tmp    initWifiSerThe();
 
     //if(GetIsStandby() == 0)    
-	//	FanCtrlFunc();      //max+ S3 沒有風扇
+	//	FanCtrlFunc(getFanCtrl());      //max+ S3 沒有風扇
         
     FPGA_Ctrl_Power_Func(0, 0);
 
@@ -1170,7 +1096,7 @@ void onCreate()
         WriteLoadParameterTmpErr(ret);
     }
 
-    ModeTypeSelectS2(Get_DataBin_PlayMode(), Get_DataBin_ResoultMode(), GetHdmiState(), Get_DataBin_CameraMode() );
+    ModeTypeSelectS2(Get_DataBin_PlayMode(), Get_DataBin_ResoultMode(), getHdmiState(), Get_DataBin_CameraMode());
 
     int kpixel = ResolutionModeToKPixel(getResolutionMode() );
 //tmp    setOLEDMainModeResolu(getPlayModeTmp(), kpixel);
@@ -1180,13 +1106,13 @@ void onCreate()
         
     //getSDPath();       	
 		
-    setStitchingOut(GetCameraMode(), getPlayMode(), getResolutionMode(), GetmFPS() ); 
+    setStitchingOut(getCameraMode(), getPlayMode(), getResolutionMode(), getFPS()); 
     LineTableInit();  
         
     for(i = 0; i < 8; i++) 
-        writeCmdTable(i, getResolutionMode(), GetmFPS(), 0, 1, 0); 
+        writeCmdTable(i, getResolutionMode(), getFPS(), 0, 1, 0); 
         
-    getPath();		//取得 THMPath / DirPath
+    getPath();		//取得 THMPath / DirPath  //產生資料夾
  
 //tmp        sendImgThe = new SendImageThread();
 //tmp        sendImgThe.start();
@@ -1218,7 +1144,7 @@ void onCreate()
             }
         };*/
 
-    Show_Now_Mode_Message(getPlayMode(), GetResolutionMode(), GetmFPS(), 0);
+    Show_Now_Mode_Message(getPlayMode(), getResolutionMode(), getFPS(), 0);
         
 //tmp        handler1 = new Handler();
 //tmp        handler1.post(runnable1);
@@ -1516,7 +1442,7 @@ void onCreate()
 */
 //tmp    runAdbWifiCmd();
 
-    setSendMcuA64Version(&mSSID[0], &mPwd[0], &VersionStr[0]);
+    setSendMcuA64Version(&mSSID[0], &mPwd[0], &mUS363Version[0]);
 
 //tmp    startWebService();
 
@@ -1541,8 +1467,6 @@ void startPreview()
       EyeseeLinux::CameraFactory::GetInstance()->CreateCamera(
           EyeseeLinux::CAM_NORMAL_0);
 	camera->StartPreview();
-	//EyeseeLinux::Layer::GetInstance()->SetLayerAlpha(EyeseeLinux::LAYER_UI, 150);
-	//EyeseeLinux::Layer::GetInstance()->SetLayerTop(EyeseeLinux::LAYER_UI);
 	camera->ShowPreview();
 #endif
 }

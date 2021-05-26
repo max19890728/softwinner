@@ -27,26 +27,21 @@
 #undef LOG_TAG
 #define LOG_TAG "US363::Fan"
 
+#define FAN_PRE_RANGE   10                    /** fanPreRange */
+#define CPU_TEMPERATURE_MAX	105                /* Cpu最高溫度 */
+
 int fanAlwaysOn = 0;
 int init_fd_fanSpeed = 0, fd_fanSpeed = -1;
-
-int FanCtrl = 2;
-int CpuTempThreshold = 70;            // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整
-int CpuTempDownClose = -5;            // Cpu降幾度關風扇
-int FanSpeed = 0;
-int FanLstLv = -1;
+  
+int cpuTempDownClose = -5;            // Cpu降幾度關風扇
+int fanSpeed = 0;
 
 int task1m_lock_flag = 0;
 unsigned long long task1m_lock_schedule = 40000000;		//us, 40s
 unsigned long long task1m_lock_time;
 
-void SetFanAlwaysOn(int en) {
-	fanAlwaysOn = en;
-}
-
-int GetFanAlwaysOn() {
-	return fanAlwaysOn;
-}
+void SetFanAlwaysOn(int en) { fanAlwaysOn = en; }
+int GetFanAlwaysOn() { return fanAlwaysOn; }
 
 void SetTask1mLockFlag(int flag) {
 	task1m_lock_flag = flag;
@@ -63,29 +58,8 @@ int CheckTask1mLockTime(unsigned long long now_t) {
 		return 0;
 }
 
-void SetFanCtrl(int ctrl) {
-	FanCtrl = ctrl;
-}
-
-int GetFanCtrl() {
-	return FanCtrl;
-}
-
-void SetFanSpeed(int speed) {
-	FanSpeed = speed;
-}
-
-int GetFanSpeed() {
-	return FanSpeed;
-}
-
-void SetFanLstLv(int speed) {
-	FanLstLv = speed;
-}
-
-int GetFanLstLv() {
-	return FanLstLv;
-}
+void setFanSpeed(int speed) { fanSpeed = speed; }
+int getFanSpeed() { return fanSpeed; }
 
 int FanLevel2Speed(int level) {
     int ret = 0;
@@ -143,18 +117,22 @@ int FanSpeed2Level(int speed) {
     return ret;
 }
 
-int calculateFanLevel(int nowSpeed, int cpuTemprature) {
+int calculateFanLevel(int fan_ctrl, int nowSpeed, int cpuTemprature) {
+    int cpu_temp_threshold = 70;        // Cpu溫度門檻值, 單位:度C ,隨風扇轉速調整
     int lv = FanSpeed2Level(nowSpeed);
 
-    if(FanCtrl == 1) 	  CpuTempThreshold = 60;
-    else if(FanCtrl == 2) CpuTempThreshold = 70;
-    else				  CpuTempThreshold = 75;
+    switch(fan_ctrl) {
+    case FAN_CTRL_FAST:   cpu_temp_threshold = 60; break;
+    case FAN_CTRL_MEDIAN: cpu_temp_threshold = 70; break;
+    case FAN_CTRL_SLOW:   cpu_temp_threshold = 75; break;
+    default: cpu_temp_threshold = 75; break;
+    }
 
-    int diffTemp = cpuTemprature - CpuTempThreshold;
+    int diffTemp = cpuTemprature - cpu_temp_threshold;
     lv += diffTemp;
 
     if(FanSpeed2Level(nowSpeed) != 0 && lv < 1) {
-        if(diffTemp <= CpuTempDownClose)
+        if(diffTemp <= cpuTempDownClose)
             lv = 0;
         else
             lv = 1;
@@ -165,10 +143,10 @@ int calculateFanLevel(int nowSpeed, int cpuTemprature) {
     return lv;
 }
 
-void FanCtrlFunc() {
-	int fanPreRange = 10;
-	static int fanPreData = 0;
-	static int fanAvgFlag = 0;
+void FanCtrlFunc(int fan_ctrl) {
+	static int fan_pre_data = 0;
+	static int fan_avg_cnt = 0;
+    static int fan_speed_lst = -1
 
 //tmp   	if(GetLedByTimeFlag() == 1) {
 //tmp   		return;
@@ -183,51 +161,53 @@ void FanCtrlFunc() {
 	MainCmd = TestToolCmd.MainCmd;
 	SubCmd  = TestToolCmd.SubCmd;
 
-    if(FanCtrl == 0)        FanSpeed = 0;
+    if(fan_ctrl == FAN_CTRL_OFF) {
+        setFanSpeed(0);
+    }
     else if(MainCmd == 7 && SubCmd == 7){
 //tmp      	do_Test_Mode_Func_jni(MainCmd, SubCmd);
     }
     else{
-    	int level = calculateFanLevel(FanSpeed, CpuNowTemp);
+    	int level = calculateFanLevel(fan_ctrl, getFanSpeed(), CpuNowTemp);
         int speed = FanLevel2Speed(level);
-        FanSpeed = speed;
+        setFanSpeed(speed);
     }
 
     int fpgatemp = Read_FPGA_Pmw();
-    if(fanPreData == 0 || fpgatemp < fanPreData){
-      	fanPreData = fpgatemp;
+    if(fan_pre_data == 0 || fpgatemp < fan_pre_data){
+      	fan_pre_data = fpgatemp;
     }
 
     if(GetFanAlwaysOn() == 1){
-      	if(FanSpeed < 40){
-      		FanSpeed = 40;
+      	if(getFanSpeed() < 40){
+      		setFanSpeed(40);
        	}
     }else{
-      	fanAvgFlag++;
-        if(fanAvgFlag >= 5){
-          	if(fpgatemp > (fanPreData + fanPreRange)){
-           		db_debug("fpga temperature start :%d\n", (fpgatemp - fanPreData) );
+      	fan_avg_cnt++;
+        if(fan_avg_cnt >= 5){
+          	if(fpgatemp > (fan_pre_data + FAN_PRE_RANGE)){
+           		db_debug("fpga temperature start :%d\n", (fpgatemp - fan_pre_data) );
            		SetFanAlwaysOn(1);
-           		fanPreData = 255;
+           		fan_pre_data = 255;
            		get_current_usec(&task1m_lock_time);
            		task1m_lock_flag = 1;
            	}
-           	fanAvgFlag = 0;
+           	fan_avg_cnt = 0;
         }
     }
 
-    if(CpuNowTemp >= CPU_TEMP_MAX){
+    if(CpuNowTemp >= CPU_TEMPERATURE_MAX){
 //      	systemlog.addLog("error", System.currentTimeMillis(), "machine", "OverHeat!", String.valueOf(CpuNowTemp));
 //tmp        stopREC(7);
 //tmp        SetPlaySoundFlag(8);
         usleep(1000000);
-//tmp        paintCpuStatus(CpuNowTemp, FanSpeed);
+//tmp        paintCpuStatus(CpuNowTemp, getFanSpeed());
     }
 
-    if(FanLstLv == -1 || (FanLstLv != FanSpeed)){
-    	FanLstLv = FanSpeed;
-        setFanRotateSpeed(FanSpeed);            // 設定風扇轉速
-        db_debug("CpuNowTemp = %d , setFanRotateSpeed = %d\n", CpuNowTemp, FanSpeed);
+    if(fan_speed_lst == -1 || (fan_speed_lst != getFanSpeed())){
+    	fan_speed_lst = getFanSpeed();
+        setFanRotateSpeed(fan_speed_lst);            // 設定風扇轉速
+        db_debug("CpuNowTemp = %d , setFanRotateSpeed = %d\n", CpuNowTemp, fan_speed_lst);
     }
 //tmp    SetMCUData(CpuNowTemp);
 }
