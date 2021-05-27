@@ -677,7 +677,7 @@ int do_Defect_Func() {
 //tmp        choose_mode_flag = 1;
         Defect_Step = 0;
 //tmp        get_current_usec(&nowTime);
-//tmp        Set_Cap_Rec_Finish_Time(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 11);
+//tmp        setPowerSavingCapRecFinishTime(nowTime, POWER_SAVING_CMD_OVERTIME_5S);
    		break;
    	}
 

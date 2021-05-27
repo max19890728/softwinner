@@ -132,15 +132,12 @@ char mHttpPassword[32] = "admin\0";                     /** httpPassword */
     
 int mTimelapseEncodeType = TIMELAPSE_ENCODE_TYPE_H264;		/** FPGA_Encode_Type */   
     
-#define POWER_SAVING_INIT_OVERTIME      35000   /* 35s */
-#define POWER_SAVING_CMD_OVERTIME_5S    5000    /* 5s */
-#define POWER_SAVING_CMD_OVERTIME_15S   15000  	/* 15s */
 int mPowerSavingMode = POWER_SAVING_MODE_OFF;							            //省電模式, 0:Off 1:On  /** Power_Saving_Mode */
 unsigned long long powerSavingInitTime1 = 0, powerSavingInitTime2 = 0;                   /** Power_Saving_Init_t1, Power_Saving_Init_t2*/
 unsigned long long powerSavingCapRecStartTime = 0, powerSavingCapRecFinishTime = 0;      /** Cap_Rec_Start_t, Cap_Rec_Finish_t*/
-unsigned long long powerSavingSendDataStateTime = 0;								        /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
+unsigned long long powerSavingSendDataStateTime = 0;								     /** Send_Data_State_t */  //預防手機忘記關閉Seting UI
 unsigned long long powerSavingOvertime = 0;                                              /** Power_Saving_Overtime */
-unsigned long long powerSavingSetingUiTime1=0, powerSavingSetingUiTime2=0;               /** Seting_UI_t1, Seting_UI_t2 */
+unsigned long long powerSavingSetingUiTime1 = 0, powerSavingSetingUiTime2 = 0;           /** Seting_UI_t1, Seting_UI_t2 */
 int fpgaStandbyEn = 0;								                                //FPGA休眠狀態, 0:Off 1:On  /** FPGA_Sleep_En */
 int powerSavingInit = 0;							                                //開機 / 休眠起來一段時間FPGA才進入休眠  /** Power_Saving_Init */
 int powerSavingSetingUiState = 0;								                    //手機Seting列的狀態, 0:close 	1:open  /** Seting_UI_State */
@@ -158,28 +155,20 @@ char mEthernetDns[64];
 int mDrivingRecordMode = 1;                     // 行車紀錄模式 0:off 1:on   /** DrivingRecord_Mode */
 int mDebugLogSaveToSDCard = 0;	 	            // 系統資料是否存入SD卡 0:off 1:on   /** DebugLog_Mode */
 
-//==================== variable ====================
-#define BOTTOM_S_WIDTH      1024                    
-#define BOTTOM_S_HEIGHT     1024    
-                                                                       
-#define BOTTOM_FILE_NAME_DEFAULT    "background_bottom"                           
-#define BOTTOM_FILE_NAME_USER       "background_bottom_user"  
-#define BOTTOM_FILE_NAME_ORG        "background_bottom_org" 
-#define BOTTOM_FILE_NAME_SOURCE     "background_bottom"
+//==================== variable ====================                               
+char bottomFileNameSource[32] = "background_bottom\0";   /** BOTTOM_FILE_NAME_SOURCE */
 
-#define SD_CARD_FREE_SIZE_MIN       0x1E00000   /* 30MB */  /** JAVA_SD_CARD_MIN_SIZE */
-
-int doResize[10];
-int doResizeFlag = 0, doResizeFlagLst = 0;      /** doResize_flag, doResize_flag_lst*/
-char doResizePath[8];                           /** doResize_path */
+int doResizeParameter[10];                      /** doResize */
+int doResizeIndex = 0, doResizeIndexLst = 0;    /** doResize_flag, doResize_flag_lst*/
+char doResizePath[8][128];                      /** doResize_path */
 int doResizeMode[8];                            /** doResize_mode */
 
 char webServiceData[0x10000];
 int webServiceDataLen = 0;
 
-int recordEn = 0;                               /** mRecordEn */
-int recordCmd = 0;                              /** mRecordCmd */
-//int recordEnJNI = -2;                         // read jni rec_state   /** mRecordEnJNI */
+int recordEn = 0;                               /** mRecordEn */    //0:stop 1:start
+int recordCmdFlag = 0;                          /** mRecordCmd */   //0:none 1:doRecordVideo 2:audio record start 3:send state to wifi
+int recordEnReal = -2;                          // read jni rec_state   /** mRecordEnJNI */ //-2:none 0:start 1:recording -1/-3:stop
 
 int wifiModeCmd = 0;                            // change Wifi or WifiAP    /** mWifiModeCmd */
 enum {
@@ -189,28 +178,27 @@ enum {
     WIFI_STA_CHANGE
 };
 int wifiModeState = WIFI_AP;                    /** mWifiModeState */
-//int wifiConnectState = 0;                     // 0:no 1:yes   /** Connect_State_lst */ // WIFI連線狀態
-int wifiAPEn=0;                                 /** wifi_connected */
-int wifiAPRestartCount = 0;                     /** systemRestartCount */
+int wifiApEn=0;                                 /** wifi_connected */
+//int wifiApRestartCount = 0;                   /** systemRestartCount */   //checkWifiAPLive() 可改靜態即可
 int wifiConnectIsAlive = 0;                     /** Wifi_Connect_isAlive */
-int wifiChangeStop = 0;
+int wifiChangeStop = 0;                         //changeWifiMode() 可改靜態即可
 
-int hdmiState = 0/*, hdmiStateLst = -1*/;           //0:off 1:on    /** HDMI_State, HDMI_State_lst */
+int hdmiState = 0/*, hdmiStateLst = -1*/;       //0:off 1:on    /** HDMI_State, HDMI_State_lst */
 int hdmiStateChange = 0;                        /** HDMI_State_Change */
     
 int fpgaCheckSum = 0;
 int skipWatchDog = 0/*, skipWatchDogLst = -1*/;     /**  , skipWatchDog_lst */
-int dnaCheck = 0, dnaCheckLst = -1;             //0:err 1:ok  /** dna_check_ok, dna_check_ok_lst */
+int dnaCheck = 0/*, dnaCheckLst = -1*/;             //0:err 1:ok  /** dna_check_ok, dna_check_ok_lst */
 
 char thmPath[128];                              /** THM_path */
 char dirPath[128];                              /** DIR_path */
 char sdPath[128] = "/mnt/extsd";                /** sd_path */
-int sdState = 0, sdStateLst = -1;               /** sd_state, lst_sd_state */
+int sdState = 0/*, sdStateLst = -1*/;               /** sd_state, lst_sd_state */
 unsigned long long sdFreeSize = 0;                   /** sd_freesize */
 unsigned long long sdAllSize = 0;                    /** sd_allsize */
 
-char capNumStr[64];                             //還可以拍幾張  /** cap_num */
-char recTimeStr[64];                            //還可以錄多久 /** rec_time */
+char capNumStr[64];                             //還可以拍幾張    /** cap_num */
+char recTimeStr[64];                            //還可以錄多久    /** rec_time */
 int recTime = 0;                                //已經錄了多久
 int isNeedNewFreeCount = 0;                     //需要重新計算還可以拍幾張/路多久, 則設成1
 //int captureDCnt = 0;                          //取得拍照時Pipe Line Cmd, readCaptureDCnt(), 可能Cmd沒有成功加入會歸零, 拍完照也會歸零
@@ -377,7 +365,7 @@ enum {
     ADJUST_SENSOR_FLAG_SYNC        = 2,
     ADJUST_SENSOR_FLAG_CHOOSE_MODE = 3
 };
-int adjSensorFlag = 0;		                    /** Adj_Sensor_Sync_Flag */
+int adjustSensorFlag = 0;		                    /** Adj_Sensor_Sync_Flag */
 
 #define  SHOW_SENSOR                0
 #define  SHOW_Adj_C_New             1
@@ -431,8 +419,6 @@ long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
 
 //==================== get/set =====================
 
-void getSdPath(char *path) { sprintf(path, "%s\0", sdPath); }
-
 void setDoAutoStitchFlag(int flag) { doAutoStitchingFlag = flag; }
 int getDoAutoStitchFlag() { return doAutoStitchingFlag; }
 
@@ -468,9 +454,6 @@ void getChooseModeTime(unsigned long long *time) { *time = chooseModeTime; }
 
 void setHdmiState(int state) { hdmiState = state; }
 int getHdmiState() { return hdmiState; }
-
-//void setHdmiStateLst(int state) { hdmiStateLst = state; }
-//int getHdmiStateLst() { return hdmiStateLst; }
 
 void setHdmiStateChange(int en) { hdmiStateChange = en; }
 int getHdmiStateChange() { return hdmiStateChange; }
@@ -611,8 +594,106 @@ int getBottomTextMode() { return mBottomTextMode; }
 void setTimelapseEncodeType(int enc_type) { mTimelapseEncodeType = enc_type; }
 int getTimelapseEncodeType() { return mTimelapseEncodeType; }
 
-void setPowerSavingMode(int mode) { mPowerSavingMode = mode; }
-int getPowerSavingMode() { return mPowerSavingMode; }
+void setFpgaStandbyEn(int en) { 
+    fpgaStandbyEn = en; 
+    SetFPGASleepEn(fpgaStandbyEn);
+}
+int getFpgaStandbyEn() { return fpgaStandbyEn; }
+
+void setPowerSavingInit(int flag) { powerSavingInit = flag; }
+int getPowerSavingInit() { return powerSavingInit; }
+
+void setPowerSavingSetingUiState(int state) { powerSavingSetingUiState = state; }
+int getPowerSavingSetingUiState() { return powerSavingSetingUiState; }
+
+void setDrivingRecordMode(int mode) { mDrivingRecordMode = mode; }
+int getDrivingRecordMode() { return mDrivingRecordMode; }
+
+void setDebugLogSaveToSDCard(int en) { mDebugLogSaveToSDCard = en; }
+int getDebugLogSaveToSDCard() { return mDebugLogSaveToSDCard; }
+
+void setPowerSavingInitTime1(unsigned long long time) { powerSavingInitTime1 = time; }
+unsigned long long getPowerSavingInitTime1() { return powerSavingInitTime1; }
+
+void setPowerSavingInitTime2(unsigned long long time) { powerSavingInitTime2 = time; }
+unsigned long long getPowerSavingInitTime2() { return powerSavingInitTime2; }
+
+void setPowerSavingCapRecStartTime(unsigned long long time) {
+		powerSavingCapRecStartTime = time;
+		setPowerSavingInit(1);		//預防開機先拍照
+}
+unsigned long long getPowerSavingCapRecStartTime() { return powerSavingCapRecStartTime; }
+
+void setPowerSavingOvertime(unsigned long long time) { powerSavingOvertime = time; }
+unsigned long long getPowerSavingOvertime() { return powerSavingOvertime; }
+
+void setPowerSavingCapRecFinishTime(unsigned long long time, unsigned long long overtime) {
+	powerSavingCapRecFinishTime = time;
+	setPowerSavingOvertime(overtime);
+	setPowerSavingInit(1);		//預防開機先拍照
+}
+unsigned long long getPowerSavingCapRecFinishTime() { return powerSavingCapRecFinishTime; }
+
+void setPowerSavingSendDataStateTime(unsigned long long time) { powerSavingSendDataStateTime = time; }
+unsigned long long getPowerSavingSendDataStateTime() { return powerSavingSendDataStateTime; }
+
+void setPowerSavingSetingUiTime1(unsigned long long time) { powerSavingSetingUiTime1 = time; }
+unsigned long long getPowerSavingSetingUiTime1() { return powerSavingSetingUiTime1; }
+
+void setPowerSavingSetingUiTime2(unsigned long long time) { powerSavingSetingUiTime2 = time; }
+unsigned long long getPowerSavingSetingUiTime2() { return powerSavingSetingUiTime2; }
+
+void setWebServiceDataLen(int len) { webServiceDataLen = len; }
+int getWebServiceDataLen() { return webServiceDataLen; }
+
+void setWebServiceData(char *data, int offset, int data_len) { memcpy(&webServiceData[offset], data, data_len); }
+void getWebServiceData(char *buf, int web_len) { memcpy(buf, &webServiceData[0], web_len); }
+
+void pushWebServiceData(char *data, int offset, int data_len) { 
+    int web_len = getWebServiceDataLen();
+    setWebServiceData(data, offset, data_len);
+    web_len += data_len;
+    setWebServiceDataLen(web_len);
+}
+void popWebServiceDataAll(char *buf) {
+    int web_len = getWebServiceDataLen();
+    getWebServiceData(buf, web_len);
+    setWebServiceDataLen(0);
+}
+
+void setRecordEn(int en) { recordEn = en; }
+int getRecordEn() { return recordEn; }
+
+void setRecordCmdFlag(int flag) { recordCmdFlag = flag; }
+int getRecordCmdFlag() { return recordCmdFlag; }
+
+void setRecordEnReal(int en) { recordEnReal = en; }
+int getRecordEnReal() { return recordEnReal; }
+
+void setWifiModeCmd(int mode) { wifiModeCmd = mode; }
+int getWifiModeCmd() { return wifiModeCmd; }
+
+void setWifiModeState(int state) { wifiModeState = state; }
+int getWifiModeState() { return wifiModeState; }
+
+void setWifiConnectIsAlive(int en) { wifiConnectIsAlive = en; }
+int getWifiConnectIsAlive() { return wifiConnectIsAlive; }
+
+void setDnaCheck(int en) { dnaCheck = en; }
+int getDnaCheck() { return dnaCheck; }
+
+void setThmPath(char *path) { snprintf(thmPath, sizeof(thmPath), "%s\0", path); }
+void getThmPath(char *path, int size) { snprintf(path, size, "%s\0", thmPath); }
+
+void setDirPath(char *path) { snprintf(dirPath, sizeof(dirPath), "%s\0", path); }
+void getDirPath(char *path, int size) { snprintf(path, size, "%s\0", dirPath); }
+
+void setSdPath(char *path) { snprintf(sdPath, sizeof(sdPath), "%s\0", path); }
+void getSdPath(char *path, int size) { snprintf(path, size, "%s\0", sdPath); }
+
+void setSdState(int state) { sdState = state; }
+int getSdState() { return sdState; }
+
 
 
 
@@ -638,14 +719,14 @@ void initCustomerFunc()
     switch(mCustomerCode) {
     case CUSTOMER_CODE_LETS:
 		sprintf(name, "LET'S\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_lets\0");
+		sprintf(bottomFileNameSource, "background_lets\0");
 //tmp    	ControllerServer.machineNmae = "LET'S";
     	setModelName(&name[0]);
     	writeWifiMaxLink(10);
     	break;
     case CUSTOMER_CODE_ALIBABA:
 		sprintf(name, "Alibaba\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_alibaba\0");
+		sprintf(bottomFileNameSource, "background_alibaba\0");
 //tmp    	ControllerServer.machineNmae = "Alibaba";
     	setModelName(&name[0]);
     	writeWifiMaxLink(10);
@@ -653,7 +734,7 @@ void initCustomerFunc()
     	break;
     case CUSTOMER_CODE_PIIQ:
 		sprintf(name, "peek\0");
-		sprintf(BOTTOM_FILE_NAME_SOURCE, "background_peek\0");
+		sprintf(bottomFileNameSource, "background_peek\0");
     	//wifiAPssid = ssid.replace("US_", "peek-HD_");
 		ptr = strchr(mSSID, '_');
 		sprintf(wifiAPssid, "peek-HD_%s\0", (ptr+1) );
@@ -802,9 +883,9 @@ void databinInit(int country, int customer)
 	
 	//TagDrivingRecord = 	24;
     if(customer == CUSTOMER_CODE_PIIQ)
-    	mDrivingRecordMode = 0;	//databin.getDrivingRecord();
+    	setDrivingRecordMode(0);	//Get_DataBin_DrivingRecord();
     else
-    	mDrivingRecordMode = 1;	//Get_DataBin_DrivingRecord();
+    	setDrivingRecordMode(1);	//Get_DataBin_DrivingRecord();
 	
 	//TagUS360Versin = 		25;
 	//TagWifiChannel = 		26;
@@ -922,10 +1003,10 @@ void databinInit(int country, int customer)
 	
 	//TagSaturation =		70;
 	int sv = Get_DataBin_Saturation();
-	mSaturation = GetSaturationValue(sv);
+	setSaturation(GetSaturationValue(sv));
 	
 	//TagFreeCount
-	getSDFreeSize(&sdFreeSize);
+	calSdFreeSize(&sdFreeSize);
 //tmp    getRECTimes(sdFreeSize);
     mFreeCount = Get_DataBin_FreeCount();
     if(mFreeCount == -1){
@@ -1102,9 +1183,7 @@ void onCreate()
 //tmp    setOLEDMainModeResolu(getPlayModeTmp(), kpixel);
 
 //tmp    SetOLEDMainType(GetCameraMode(), GetCaptureCnt(), GetCaptureMode(), getTimeLapseMode(), 0);
-//tmp    showOLEDDelayValue(Get_DataBin_DelayValue());
-        
-    //getSDPath();       	
+//tmp    showOLEDDelayValue(Get_DataBin_DelayValue());      	
 		
     setStitchingOut(getCameraMode(), getPlayMode(), getResolutionMode(), getFPS()); 
     LineTableInit();  

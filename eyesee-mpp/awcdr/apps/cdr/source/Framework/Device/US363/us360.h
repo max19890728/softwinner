@@ -47,10 +47,6 @@ extern "C" {
 #define CUSTOMER_CODE_ALIBABA   	2067001
 #define CUSTOMER_CODE_PIIQ   		20141
 
-#define POWER_SAVING_INIT_OVERTIME    	35000000
-#define POWER_SAVING_CMD_OVERTIME_5S  	 5000000
-#define POWER_SAVING_CMD_OVERTIME_15S 	15000000
-
 #define  BOTTOM_FILE_NAME_DEFAULT	"background_bottom"
 #define  BOTTOM_FILE_NAME_USER		"background_bottom_user"
 #define  BOTTOM_FILE_NAME_ORG		"background_bottom_org"
@@ -283,11 +279,11 @@ void set_rec_proc_en(int en);
 void set_sd_card_state(int state);
 int get_sd_card_state();
 void set_write_file_error(int err);
-void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpga_enc);
+void setRecEn(int recState, int time_lapse, unsigned long long freesize, int timelapse_enc);
 
 void us360_init();
 
-void getSDFreeSize(unsigned long long *size);
+void calSdFreeSize(unsigned long long *size);
 int ResolutionModeToKPixel(int res_mode);
 void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_mdoe);
 

@@ -39,6 +39,19 @@ extern "C" {
 #define RESOLUTION_HEIGHT_3K    1536
 #define RESOLUTION_HEIGHT_2K    1024
 
+//Power Saving OverTime
+#define POWER_SAVING_INIT_OVERTIME      35000   /* 35s */
+#define POWER_SAVING_CMD_OVERTIME_5S    5000    /* 5s */
+#define POWER_SAVING_CMD_OVERTIME_15S   15000  	/* 15s */
+
+//Bottom File Name
+#define BOTTOM_FILE_NAME_DEFAULT    "background_bottom"                           
+#define BOTTOM_FILE_NAME_USER       "background_bottom_user"  
+#define BOTTOM_FILE_NAME_ORG        "background_bottom_org" 
+
+//SD Card Size
+#define SD_CARD_FREE_SIZE_MIN       0x1E00000   /* 30MB */  /** JAVA_SD_CARD_MIN_SIZE */
+
 //Play Mode
 enum {
     PLAY_MODE_GLOBAL = 0,

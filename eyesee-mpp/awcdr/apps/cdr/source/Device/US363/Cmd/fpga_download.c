@@ -244,7 +244,7 @@ int fpgaPowerOff() {
     // close fpga power
 //tmp	setImgReadyFlag(0);
 	setSensorPowerOff();
-	FPGA_Sleep_En = 0;	//SetFPGASleepEn(0);	//tmp
+	setFpgaStandbyEn(0);
 
     int ret;
 	ret = GPIO_Open();

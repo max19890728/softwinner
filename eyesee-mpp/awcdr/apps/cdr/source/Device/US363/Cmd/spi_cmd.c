@@ -42,8 +42,6 @@ unsigned Read_FX_HDR_Y = 400;
 unsigned char HDR_Img_Buf[7][2][1024];
 unsigned char HDR_Mo_Buf[7][2][1024];
 
-int FPGA_Sleep_En = 0;
-
 unsigned ST_Cmd_Cal_CheckSum[2] = {0};
 unsigned ST_Sen_Cmd_Cal_CheckSum[2] = {0};
 unsigned ST_Tran_Cmd_Cal_CheckSum[2] = {0};
@@ -494,11 +492,6 @@ void SetFPGASleepEn(int en) {
 //tmp		else
 //tmp			Set_Skip_Frame_Cnt(6);
 	}
-	FPGA_Sleep_En = en;
-}
-
-int GetFPGASleepEn() {
-	return FPGA_Sleep_En;
 }
 
 /*

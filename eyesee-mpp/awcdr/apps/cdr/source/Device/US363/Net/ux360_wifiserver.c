@@ -2270,16 +2270,16 @@ db_wifi_cmd("new_sock_command1: 'WFMD'\n");
 					reboot = byte2Int(&BytesReboot[0], 4);	
 			    }
 			    			
-//    			Main.mWifiModeCmd = wifiMode;
-//				Main.wifiSSID = newSsid;
-//    			Main.wifiPassword = newPwd;
-//    			Main.wifiType = newType;
-//    			Main.wifiIP = newIP;
-//    			Main.wifiGateway = newGateway;
-//    			Main.wifiPrefix = newPrefix;
-//    			Main.wifiDns1 = newDns1;
-//    			Main.wifiDns2 = newDns2;
-//				Main.wifiReboot = reboot;
+    			setWifiModeCmd(wifiMode);
+//tmp				Main.wifiSSID = newSsid;
+//tmp    			Main.wifiPassword = newPwd;
+//tmp    			Main.wifiType = newType;
+//tmp    			Main.wifiIP = newIP;
+//tmp    			Main.wifiGateway = newGateway;
+//tmp    			Main.wifiPrefix = newPrefix;
+//tmp    			Main.wifiDns1 = newDns1;
+//tmp    			Main.wifiDns2 = newDns2;
+//tmp				Main.wifiReboot = reboot;
 			    			
     			printf("Cmd1:'WFMD' mWifiModeCmd : Mode = %d Ssid = %s , Pwd = %s reboot = %d\n", wifiMode, newSsid, newPwd, reboot);
     			printf("Cmd1:'WFMD' mWifiModeCmd : type = %d ip = %s , gateway = %s prefix = %s dns1 = %s dns2 = %s\n", wifiMode, newIP, newGateway, newPrefix, newDns1, newDns2);
@@ -3133,16 +3133,16 @@ db_wifi_cmd("new_sock_command1: 'WFMD'\n");
 				    reboot = byte2Int(&BytesReboot[0], 4);	
 			    }
 			    			
-//			    Main.mWifiModeCmd = wifiMode;
-//			    Main.wifiSSID = newSsid;
-//			    Main.wifiPassword = newPwd;
-//			    Main.wifiType = newType;
-//			    Main.wifiIP = newIP;
-//			    Main.wifiGateway = newGateway;
-//			    Main.wifiPrefix = newPrefix;
-//			    Main.wifiDns1 = newDns1;
-//			    Main.wifiDns2 = newDns2;
-//				Main.wifiReboot = reboot;
+			    setWifiModeCmd(wifiMode);
+//tmp			    Main.wifiSSID = newSsid;
+//tmp			    Main.wifiPassword = newPwd;
+//tmp			    Main.wifiType = newType;
+//tmp			    Main.wifiIP = newIP;
+//tmp			    Main.wifiGateway = newGateway;
+//tmp			    Main.wifiPrefix = newPrefix;
+//tmp			    Main.wifiDns1 = newDns1;
+//tmp			    Main.wifiDns2 = newDns2;
+//tmp				Main.wifiReboot = reboot;
 			    			
 			    printf("Cmd1:'WFMD' mWifiModeCmd : Mode = %d Ssid = %s , Pwd = %s reboot = %d\n", wifiMode, newSsid, newPwd, reboot);
 			    printf("Cmd1:'WFMD' mWifiModeCmd : type = %d ip = %s , gateway = %s prefix = %s dns1 = %s dns2 = %s\n", wifiMode, newIP, newGateway, newPrefix, newDns1, newDns2);
@@ -3987,8 +3987,9 @@ db_wifi_cmd("new_sock_command1: 'SETS'\n");
 				
 				mSetingUIEn = 1;
 				mSetingUIState = state;
-				//Main.Send_Data_State_t = System.currentTimeMillis();
-				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Seting UI En.", String.valueOf(mSetingUIState));
+                unsigned long long now_time;
+                get_current_usec(&now_time);
+                setPowerSavingSendDataStateTime(now_time);
 				
 				*m += (16+dataLen+*skip);
 				*ost -= (16+dataLen+*skip);
@@ -4423,10 +4424,10 @@ db_wifi_cmd("new_sock_command3: 'SWAP'\n");
 					setSockCmdSta_dataStatus(0);
 					sendDataStatusCmd = 1;
 					mConnected = 1;
-//					setWifiOledEn(1);
-//					unsigned long long nowTime;
-//					get_current_usec(&nowTime);
-//					Main.Send_Data_State_t = nowTime;
+//tmp					setWifiOledEn(1);
+					unsigned long long now_time;
+					get_current_usec(&now_time);
+					setPowerSavingSendDataStateTime(now_time);
 				}
 				printf("Cmd3:'SWAP' [Cmd Status2] mDataSwapEn = 1\n");
 				
@@ -4885,7 +4886,7 @@ db_wifi_cmd("process_output_stream: 'SWAP'\n");
 			send_data(mSocket, &cmd[0], 4);
 			send_data(mSocket, (char*)&ver, sizeof(ver));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(mSocket, (char*)&val, sizeof(val));
 //			send_data(mSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -4896,7 +4897,7 @@ db_wifi_cmd("process_output_stream: 'SWAP'\n");
 			send_data(gSocket, &cmd[0], 4);
 			send_data(gSocket, (char*)&ver, sizeof(ver));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(gSocket, (char*)&val, sizeof(val));
 //			send_data(gSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -5663,7 +5664,7 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 		if(mw){
 			send_data(mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(mSocket, (char*)&val, sizeof(val));
 //			send_data(mSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -5685,7 +5686,7 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 		if(gw){
 			send_data(gSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(gSocket, (char*)&val, sizeof(val));
 //			send_data(gSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -6168,21 +6169,18 @@ void webservice_thread(void) {
             lstTime = curTime;
         }
 		
-/*		if(Main.webServiceDataLen > 0 && ControllerServer.isServerProcessing == 0){
-			int len = Main.webServiceDataLen;
-			if(len > 0){
-				if(gSocketOst < 0) gSocketOst = 0;
-				if(gSocketOst + len < 0x10000){
-					memcpy(&gSocketDataQ[gSocketOst], &Main.webServiceData[0], len);
-					gSocketOst += len;
-					Main.webServiceDataLen = 0;
-					printf("webservice_thread() get webservice len: %d\n", gSocketOst);
-					process_input_stream(1);
-				}
-				else{
-					printf("webservice_thread() WifiServer: Err! socketOst=%d\n", gSocketOst);
-					gSocketOst = 0;
-				}
+/*tmp		if(getWebServiceDataLen() > 0 && ControllerServer.isServerProcessing == 0){
+			int len = getWebServiceDataLen();
+            if(gSocketOst < 0) gSocketOst = 0;
+			if(gSocketOst + len < 0x10000){
+                popWebServiceDataAll(&gSocketDataQ[gSocketOst]);
+				gSocketOst += len;
+				printf("webservice_thread() get webservice len: %d\n", gSocketOst);
+				process_input_stream(1);
+			}
+			else{
+				printf("webservice_thread() WifiServer: Err! socketOst=%d\n", gSocketOst);
+				gSocketOst = 0;
 			}
 		}*/
 		
