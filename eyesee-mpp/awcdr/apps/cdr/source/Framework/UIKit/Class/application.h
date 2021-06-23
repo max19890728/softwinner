@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <System/logger.h>
 #include <sys/types.h>
 
 #include <memory>
@@ -44,6 +45,8 @@ class Application : public std::enable_shared_from_this<UI::Application>,
 
   // MARK: - -
  private:
+  System::Logger logger;
+
   std::set<std::unique_ptr<UI::Event>> events_;
   std::set<std::unique_ptr<UI::Press>> press_;
 

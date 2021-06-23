@@ -65,15 +65,15 @@ void UI::ScrollView::ContentSizeDidSet() {
 
 auto UI::ScrollView::ContentOffsetWillSet(const UI::Point& new_value)
     -> const UI::Point& {
-  if (new_value.y > content_inset_.top) new_value.y = content_inset_.top;
   if (new_value.y <
       frame().height() - content_size_.height - content_inset_.bottom)
     new_value.y =
         frame().height() - content_size_.height - content_inset_.bottom;
-  if (new_value.x > content_inset_.left) new_value.x = content_inset_.left;
+  if (new_value.y > content_inset_.top) new_value.y = content_inset_.top;
   if (new_value.x <
       frame().width() - content_size_.width - content_inset_.right)
     new_value.x = frame().width() - content_size_.width - content_inset_.right;
+  if (new_value.x > content_inset_.left) new_value.x = content_inset_.left;
   return new_value;
 }
 
@@ -91,6 +91,11 @@ void UI::ScrollView::AdjustedContentInsetDidChange() {
     case ContentInsetAdjustmentBehavior::never:
       break;
     case ContentInsetAdjustmentBehavior::always:
+      content_offset_ -= UI::
+      Point{x : content_inset_.left, y : content_inset_.top};
+      int test = content_offset_.x;
+      db_debug("%d", test);
+      SetNeedDisplay();
       break;
   }
 }

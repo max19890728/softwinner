@@ -38,13 +38,13 @@ class TableViewDataSource {
 
 class TableView : public UI::ScrollView, public UI::ScrollViewDelegate {
  public:
-  static inline std::shared_ptr<UI::TableView> init(UI::Coder decoder = {}) {
+  static inline auto init(UI::Coder decoder = {}) {
     auto building = std::make_shared<UI::TableView>();
     building->Layout(decoder);
     return building;
   }
 
-  static inline std::shared_ptr<UI::TableView> init(UI::Rect frame) {
+  static inline auto init(UI::Rect frame) {
     auto building = UI::TableView::init();
     building->frame(frame);
     return building;

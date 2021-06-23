@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include <Framework/UIKit.h>
+#include <System/logger.h>
+
 #include <memory>
 #include <string>
 
 #include "Device/CameraSetting/CameraInfo/camera_info_manager.h"
 #include "Device/CameraSetting/camera_mode_manager.h"
-#include "Framework/UIKit.h"
 
 class PreviewViewController final : public UI::ViewController {
  public:
@@ -35,6 +37,8 @@ class PreviewViewController final : public UI::ViewController {
 
  private:
   static UI::Size button_size;
+
+  System::Logger logger;
 
   SettingManager::CameraInfoManager& camera_info_;
   CameraSetting::CameraModeManager& camera_mode_;

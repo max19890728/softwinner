@@ -13,19 +13,19 @@ namespace UI {
 class ImageView : public UI::View {
   // MARK: - 初始化器
  public:
-  static inline std::shared_ptr<UI::ImageView> init() {
+  static inline auto init() {
     auto building = std::make_shared<UI::ImageView>();
     building->Layout();
     return building;
   }
 
-  static inline std::shared_ptr<UI::ImageView> init(UIImage image) {
+  static inline auto init(UIImage image) {
     auto building = UI::ImageView::init();
     building->image(image);
     return building;
   }
 
-  static inline std::shared_ptr<UI::ImageView> init(UIImage image, UIImage highlight_image) {
+  static inline auto init(UIImage image, UIImage highlight_image) {
     auto building = UI::ImageView::init(image);
     building->highlight_image(highlight_image);
     return building;
@@ -34,6 +34,7 @@ class ImageView : public UI::View {
   ImageView();
 
   // MARK: - 顯示的圖像
+
  private:
   UIImage image_;
   UIImage highlight_image_;

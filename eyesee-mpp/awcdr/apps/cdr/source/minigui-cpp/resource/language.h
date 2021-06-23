@@ -34,7 +34,7 @@ class Language {
   int initLanguage(StringIntMap pLangInfo);
 
  private:
-  LOGFONT *mfont, *mfont_28, *mfont_30, *mfont_32, *mfont_34, *mfont_200;
+  LOGFONT *mfont;
   std::map<int, std::string> mlanguage_conf;
   int mCurrentLangID;
   static pthread_mutex_t mutex_;

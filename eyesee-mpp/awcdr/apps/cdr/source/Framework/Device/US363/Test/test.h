@@ -53,6 +53,7 @@ extern struct Test_Tool_Cmd_Struct_H TestToolCmd;
 //}Test_Tool_Result_Struct;
 //extern Test_Tool_Result_Struct Test_Tool_Result;
 
+extern char VersionStrJNI[32];
 extern int testtool_set_AEG, testtool_set_gain;
 
 int do_FX_ST_Test(int f_id);

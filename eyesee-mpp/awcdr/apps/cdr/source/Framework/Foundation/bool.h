@@ -22,8 +22,11 @@ struct Bool : Protocol::Property<bool> {
   /* * * * * 運算符重載 * * * * */
 
  public:
-  inline auto operator!() -> const bool& {
-    return !value_;
+  inline auto operator!() -> const bool { return !value_; }
+
+  inline auto operator=(const Bool& that) -> const Bool& {
+    bool new_value = that.getter ? that.getter() : that.get();
+    return this->Protocol::Property<bool>::operator=(new_value);
   }
 
   auto operator=(const bool& new_value) -> const bool& override {
@@ -32,6 +35,11 @@ struct Bool : Protocol::Property<bool> {
 
   operator const bool&() const {
     return this->Protocol::Property<bool>::operator const bool&();
+  }
+
+  explicit operator bool() const {
+    if (this->getter) return this->getter();
+    return get();
   }
 
   /* * * * * 繼承類別 * * * * */

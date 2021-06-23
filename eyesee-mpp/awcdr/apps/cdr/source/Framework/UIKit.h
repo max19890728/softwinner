@@ -22,6 +22,7 @@
 #include "UIKit/Struct/color.h"
 #include "UIKit/Struct/edge_insets.h"
 #include "UIKit/Struct/event.h"
+#include "UIKit/Struct/font.h"
 #include "UIKit/Struct/image.h"
 #include "UIKit/Struct/index_path.h"
 #include "UIKit/Struct/point.h"

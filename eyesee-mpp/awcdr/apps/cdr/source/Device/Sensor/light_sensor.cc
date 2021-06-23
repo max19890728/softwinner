@@ -4,6 +4,10 @@
 
 #include "Device/Sensor/light_sensor.h"
 
+#include <math.h>
+
+#include "Device/ux360_lcd.h"
+
 namespace Device {
 
 // - MARK: 初始化器
@@ -19,5 +23,11 @@ LightSensor::~LightSensor() {}
 
 /* * * * * 繼承類別 * * * * */
 
-void LightSensor::MonitorAction() { value_ = Read(path_); }
+void LightSensor::MonitorAction() {
+  value_ = Read(path_);
+  int light_value_ = value_;
+  if (light_value_ < 100) light_value_ = 100;
+  if (light_value_ > 10000) light_value_ = 10000;
+  disp_ioctl(2, std::sqrt(light_value_) + 145);
+}
 }  // namespace Device

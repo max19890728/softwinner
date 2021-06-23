@@ -32,6 +32,14 @@ void Self::Layout(UI::Coder decoder) {
   auto title_view = UI::ImageView::init(UI::Image::init("TitleBar/setup"));
   title_view->frame(title_view_->frame());
   title_view_->addSubView(title_view);
+  #if 0
+  #else
+  table_view_->content_inset_ = UI::EdgeInsets::zero;
+  table_view_->frame(UI::Rect{
+    origin : UI::Point{x : 0, y : title_view_->frame().height()},
+    size : UI::Size{width: 240, height: 320 - title_view_->frame().height()}
+  });
+  #endif
 }
 
 int Self::NumberOfSectionIn() { return 2; }

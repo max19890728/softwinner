@@ -15,10 +15,10 @@ struct EdgeInsets : public Protocol::Property<EdgeInsets> {
 
   EdgeInsets(int, int, int, int);
 
-  int top = 0;
-  int bottom = 0;
-  int left = 0;
-  int right = 0;
+  Int top;
+  Int bottom;
+  Int left;
+  Int right;
 
   /* * * * * 繼承類別 * * * * */
 

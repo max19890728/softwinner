@@ -207,7 +207,7 @@ void SetMCUData(int cpuNowTemp) {
 
     int ver = data[10];
     if(ver != 0){
-      	if(ver > 12 && getWifiDisableTime() > 0){
+      	if(ver > 12 && wifiDisableTime > 0){
 //tmp       		setMCULedSetting(MCU_SLEEP_TIMER_START, 1);
        	}
        	if(ver != mMcuVersion && mMcuVersion != 0){

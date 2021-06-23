@@ -20,23 +20,17 @@ Self::Self(CameraSetting::QuickSetting& setting)
 /* * * * * 其他成員 * * * * */
 
 void Self::SetInsetAndReload() {
-  db_debug("");
   auto cell_image = setting_->values_.at(0).value_default_;
   auto _ = cell_image->Bitmap();
   auto inset_lenght = 160 - cell_image->rect_.height() / 2;
   content_inset_ = UI::EdgeInsets(inset_lenght, inset_lenght, 0, 0);
-  db_debug("");
   ReloadData();
-  db_debug("");
-  // ScrollToRow({section : 0, row : setting_->value_}, ScrollPosition::middle);
-  db_debug("");
+  ScrollToRow({section : 0, row : setting_->value_}, ScrollPosition::middle);
 }
 
 void Self::SetNewSetting(CameraSetting::QuickSetting& new_setting) {
-  db_debug("");
   setting_ = &(new_setting);
   SetInsetAndReload();
-  db_debug("");
 }
 
 /* * * * * 繼承類別 * * * * */
@@ -57,7 +51,6 @@ void Self::Layout(UI::Coder decoder) {
 int Self::NumberOfSectionIn() { return 1; }
 
 int Self::NumberOfRowsInSection(int) {
-  db_debug("%d", setting_->values_.size());
   return setting_->values_.size();
 }
 

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-int stratWifiAp(char *ssid, char *password, int type);
+int stratWifiAp(char *ssid, char *password, int channel, int type);
 void closeWifiAp();
 bool isWifiApEnabled();
 

@@ -1414,7 +1414,7 @@ int NetManager::GetNetDevState(const std::string &netdev_name, NET_DEV_STATE &ne
     return 0;
 }
 
-int NetManager::SwitchToSoftAp(const char *ssid, const char *pwd, int mode, int encrypt, int freq)
+int NetManager::SwitchToSoftAp(const char *ssid, const char *pwd, int ch, int mode, int encrypt, int freq)
 {
     int ret = 0;
 
@@ -1434,7 +1434,7 @@ int NetManager::SwitchToSoftAp(const char *ssid, const char *pwd, int mode, int 
 
     /* Enable soft ap */
     SoftApConfig softap;
-    softap.channel = 6;
+    softap.channel = ch;
     softap.hidden_ssid = 0;
     softap.frequency = freq;
     strncpy(softap.ssid, ssid, sizeof(softap.ssid));
@@ -1541,13 +1541,13 @@ int NetManager::EnableMonitorMode(const string &interface, const string &ssid, c
         return -1;
     }
     sleep(2);
-//#if 0	//max+
+#if 0	//max+
     ret = set_wifi_monitor(interface.c_str(), 1);
     if (ret < 0) {
         db_error("Do set_wifi_monitor fail! ret:%d", ret);
         return -1;
     }
-//#endif
+#endif
     return 0;
 }
 

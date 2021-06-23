@@ -10,6 +10,7 @@
 #include <string>
 
 #include "UIKit/Class/view.h"
+#include "UIKit/Struct/font.h"
 #include "UIKit/buildable.h"
 
 namespace UI {
@@ -17,7 +18,7 @@ namespace UI {
 class Label : public UI::View {
   // - MARK: 初始化器
  public:
-  static inline std::shared_ptr<UI::Label> init(UI::Coder decoder = {}) {
+  static inline auto init(UI::Coder decoder = {}) {
     auto building = std::make_shared<UI::Label>();
     building->Layout(decoder);
     return building;
@@ -29,6 +30,8 @@ class Label : public UI::View {
 
  public:
   String text_;
+
+  UI::Font font_;
 
   UI::Color text_color_;
 

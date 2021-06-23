@@ -14,17 +14,10 @@
 #undef LOG_TAG
 #define LOG_TAG "UI::TableViewController"
 
-UITableViewController UI::TableViewController::init(UI::Coder decoder) {
-  auto building = std::make_shared<UI::TableViewController>();
-  building->Layout(decoder);
-  return building;
-}
-
 UI::TableViewController::TableViewController()
     : UI::ViewController::ViewController() {}
 
 void UI::TableViewController::Layout(UI::Coder decoder) {
-  db_msg("");
   this->UI::ViewController::Layout(decoder);
   title_view_->frame(UI::Rect{
     origin : UI::Point{x : 0, y : 0},
@@ -52,6 +45,12 @@ void UI::TableViewController::ViewDidLoad() {
 void UI::TableViewController::ViewDidAppear() {
   this->UI::ViewController::ViewDidAppear();
   table_view_->ReloadData();
+  if (table_view_->content_size_.height - table_view_->content_inset_.top <
+      table_view_->frame().height()) {
+    table_view_->content_size_.height =
+        table_view_->frame().height() - table_view_->content_inset_.top;
+  }
+  table_view_->content_offset_.y = table_view_->content_inset_.top;
 }
 
 int UI::TableViewController::NumberOfSectionIn() { return 0; }

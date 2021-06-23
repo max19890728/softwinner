@@ -25,7 +25,7 @@ do
     esac
 done
 
-file=../lang/zh-CN.xml
+file=../lang/zh-TW.xml
 md5_file=../lang/.md5
 fmd5()
 {
@@ -63,18 +63,18 @@ if [ "$h" == "" ]; then
     h=26
 fi
 
-grep -oh ">.*<" ../lang/zh-CN.xml | grep -o "[^<|^>]" | sort > ../lang/zh-CN.symbol
-grep -oh ">.*<" ../lang/zh-DE.xml | grep -o "[^<|^>]" | sort > ../lang/zh-DE.symbol
+# grep -oh ">.*<" ../lang/zh-CN.xml | grep -o "[^<|^>]" | sort > ../lang/zh-CN.symbol
+# grep -oh ">.*<" ../lang/zh-DE.xml | grep -o "[^<|^>]" | sort > ../lang/zh-DE.symbol
 grep -oh ">.*<" ../lang/zh-EN.xml | grep -o "[^<|^>]" | sort > ../lang/zh-EN.symbol
-grep -oh ">.*<" ../lang/zh-ES.xml | grep -o "[^<|^>]" | sort > ../lang/zh-ES.symbol
-grep -oh ">.*<" ../lang/zh-FR.xml | grep -o "[^<|^>]" | sort > ../lang/zh-FR.symbol
-grep -oh ">.*<" ../lang/zh-IT.xml | grep -o "[^<|^>]" | sort > ../lang/zh-IT.symbol
-grep -oh ">.*<" ../lang/zh-JA.xml | grep -o "[^<|^>]" | sort > ../lang/zh-JA.symbol
-grep -oh ">.*<" ../lang/zh-KO.xml | grep -o "[^<|^>]" | sort > ../lang/zh-KO.symbol
-grep -oh ">.*<" ../lang/zh-PT.xml | grep -o "[^<|^>]" | sort > ../lang/zh-PT.symbol
-grep -oh ">.*<" ../lang/zh-RU.xml | grep -o "[^<|^>]" | sort > ../lang/zh-RU.symbol
+# grep -oh ">.*<" ../lang/zh-ES.xml | grep -o "[^<|^>]" | sort > ../lang/zh-ES.symbol
+# grep -oh ">.*<" ../lang/zh-FR.xml | grep -o "[^<|^>]" | sort > ../lang/zh-FR.symbol
+# grep -oh ">.*<" ../lang/zh-IT.xml | grep -o "[^<|^>]" | sort > ../lang/zh-IT.symbol
+# grep -oh ">.*<" ../lang/zh-JA.xml | grep -o "[^<|^>]" | sort > ../lang/zh-JA.symbol
+# grep -oh ">.*<" ../lang/zh-KO.xml | grep -o "[^<|^>]" | sort > ../lang/zh-KO.symbol
+# grep -oh ">.*<" ../lang/zh-PT.xml | grep -o "[^<|^>]" | sort > ../lang/zh-PT.symbol
+# grep -oh ">.*<" ../lang/zh-RU.xml | grep -o "[^<|^>]" | sort > ../lang/zh-RU.symbol
 grep -oh ">.*<" ../lang/zh-TW.xml | grep -o "[^<|^>]" | sort > ../lang/zh-TW.symbol
-grep -oh ">.*<" ../lang/zh-TI.xml | grep -o "[^<|^>]" | sort > ../lang/zh-TI.symbol
+# grep -oh ">.*<" ../lang/zh-TI.xml | grep -o "[^<|^>]" | sort > ../lang/zh-TI.symbol
 
 
 # generate font sxf_${width}x${height}.bin

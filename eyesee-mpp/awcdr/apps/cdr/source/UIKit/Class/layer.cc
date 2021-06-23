@@ -23,12 +23,14 @@ UI::Layer::Layer()
     : context_(HWND_INVALID),
       content_(nullptr),
       superlayer_(nullptr),
+      is_hidden_(false),
+      background_color_(UI::Color{0}),
       frame_(UI::Rect::zero),
-      background_color_(UI::Color{0x00000000}),
       shouldRasterize_(false),
       is_need_display_(false),
-      is_need_layout_(false),
-      is_hidden_(false) {
+      is_need_layout_(false) {
+  is_hidden_.didSet = std::bind(&UI::Layer::IsHiddenDidSet, this);
+  background_color_.didSet = std::bind(&UI::Layer::BackgroundColorDidSet, this);
   frame_.willSet = std::bind(&Layer::FrameWillSet, this, std::placeholders::_1);
   frame_.didSet = std::bind(&UI::Layer::FrameDidSet, this);
 }
@@ -56,32 +58,14 @@ void UI::Layer::LayoutIfNeed() {
   if (is_need_layout_) {
     for (auto const& sublayer : sublayers_) sublayer->LayoutIfNeed();
     if (content_) SetContent(content_);
-    SetBackground(background_color_);
-    SetHidden(is_hidden_);
     is_need_layout_ = false;
   }
 }
 
-// - MARK: Get Function
-
-UI::Color const& UI::Layer::BackgroundColor() { return background_color_; }
-
-bool UI::Layer::IsHidden() { return is_hidden_; }
-
 // - MARK: Set Function
-
-void UI::Layer::SetBackground(UI::Color const& new_color) {
-  background_color_ = new_color;
-  SetNeedDisplay();
-}
 
 void UI::Layer::SetContent(UIImage const& image) {
   content_ = image;
-  SetNeedDisplay();
-}
-
-void UI::Layer::SetHidden(bool hidden) {
-  is_hidden_ = hidden;
   SetNeedDisplay();
 }
 
@@ -95,6 +79,12 @@ void UI::Layer::Draw(/* in */ HDC context) {
     delegate->Draw(shared_from(this), context);
   for (auto const& sublayer : sublayers_) sublayer->Draw(context);
 }
+
+// - MARK: 修改圖層的外觀
+
+void UI::Layer::IsHiddenDidSet() { SetNeedDisplay(); }
+
+void UI::Layer::BackgroundColorDidSet() { SetNeedDisplay(); }
 
 // - MARK: 管理圖層位置與邊界
 

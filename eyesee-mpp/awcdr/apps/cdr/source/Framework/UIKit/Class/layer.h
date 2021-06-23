@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <Foundation.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,10 +26,10 @@ class LayerDelegate {
 class Layer : public std::enable_shared_from_this<UI::Layer> {
   // MARK: - 初始化器
  public:
-  static inline std::shared_ptr<UI::Layer> init() { return std::make_shared<UI::Layer>(); }
+  static inline auto init() { return std::make_shared<UI::Layer>(); }
 
   // 只用於 UI::Window 以包含 Context 作為繪圖樹的起點;
-  static inline std::shared_ptr<UI::Layer> init(HWND context) {
+  static inline auto init(HWND context) {
     auto initialize = UI::Layer::init();
     initialize->context_ = context;
     RECT rect;
@@ -41,9 +43,7 @@ class Layer : public std::enable_shared_from_this<UI::Layer> {
 
   // MARK: -
  public:
-  std::weak_ptr<LayerDelegate> delegate_;
   HWND context_;
-  UIImage content_;
 
   void AddSublayer(std::shared_ptr<UI::Layer>);
 
@@ -51,30 +51,30 @@ class Layer : public std::enable_shared_from_this<UI::Layer> {
 
   void UnloadContent();
 
-  // - MARK: Layout Function
+  // - MARK: 圖層委託
 
-  void SetNeedLayout();
-
-  void LayoutIfNeed();
-
-  // - MARK: Get Function
-
-  UI::Color const& BackgroundColor();
-
-  bool IsHidden();
-
-  // - MARK: Set Function
-
-  void SetBackground(UI::Color const&);
-
-  void SetContent(UIImage const&);
-
-  void SetHidden(bool);
+  std::weak_ptr<LayerDelegate> delegate_;
 
   // - MARK: 準備圖層內容
 
+  UIImage content_;
+
   // 呼叫 Delegate 進行繪畫，在呼叫子圖層進行繪畫，以重畫整個繪圖樹。
   void Draw(/* in */ HDC);
+
+  void SetContent(UIImage const&);
+
+  // - MARK: 修改圖層的外觀
+
+ public:
+  Bool is_hidden_;
+
+  UI::Color background_color_;
+
+ private:
+  virtual void IsHiddenDidSet();
+
+  virtual void BackgroundColorDidSet();
 
   // - MARK: 管理圖層位置與邊界
 
@@ -103,6 +103,12 @@ class Layer : public std::enable_shared_from_this<UI::Layer> {
   // 返回是否需要更新畫面。
   bool NeedDisplay();
 
+  // - MARK: 管理圖層大小與佈局更改
+
+  void SetNeedLayout();
+
+  void LayoutIfNeed();
+
   // - MARK: 不同座標系間的轉換
 
   /**
@@ -128,11 +134,9 @@ class Layer : public std::enable_shared_from_this<UI::Layer> {
  private:
   std::shared_ptr<UI::Layer> superlayer_;
   std::vector<std::shared_ptr<UI::Layer>> sublayers_;
-  UI::Color background_color_;
   bool shouldRasterize_;
   bool is_need_layout_;
   bool is_need_display_;
-  bool is_hidden_;
 
   // - MARK: 圖層樹處理
 

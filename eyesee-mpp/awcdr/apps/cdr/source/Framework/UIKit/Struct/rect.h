@@ -30,10 +30,10 @@ struct Rect : Protocol::Property<Rect> {
   static UI::Rect const init(UI::Coder decoder);
 
   Rect(UI::Point origin, UI::Size size) : origin(origin), size(size) {
-    origin.didSet = [this] {
+    this->origin.didSet = [this] {
       if (this->didSet) this->didSet();
     };
-    size.didSet = [this] {
+    this->size.didSet = [this] {
       if (this->didSet) this->didSet();
     };
   }

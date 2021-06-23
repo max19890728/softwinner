@@ -17,7 +17,11 @@ class TableViewController : public UI::ViewController,
                             public UI::TableViewDelegate,
                             public UI::TableViewDataSource {
  public:
-  static std::shared_ptr<TableViewController> init(UI::Coder = {});
+  static inline auto init(UI::Coder decoder = {}) {
+    auto building = std::make_shared<UI::TableViewController>();
+    building->Layout(decoder);
+    return building;
+  }
 
  public:
   std::shared_ptr<TableViewControllerDelegate> delegate = nullptr;

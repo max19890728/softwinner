@@ -4,8 +4,13 @@
 
 #pragma once
 
-#include "UIKit/Struct/image.h"
+#include <Foundation.h>
+#include <System/logger.h>
+
+#include <map>
+
 #include "UIKit/Struct/bundle.h"
+#include "UIKit/Struct/image.h"
 
 namespace CameraSetting {
 
@@ -15,10 +20,19 @@ struct CameraSetting {
   UIImage cell_title_;
   UIImage cell_title_highlight_;
 
-  int value_ = 0;
+  std::string key_;
+
+  Int value_ = 0;
+  int default_;
   UI::Bundle bundle_;
 
+  std::vector<int> check_array_;
+
+  // std::map<int, int> check_map_;
+
   std::vector<std::pair<UIImage, UIImage>> options_;
+
+  std::vector<std::pair<UIImage, UIImage>> details_;
 
   std::vector<UIImage> icons_;
 
@@ -26,6 +40,11 @@ struct CameraSetting {
 
   std::pair<UIImage, UIImage> CellDetailImage();
 
+  void SetByRaw(int);
+
   void SetValue(int);
+
+ private:
+  System::Logger logger;
 };
 }  // namespace CameraSetting

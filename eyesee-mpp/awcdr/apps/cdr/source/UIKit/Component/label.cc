@@ -10,7 +10,10 @@
 #define LOG_TAG "UI::Label"
 
 UI::Label::Label()
-    : UI::View::View(), text_(""), text_color_(UI::Color::black) {
+    : UI::View::View(),
+      text_(""),
+      font_(UI::Font::SystemFont(16)),
+      text_color_(UI::Color::black) {
   text_.didSet = std::bind(&Label::TextDidSet, this);
   text_color_.didSet = std::bind(&Label::TextColorDidSet, this);
 }
@@ -38,6 +41,7 @@ void UI::Label::Draw(UILayer layer, /* in */ HDC context) {
   this->UI::View::Draw(layer, context);
   auto on_screen_frame = layer->Convert(layer->frame_, Convert::to);
   if (!text_.is_empty_) {
+    SelectFont(context, font_);
     SetTextColor(context, text_color_);
     SetBkMode(context, BM_TRANSPARENT);
     RECT text_rect = {Rect2RECT(on_screen_frame)};

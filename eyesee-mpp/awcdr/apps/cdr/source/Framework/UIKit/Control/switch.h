@@ -17,7 +17,7 @@ namespace UI {
 class Switch : public UI::Control {
   // MARK: - 初始化器
  public:
-  static inline std::shared_ptr<UI::Switch> init() {
+  static inline auto init() {
     auto building = std::make_shared<UI::Switch>();
     building->Layout();
     return building;

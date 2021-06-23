@@ -64,3 +64,24 @@ bool contains(/* in */ std::vector<T> &vector, /* is equal to */ T element) {
   }
   if (iter == vector.end()) return false;
 }
+
+/**
+ * 自動將數值轉換為 `char *` 並插入指定向量尾端
+ * - note: 指定向量型態必須為 `std::vector<char>`
+ **/
+template <typename T>
+inline void Insert(std::vector<char> &vector, T value) {
+  char *chars = reinterpret_cast<char *>(&value);
+  vector.insert(vector.end(), chars, chars + sizeof(T));
+}
+
+template <typename S, int MaxSize>
+inline void Insert(std::vector<char> &vector, S string) {
+  if (string.size() > MaxSize) {
+    std::copy(string.begin(), string.begin() + MaxSize,
+              std::back_inserter(vector));
+  } else {
+    for (int space = 0; space < MaxSize - string.size(); space++) string += ' ';
+    std::copy(string.begin(), string.end(), std::back_inserter(vector));
+  }
+}

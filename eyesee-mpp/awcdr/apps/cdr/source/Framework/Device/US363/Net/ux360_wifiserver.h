@@ -26,6 +26,20 @@ void setSendFeedBackCmd(int idx, char *cmd);
 
 void free_wifiserver_buf();
 int malloc_wifiserver_buf();
+void setDbtDdrCmdEn(int en);
+int getDbtDdrCmdEn();
+void setDbtInputDdrDataEn(int en);
+int getDbtInputDdrDataEn();
+void setDbtInputDdrDataFinish(int flag);
+int getDbtInputDdrDataFinish();
+void setDbtOutputDdrDataEn(int en);
+int getDbtOutputDdrDataEn();
+void setDbtRegCmdEn(int en);
+int getDbtRegCmdEn();
+void setDbtInputRegDataFinish(int flag);
+int getDbtInputRegDataFinish();
+void setDbtOutputRegDataEn(int en);
+int getDbtOutputRegDataEn();
 
 #ifdef __cplusplus
 }   // extern "C"

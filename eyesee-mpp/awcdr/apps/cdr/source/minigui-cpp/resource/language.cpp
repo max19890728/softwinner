@@ -39,27 +39,7 @@ Language::Language() {
   mfont = CreateLogFont("sxf", "arialuni", "UTF-8", FONT_WEIGHT_REGULAR,
                         FONT_SLANT_ROMAN, FONT_SETWIDTH_NORMAL,
                         FONT_OTHER_AUTOSCALE, FONT_UNDERLINE_NONE,
-                        FONT_STRUCKOUT_NONE, 26, 0);
-  mfont_28 = CreateLogFont("sxf", "arialuni", "UTF-8", FONT_WEIGHT_REGULAR,
-                           FONT_SLANT_ROMAN, FONT_SETWIDTH_NORMAL,
-                           FONT_OTHER_AUTOSCALE, FONT_UNDERLINE_NONE,
-                           FONT_STRUCKOUT_NONE, 28, 0);
-  mfont_30 = CreateLogFont("sxf", "arialuni", "UTF-8", FONT_WEIGHT_REGULAR,
-                           FONT_SLANT_ROMAN, FONT_SETWIDTH_NORMAL,
-                           FONT_OTHER_AUTOSCALE, FONT_UNDERLINE_NONE,
-                           FONT_STRUCKOUT_NONE, 30, 0);
-  mfont_32 = CreateLogFont("sxf", "arialuni", "UTF-8", FONT_WEIGHT_REGULAR,
-                           FONT_SLANT_ROMAN, FONT_SETWIDTH_NORMAL,
-                           FONT_OTHER_AUTOSCALE, FONT_UNDERLINE_NONE,
-                           FONT_STRUCKOUT_NONE, 32, 0);
-  mfont_34 = CreateLogFont("sxf", "arialuni", "UTF-8", FONT_WEIGHT_REGULAR,
-                           FONT_SLANT_ROMAN, FONT_SETWIDTH_NORMAL,
-                           FONT_OTHER_AUTOSCALE, FONT_UNDERLINE_NONE,
-                           FONT_STRUCKOUT_NONE, 34, 0);
-  mfont_200 = CreateLogFont(FONT_TYPE_NAME_SCALE_TTF, "arialuni", "UTF-8",
-                            FONT_WEIGHT_REGULAR, FONT_SLANT_ROMAN,
-                            FONT_SETWIDTH_NORMAL, FONT_OTHER_AUTOSCALE,
-                            FONT_UNDERLINE_NONE, FONT_STRUCKOUT_NONE, 200, 0);
+                        FONT_STRUCKOUT_NONE, 16, 0);
 }
 
 Language::~Language() {}
@@ -93,20 +73,7 @@ int Language::initLanguage(StringIntMap pLangInfo) {
 }
 
 LOGFONT* Language::GetFontBySize(int sz) {
-  switch (sz) {
-    case 28:
-      return mfont_28;
-    case 30:
-      return mfont_30;
-    case 32:
-      return mfont_32;
-    case 34:
-      return mfont_34;
-    case 200:
-      return mfont_200;
-    default:
-      return mfont;
-  }
+  return mfont;
 }
 
 LOGFONT* Language::GetFont() { return mfont; }

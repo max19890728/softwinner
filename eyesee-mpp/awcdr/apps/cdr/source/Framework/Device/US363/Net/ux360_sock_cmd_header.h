@@ -11,10 +11,10 @@ extern "C" {
 #endif
 
 struct socket_cmd_header_struct {
-	int 	version;
+	unsigned int 	version;
 	char 	keyword[4];
-	int 	dataLength;
-	int 	checkSum;
+	unsigned int 	dataLength;
+	unsigned int 	checkSum;
 };
 
 

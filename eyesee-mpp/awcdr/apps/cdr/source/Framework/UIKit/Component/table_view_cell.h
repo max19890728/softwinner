@@ -22,13 +22,13 @@ class TableViewCell : public UI::View {
 
   enum class SelectionStyle { none, effected };
 
-  static inline std::shared_ptr<UI::TableViewCell> init(UI::Coder decoder = {}) {
+  static inline auto init(UI::Coder decoder = {}) {
     auto building = std::make_shared<UI::TableViewCell>();
     building->Layout(decoder);
     return building;
   }
 
-  static std::shared_ptr<UI::TableViewCell> init(UI::TableViewCell::Style style) {
+  static inline auto init(UI::TableViewCell::Style style) {
     auto building = UI::TableViewCell::init();
     switch (style) {
       case UI::TableViewCell::Style::camera_setting:
@@ -55,6 +55,7 @@ class TableViewCell : public UI::View {
 
   UIView background_view_;
   UIView content_view_;
+  UIImageView title_view_;
 
  protected:
   UI::TableViewCell::AccessoryType accessory_type_;
@@ -63,7 +64,6 @@ class TableViewCell : public UI::View {
   bool is_selected_;
 
  private:
-  UIImageView title_view_;
   UIImageView detail_view_;
   UIImageView accessory_view_;
   UIImageView selection_view_;

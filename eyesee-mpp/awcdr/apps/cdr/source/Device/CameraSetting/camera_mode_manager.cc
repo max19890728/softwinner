@@ -25,10 +25,8 @@ CameraModeManager::CameraModeManager() {
       mode_ = setting;
     }
   } catch (const std::string error_message) {
-    db_error("Read CameraMode error, Set to Default");
     mode_ = 0;
   }
-  db_info("CameraMode: %d", mode_);
 }
 
 CameraModeManager::~CameraModeManager() {}

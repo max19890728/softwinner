@@ -5,10 +5,11 @@
 #pragma once
 
 #include <Foundation/property.h>
+#include <System/custom_debug_string_convertible.h>
 
 #include <string>
 
-struct Int : Protocol::Property<int> {
+struct Int : Protocol::Property<int>, CustomDebugStringConvertible {
   // - MARK: 初始化器
 
   Int(int value) : value_(value) {}
@@ -54,5 +55,12 @@ struct Int : Protocol::Property<int> {
 
   auto set(const int& new_value) -> const int& override {
     return value_ = new_value;
+  }
+
+  // - MARK: CustomDebugStringConvertible
+
+ public:
+  auto PrintDebugStringOn(std::ostream& output) const -> std::ostream& {
+    return output << value_;
   }
 };

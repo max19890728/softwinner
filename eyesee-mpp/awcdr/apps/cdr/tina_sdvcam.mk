@@ -16,8 +16,8 @@ SRC_TAGS := \
     source/device_model \
     source/UIKit \
     source/Device \
-    source/DebugKit \
-    source/US363
+    source/US363 \
+    source/System
 EXCLUDE_DIRS := source/device_model/unused/
 SRC_TAGS := $(filter-out $(EXCLUDE_DIRS), $(SRC_TAGS))
 ISE_SUPPORT := 0
@@ -36,7 +36,6 @@ INCLUDE_DIRS := \
     $(CUR_PATH) \
     $(CUR_PATH)/source \
     $(CUR_PATH)/source/common \
-    $(CUR_PATH)/source/UIKit \
     $(CUR_PATH)/source/Framework \
     $(CUR_PATH)/source/US363 \
     $(CUR_PATH)/source/minigui-cpp/ \

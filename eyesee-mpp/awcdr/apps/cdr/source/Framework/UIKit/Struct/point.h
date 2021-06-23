@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Foundation.h>
-#include <sys/types.h>
+#include <System/custom_debug_string_convertible.h>
 
 #define ParamToPoint(param)          \
   UI::Point {                        \
@@ -17,7 +17,7 @@ namespace UI {
 
 enum class Convert : bool { from, to };
 
-struct Point : Protocol::Property<Point> {
+struct Point : Protocol::Property<Point>, CustomDebugStringConvertible {
   static const UI::Point zero;
 
   Point(int x, int y) : x(x), y(y) {
@@ -99,6 +99,13 @@ struct Point : Protocol::Property<Point> {
     x = new_value.x;
     y = new_value.y;
     return *this;
+  }
+
+  // - MARK: CustomDebugStringConvertible
+
+ public:
+  inline auto PrintDebugStringOn(std::ostream &output) const -> std::ostream & {
+    return output << "(x: " << x << ", y: " << y << ")";
   }
 };
 

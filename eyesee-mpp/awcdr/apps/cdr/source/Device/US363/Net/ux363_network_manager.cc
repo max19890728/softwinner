@@ -36,19 +36,21 @@ using namespace EyeseeLinux;
 
 char wifiApSsidOsc[32] = "US_0000.OSC\0", wifiApPasswordOsc[16] = "88888888\0";
 char wifiStaSsid[32] = "StaSsid\0", wifiStaPassword[16] = "00000000\0";
+int wifiApChannel = 6;
 
-int stratWifiAp(char *ssid, char *password, int type)
+int stratWifiAp(char *ssid, char *password, int channel, int type)
 {
 	NetManager::NetLinkType netlink_type;
 	
 	checkWifiApPassword(password);
 	sprintf(wifiApSsidOsc, "%s.OSC", ssid);
 	sprintf(wifiApPasswordOsc, "%s", password);
+    wifiApChannel = channel;
 	
 	NetManager::GetInstance()->GetNetLinkType(netlink_type);
 	if(netlink_type != NetManager::NETLINK_NONE)
 		NetManager::GetInstance()->DisableAllNetLink();
-	std::thread([] { NetManager::GetInstance()->SwitchToSoftAp(&wifiApSsidOsc[0], &wifiApPasswordOsc[0], 0, 0, 0); }).join();
+	std::thread([] { NetManager::GetInstance()->SwitchToSoftAp(&wifiApSsidOsc[0], &wifiApPasswordOsc[0], wifiApChannel, 0, 0, 0); }).join();
 	return 1;
 }
 

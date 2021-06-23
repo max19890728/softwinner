@@ -1,0 +1,8 @@
+{
+  "key": "ExposureFreq",
+  "default": 60,
+  "option_list" : [
+    {"raw": 50},
+    {"raw": 60}
+  ]
+}

@@ -3788,7 +3788,7 @@ PROCESS_MESSAGE:
             } 
             else if (cmd == VDecComp_ReopenVideoEngine) 
             {
-                alogd("resolution change, reopen VideoEngine done.");
+                //alogd("resolution change, reopen VideoEngine done.");
                 pVideoDecData->mResolutionChangeFlag = FALSE;
             }
             

@@ -1567,7 +1567,7 @@ void Set_HDR7P_AEG_Idx(int idx, int aeg_idx, int aeg_max, int aeg_min, int frame
 {
 	int ep_ln_max;
 	int tmp_idx = aeg_idx;
-	int sys_fps = getFPS();
+	int sys_fps = get_MainFPS();
 
 	ep_ln_max = get_ep_ln_maximum(sys_fps);
 	if(tmp_idx >= aeg_max) tmp_idx = aeg_max;

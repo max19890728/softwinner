@@ -51,7 +51,6 @@ void UI::TableView::ReloadData() {
       cell_views_.emplace(index_path, cell);
     }
   }
-  if (offset < frame().height()) offset = frame().height();
   content_size_ = UI::Size{width : frame().width(), height : offset};
   SetNeedDisplay();
 }

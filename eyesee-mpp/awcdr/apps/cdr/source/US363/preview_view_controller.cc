@@ -5,10 +5,12 @@
 #include "US363/preview_view_controller.h"
 
 #include <Device/CameraSetting/QuickSetting/quick_setting.h>
+#include <System/logger.h>
 
 #include <memory>
 #include <string>
 
+#include "Device/us363_camera.h"
 #include "Device/CameraSetting/CameraInfo/camera_info_manager.h"
 #include "US363/CameraModeSetting/camera_mode_view_controller.h"
 #include "US363/CameraSetting/camera_setting_select_view_controller.h"
@@ -17,7 +19,6 @@
 #include "US363/QuickSetting/quick_setting_view_controller.h"
 #include "US363/debug_view_controller.h"
 #include "common/app_def.h"
-#include "common/app_log.h"
 #include "device_model/display.h"
 #include "device_model/media/camera/camera.h"
 #include "device_model/media/camera/camera_factory.h"
@@ -25,13 +26,11 @@
 #undef Self
 #define Self PreviewViewController
 
-#undef LOG_TAG
-#define LOG_TAG "PreviewViewController"
-
 UI::Size Self::button_size = UI::Size{width : 46, height : 27};
 
 Self::Self()
     : UI::ViewController::ViewController(UI::Coder{std::string{"PreviewView"}}),
+      logger(System::Logger(std::string{"Preview(VC)"})),
       camera_info_(SettingManager::CameraInfoManager::instance()),
       camera_mode_(CameraSetting::CameraModeManager::instance()),
       delay_setting_(
@@ -41,11 +40,20 @@ Self::Self()
       camera_mode_button_(UI::Button::init()),
       connection_info_button_(UI::Button::init()),
       battery_info_button(UI::Button::init()) {
-
+  Log(LogLevel::Info) << '\n';
+  startPreview();
   SettingManager::QuickSettingManager::instance();
+  view_->background_color_ = UI::Color::alpha;
 }
 
 void Self::Layout(UI::Coder decoder) {
+  auto background_image = UI::Image::init("status_bar_background");
+  auto background_image_view = UI::ImageView::init(background_image);
+  background_image_view->frame(UI::Rect{
+    origin : UI::Point{x : 0, y : 0},
+    size : UI::Size{width : 240, height : 67}
+  });
+  view_->addSubView(background_image_view);
   delay_setting_button_->frame({origin : {x : 0, y : 0}, size : button_size});
   delay_setting_button_->tag_ = 0;
   delay_setting_button_->AddTarget(this, Selector(Self::ButtonAction),
@@ -93,8 +101,7 @@ void Self::ViewDidAppear() {
 }
 
 void Self::TouchesBegan(UITouch const& touch, UIEvent const& event) {
-  db_debug("touches Began, x: %d, y: %d", touch->touch_point_.x,
-           touch->touch_point_.y);
+  Log(LogLevel::Debug) << touch->touch_point_ << '\n';
   if (touch->touch_point_.y > 280) {
     pan_start_from_ = UI::ViewController::RectEdge::bottom;
   } else if (touch->touch_point_.x > 208) {
@@ -104,13 +111,13 @@ void Self::TouchesBegan(UITouch const& touch, UIEvent const& event) {
 }
 
 void Self::TouchesMoved(UITouch const& touch, UIEvent const& event) {
-  db_debug("touches Moved, is from edge: %d", pan_start_from_);
+  Log(LogLevel::Debug) << "Is from edge: " << pan_start_from_ << "\n";
   is_pan_ = true;
   this->UI::Responder::TouchesMoved(touch, event);
 }
 
 void Self::TouchesEnded(UITouch const& touch, UIEvent const& event) {
-  db_debug("touches Ended");
+  Log(LogLevel::Debug) << '\n';
   if (is_pan_) {
     switch (pan_start_from_) {
       case UI::ViewController::RectEdge::bottom:
@@ -160,3 +167,5 @@ void Self::PressesEnded(UIPress const& press) {
 #endif
   this->UI::ViewController::PressesEnded(press);
 }
+
+#undef Self

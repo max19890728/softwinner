@@ -1547,6 +1547,9 @@ void Make_thita_rate(void)
   }
 }
 
+int CtrlCameraPositionMode = 1;		// 0:手動 1:自動(G Sensor)
+int CameraPositionMode = 0;		// 0:0 1:180 2:90
+
 void Make_ST_Sensor_Cmd(void)
 {
 	int binn, i, j, Addr;
@@ -1638,21 +1641,19 @@ void Make_ST_Cmd_Tmp(void)
 void Get_M_Mode(int *M_Mode, int *S_Mode)
 {
     int c_mode, mode, res;
-    c_mode = getCameraMode();
+    c_mode = CameraMode;
     mode = Stitching_Out.Output_Mode;
     res = Stitching_Out.OC[mode].Resolution_Mode;
     switch(res) {
         case 1:  *M_Mode = 0; *S_Mode = 3; break;   // 12K
         case 2:  *M_Mode = 3; *S_Mode = 3; break;   // 4K
         case 7:
-            //拍照的6K/8K, 採用12K DMA成6K/8K
-        	if(c_mode == CAMERA_MODE_TIMELAPSE) { *M_Mode = 1; *S_Mode = 4; }
-        	else                                { *M_Mode = 0; *S_Mode = 3; }
+        	if(c_mode == 2) { *M_Mode = 1; *S_Mode = 4; }
+        	else            { *M_Mode = 0; *S_Mode = 3; }
         	break;   // 8K
         case 12:
-            //拍照的6K/8K, 採用12K DMA成6K/8K
-        	if(c_mode == CAMERA_MODE_TIMELAPSE) { *M_Mode = 2; *S_Mode = 4; }
-        	else                                { *M_Mode = 0; *S_Mode = 3; }
+        	if(c_mode == 2) { *M_Mode = 2; *S_Mode = 4; }
+        	else            { *M_Mode = 0; *S_Mode = 3; }
         	break;   // 6K
         case 13: *M_Mode = 4; *S_Mode = 4; break;   // 3K
         case 14: *M_Mode = 5; *S_Mode = 5; break;   // 2K
@@ -1663,7 +1664,7 @@ int Get_Input_Scale(void)
 {
     int Input_Scale;
     int c_mode, mode, res;
-    c_mode = getCameraMode();
+    c_mode = CameraMode;
     mode = Stitching_Out.Output_Mode;
     res = Stitching_Out.OC[mode].Resolution_Mode;
     switch(res) {
@@ -1671,14 +1672,12 @@ int Get_Input_Scale(void)
         case 1:  Input_Scale = 1; break;   // 12K
         case 2:  Input_Scale = 3; break;   // 4K
         case 7:
-            //拍照的6K/8K, 採用12K DMA成6K/8K
-        	if(c_mode == CAMERA_MODE_TIMELAPSE) Input_Scale = 2;
-        	else                                Input_Scale = 1;
+        	if(c_mode == 2) Input_Scale = 2;
+        	else            Input_Scale = 1;
         	break;   // 8K
         case 12:
-            //拍照的6K/8K, 採用12K DMA成6K/8K
-        	if(c_mode == CAMERA_MODE_TIMELAPSE) Input_Scale = 2;
-        	else                                Input_Scale = 1;
+        	if(c_mode == 2) Input_Scale = 2;
+        	else            Input_Scale = 1;
         	break;   // 6K
         case 13: Input_Scale = 2; break;   // 3K
         case 14: Input_Scale = 2; break;   // 2K
@@ -3848,11 +3847,11 @@ void calculate_real_sensor_exp(int exp_idx, int *fr, int *ln, int *fps)
     int ep_ln_33ms, ep_ln_max, ep_sec = 1;;
     int ep_tmp, ep_line;
     int freq = ISP_AEG_EP_IMX222_Freq;
-    int sys_fps = getFPS();
+    int sys_fps = MainFPS;
 
     ep_ln_33ms = get_ep_ln_default_33ms(freq);
-    // FPS = 100 -> 10fps, ep_ln_max = 3666 (每秒10fps -> 100ms -> 最多3666掃描線)
-    //     = 50 -> 5fps, ep_ln_max = 7332 (每秒5fps -> 200ms -> 最多7332掃描線)
+    // MainFPS = 100 -> 10fps, ep_ln_max = 3666 (每秒10fps -> 100ms -> 最多3666掃描線)
+    //         = 50 -> 5fps, ep_ln_max = 7332 (每秒5fps -> 200ms -> 最多7332掃描線)
     ep_ln_max = get_ep_ln_maximum(sys_fps);
 
     if(exp_idx >= 0) {

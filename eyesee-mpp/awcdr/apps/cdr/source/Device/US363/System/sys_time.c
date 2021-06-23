@@ -17,7 +17,6 @@
 #include <math.h>
 #include <time.h>
 
-#include "device_model/system/rtc.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG
@@ -42,9 +41,10 @@ int gettimeformt(time_t t, char *t_str) {
  *   設定系統時間
  * */
 void setSysTime(unsigned long long time) {
-    int ret;
+    int res, fd;
     struct timespec ts;
     struct tm *tt;
+    char str[32];
 
     ts.tv_sec = time / 1000;
     ts.tv_nsec = (time % 1000) * 1000000;
@@ -53,7 +53,14 @@ void setSysTime(unsigned long long time) {
     db_debug("setSysTime: %d/%d/%d %d:%d:%d time=%lld\n", tt->tm_year+1900, tt->tm_mon+1, tt->tm_mday,
             tt->tm_hour, tt->tm_min, tt->tm_sec, time);
 
-    rtc_set_time(tt);
-    if(ret < 0)
-        db_error("setSysTime: err! ret=%d time=%lld\n", ret, time);
+    fd = open("/dev/alarm", O_RDWR);
+//tmp    res = ioctl(fd, ANDROID_ALARM_SET_RTC, &ts);
+    //res = settimeofday(&tv, NULL);
+    if(res < 0) {
+        db_error("setSysTime: err! res=%d time=%lld\n", res, time);
+        //fprintf(stderr,"settimeofday failed %s\n", strerror(errno));
+        //return 1;
+    }
+    close(fd);
+    //return 0;
 }

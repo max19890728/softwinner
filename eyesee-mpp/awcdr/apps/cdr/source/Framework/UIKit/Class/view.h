@@ -28,13 +28,13 @@ class View : public std::enable_shared_from_this<UI::View>,
   // MARK: - 初始化器
 
  public:
-  static inline std::shared_ptr<UI::View> init(UI::Coder decoder = {}) {
+  static inline auto init(UI::Coder decoder = {}) {
     auto building = std::make_shared<UI::View>();
     building->Layout(decoder);
     return building;
   }
 
-  static inline std::shared_ptr<UI::View> init(UI::Rect frame) {
+  static inline auto init(UI::Rect frame) {
     auto building = UI::View::init();
     building->frame(frame);
     return building;
@@ -51,17 +51,17 @@ class View : public std::enable_shared_from_this<UI::View>,
    **/
   UI::Color background_color_;
 
+  Bool is_hidden_;
+
  private:
-  /**
-   *  當 `background_color_` 被修改完後會自動呼叫此方法，覆寫此方法以改變預設行為
-   **/
+  // 當 `background_color_` 被修改完後會自動呼叫此方法，覆寫此方法以改變預設行為
   virtual void BackgroundColorDidSet();
 
+  virtual auto IsHiddenGetter() const -> const bool&;
+
+  virtual void IsHiddenDidSet();
+
  public:
-  auto IsHidden() { return layer_->IsHidden(); }
-
-  void IsHidden(bool);
-
   /**
    * 確認繪製圖層時需不需要清除原本的內容
    *

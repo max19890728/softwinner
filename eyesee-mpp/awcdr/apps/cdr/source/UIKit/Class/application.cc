@@ -4,7 +4,7 @@
 
 #include "UIKit/Class/application.h"
 
-#include <common/app_log.h>
+#include <System/logger.h>
 #include <common/extension/set.h>
 #include <common/extension/vector.h>
 #include <sys/types.h>
@@ -21,12 +21,14 @@
 #include "UIKit/Struct/screen.h"
 #include "UIKit/Struct/touch.h"
 
-#undef LOG_TAG
-#define LOG_TAG "UI::Application"
+UI::Application::Application()
+    : logger(System::Logger(std::string{"UI::Application"})) {
+  Log(LogLevel::Info) << "Initialization" << '\n';
+}
 
-UI::Application::Application() { db_info("UI::Application Initialization"); }
-
-UI::Application::~Application() { db_info("UI::Application Deinitialization"); }
+UI::Application::~Application() {
+  Log(LogLevel::Info) << "Deinitialization" << '\n';
+}
 
 UIWindow UI::Application::get_key_window() {
   return dropFirst<UIWindow>(
@@ -55,7 +57,7 @@ void UI::Application::Run() {
       ::DispatchMessage(&message);
     }
   } else {
-    db_error("Need set key_window_");
+    Log(LogLevel::Error) << "Miss key_window_" << '\n';
   }
 }
 
@@ -92,8 +94,7 @@ void UI::Application::HandleTouch(uint state, UI::Point point) {
     SendEvent(now_event);
 #if 0
     for (auto const& event : events_) {
-      db_msg("(%03d, %03d), time: %lu", event->touche_->touch_point_.x,
-             event->touche_->touch_point_.y, event->touche_->timestamp_);
+      Log(LogLevel::Debug) << event->touche_->touch_point_ << '\n';
     }
 #endif
   }

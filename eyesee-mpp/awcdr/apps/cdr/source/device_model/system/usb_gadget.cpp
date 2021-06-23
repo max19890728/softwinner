@@ -120,6 +120,10 @@ void USBGadget::ActiveMassStorage(const string &dev)
     system(ss.str().c_str());
     system("ln -s /sys/kernel/config/usb_gadget/g1/functions/mass_storage.usb0/ /sys/kernel/config/usb_gadget/g1/configs/c.1/mass_storage.usb0");
     system("ls /sys/class/udc | xargs echo > /sys/kernel/config/usb_gadget/g1/UDC");
+
+    sleep(1);
+    system("mount /dev/mmcblk0 /mnt/extsd");
+    sleep(1);
 }
 
 void USBGadget::DeactiveMassStorage()

@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "Device/US363/System/sys_time.h"
-#include "Device/US363/Util/byte_util.h"
+#include "Device/US363/Util/ux360_byteutil.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG
@@ -69,14 +69,15 @@ void sock_cmd_header_Bytes2Data(char *buf, struct socket_cmd_header_struct *cmd_
 	b += size;
 	
 	size = sizeof(cmd_h->checkSum);
-	memcpy(&cmd_h->checkSum, b, size);
+	memcpy(&cmd_h->checkSum, b, size);   
 	swap32(&cmd_h->checkSum);
-	b += size;
+	b += size;   
 }
 
 int sock_cmd_header_checkHeader(struct socket_cmd_header_struct *cmd_h) {
-	int b2i = byte2Int(&cmd_h->keyword[0], 4);
-	int sum = cmd_h->version + b2i + cmd_h->dataLength;
+	unsigned int b2i = byte2Int(&cmd_h->keyword[0], 4);
+	unsigned int sum = cmd_h->version + b2i + cmd_h->dataLength;
+    //printf("sock_cmd_header_checkHeader() sum=%d ver=0x%x b2i=%d len=%d\n", sum, cmd_h->version, b2i, cmd_h->dataLength);    
 	if(sum == cmd_h->checkSum) return 1;
 	else					   return 0;
 }

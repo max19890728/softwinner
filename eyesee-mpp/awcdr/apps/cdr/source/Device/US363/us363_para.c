@@ -42,6 +42,9 @@ static pthread_mutex_t pthread_f2_io_mutex;
 //-------------Around camera US360 miller 20150530-----------
 // ==========================================================
 
+int MainFPS = 300;      // 300=30fps
+int ResolutionWidth = 1280;
+int ResolutionHeight = 720;
 int Sitching_Idx = 0;
 
 //debug
@@ -197,13 +200,16 @@ void setStitchingOut(int c_mode, int mode, int res_mode, int fps)
         }
     }
 
+    MainFPS = fps;      // 300~100, 30fps~10fps
     Stitching_Out.Output_Mode = mode;
     Stitching_Out.OC[mode].Resolution_Mode = res;
-    db_debug("setStitchingOut: FPS=%d mode=%d res=%d\n", fps, mode, res);
+    db_debug("setStitchingOut: MainFPS=%d mode=%d res=%d\n", fps, mode, res);
 
     switch(res) {
     default:
     case 1:        //12K
+            ResolutionWidth  = S2_RES_12K_WIDTH;				//11520
+            ResolutionHeight = S2_RES_12K_HEIGHT;
             if(c_mode == 14) {
             	if(jpeg_3d_mode == 0) { mVideoWidth  = S2_RES_3D1K_WIDTH; mVideoHeight = S2_RES_3D1K_HEIGHT; }
             	else				  { mVideoWidth  = S2_RES_3D4K_WIDTH; mVideoHeight = S2_RES_3D4K_HEIGHT; }
@@ -214,25 +220,39 @@ void setStitchingOut(int c_mode, int mode, int res_mode, int fps)
             }
             break;
     case 2:        //4K
+            ResolutionWidth  = S2_RES_4K_WIDTH;
+            ResolutionHeight = S2_RES_4K_HEIGHT;
             mVideoWidth  = S2_RES_4K_WIDTH;
             mVideoHeight = S2_RES_4K_HEIGHT;
             break;
     case 7:        //8K
+            ResolutionWidth  = S2_RES_8K_WIDTH;
+            ResolutionHeight = S2_RES_8K_HEIGHT;
             if(c_mode == 2) { mVideoWidth  = S2_RES_3K_WIDTH; mVideoHeight = S2_RES_3K_HEIGHT; }
             else            { mVideoWidth  = S2_RES_4K_WIDTH; mVideoHeight = S2_RES_4K_HEIGHT; }
             break;
     case 8:        //10K
+            //if(AEG_EP_Freq == 60) FPS = 100;
+            //else                  FPS = 100;
+            ResolutionWidth  = S2_RES_10K_WIDTH;
+            ResolutionHeight = S2_RES_10K_HEIGHT;
             if(c_mode == 2) { mVideoWidth  = S2_RES_3K_WIDTH; mVideoHeight = S2_RES_3K_HEIGHT; }
             else            { mVideoWidth  = S2_RES_4K_WIDTH; mVideoHeight = S2_RES_4K_HEIGHT; }
     case 12:        //6K
+            ResolutionWidth  = S2_RES_6K_WIDTH;
+            ResolutionHeight = S2_RES_6K_HEIGHT;
             if(c_mode == 2) { mVideoWidth  = S2_RES_3K_WIDTH; mVideoHeight = S2_RES_3K_HEIGHT; }
             else            { mVideoWidth  = S2_RES_4K_WIDTH; mVideoHeight = S2_RES_4K_HEIGHT; }
             break;
     case 13:        //3K
+            ResolutionWidth  = S2_RES_3K_WIDTH;
+            ResolutionHeight = S2_RES_3K_HEIGHT;
             mVideoWidth  = S2_RES_3K_WIDTH;
             mVideoHeight = S2_RES_3K_HEIGHT;
             break;
     case 14:        //2K
+            ResolutionWidth  = S2_RES_2K_WIDTH;
+            ResolutionHeight = S2_RES_2K_HEIGHT;
             mVideoWidth  = S2_RES_2K_WIDTH;
             mVideoHeight = S2_RES_2K_HEIGHT;
             break;
@@ -290,8 +310,8 @@ int NowSpeed = 0;
 int getNowSpeed()
 {
     int speed;
-    if(getCameraPositionMode() == 0) speed = NowSpeed;
-    else                             speed = -NowSpeed;
+    if(CameraPositionMode == 0) speed = NowSpeed;
+    else                        speed = -NowSpeed;
     return speed;
 }
 
@@ -357,6 +377,18 @@ void setALIGlobalPhi2WifiCmd(int phi_idx)
 	A_L_I_Global_phi2_idx = phi_idx;
 	Smooth_Com.Global_phi_Top = get_global_phi(A_L_I_Global_phi2_idx);
 	db_debug("setALIGlobalPhi2WifiCmd() idx=%d Global_phi_Top=%d\n", phi_idx, Smooth_Com.Global_phi_Top);
+}
+
+/*
+ *     設定影像正擺或倒擺
+ *     ctrl_mode: 0:手動   1:自動(G Sensor)
+ *     mode: 0:0 1:180 2:90
+ */
+void setCameraPositionMode(int ctrl_mode, int mode)
+{
+    CtrlCameraPositionMode = ctrl_mode;
+    CameraPositionMode     = mode;
+    set_A2K_DMA_CameraPosition(CameraPositionMode);
 }
 
 //extern unsigned short Trans_ZY_phi[128][256];
@@ -471,6 +503,20 @@ void getGPSLocation(int *val)
 	*(val+3) = (int)(GPS_Altitude * 1000);
 }
 
+int hdrLevel;
+void setSensorHdrLevel(int level)
+{
+	hdrLevel = level;
+}
+
+int CameraMode = 5;		// 相機模式, 0:Cap, 1:Rec, 2:TimeLapse, 3:AEB, 4:RAW(5P), 5:HDR, 6:Night 7:NightHDR 8:Sport 9:SportWDR 10:RecWDR 11:TimeLapseWDR  12:M-Mode 13:Removal 14:3D-Model
+void SetCameraMode(int mode) {
+	CameraMode = mode;
+}
+int GetCameraMode(void) {
+	return CameraMode;
+}
+
 //extern int Capture_Long_EP, Save_Jpeg_Now_Cnt, Save_Jpeg_End_Cnt;
 
 void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode)
@@ -497,15 +543,15 @@ void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode)
         init_k_spi_proc();
     }
     // rex+ test, 181106
-    //if(c_mode == CAMERA_MODE_AEB)   c_mode = CAMERA_MODE_NIGHT_HDR;   // 用 3:HDR 來測試 7:Night+WDR
-    //if(c_mode == CAMERA_MODE_RAW)   c_mode = CAMERA_MODE_NIGHT;       // 用 4:RAW 來測試 6:Night
-    //if(c_mode == CAMERA_MODE_NIGHT) c_mode = CAMERA_MODE_M_MODE;      // 用 6:Night 來測試 12:M-Mode
-    if(get_Removal_Debug_Img() == 1 && c_mode == CAMERA_MODE_AEB) c_mode = CAMERA_MODE_REMOVAL;        // 用 3:HDR 來測試 13:Removal
+    //if(c_mode == 3) c_mode = 7;       // 用 3:HDR 來測試 7:Night+WDR
+    //if(c_mode == 4) c_mode = 6;       // 用 4:RAW 來測試 6:Night
+    //if(c_mode == 6) c_mode = 12;      // 用 6:Night 來測試 12:M-Mode
+    if(get_Removal_Debug_Img() == 1 && c_mode == 3) c_mode = 13;        // 用 3:HDR 來測試 13:Removal
 
+//    CameraMode = c_mode;
     Get_M_Mode(&M_Mode, &S_Mode);
 
-    int fps = getFPS();
-    int EP_Time = 10000000 / fps;
+    int EP_Time = 10000000 / MainFPS;
     set_A2K_Live_CMD(c_mode, t_mode, M_Mode, S_Mode);   // step1. mode需要先設定
 
 //tmp    int type = GetFPGAEncodeType();
@@ -518,10 +564,10 @@ void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode)
     VinInterrupt(c_mode);                               // step2. change exp or gain, 解拍照時Exp/Gain即時調整誤動作
     
     set_A2K_Debug_Mode(DebugJPEGMode, DebugJPEGaddr, ISP2_Sensor);
-    set_A2K_Sensor_CMD(sync_mode, EP_Time, fps, hdrLevel);
+    set_A2K_Sensor_CMD(sync_mode, EP_Time, MainFPS, hdrLevel);
 
     if(sync_mode == 3) {		//change mode
-        if(c_mode == CAMERA_MODE_SPORT_WDR || c_mode == CAMERA_MODE_REC_WDR || c_mode == CAMERA_MODE_TIMELAPSE_WDR)
+        if(c_mode == 9 || c_mode == 10 || c_mode == 11)
         	SetGammaMax(220);
         else
         	SetGammaMax(255);
@@ -540,7 +586,15 @@ void reset_JPEG_Quality(int quality)
     //JPEG_Quality_lst = 0;
     set_A2K_JPEG_Quality_lst(0);
 }
-
+// rex+ 180213
+int get_CameraPositionMode(void)
+{
+    return CameraPositionMode;
+}
+int get_CtrlCameraPositionMode(void)
+{
+    return CtrlCameraPositionMode;
+}
 // rex+ 180213
 int get_DebugJPEGMode(void)
 {
@@ -552,10 +606,21 @@ int get_ISP2_Sensor(void) {
 }
 
 // rex+ 180213
+int get_MainFPS(void)
+{
+    return MainFPS;
+}
+
+// rex+ 180213
 void get_mVideo_WidthHeight(int *w, int *h)       // call from us360.c
 {
     *w = mVideoWidth;
     *h = mVideoHeight;
+}
+void get_Resolution_WidthHeight(int *w, int *h)
+{
+    *w = ResolutionWidth;
+    *h = ResolutionHeight;
 }
 
 /*int cardboard_v1_offset = 40;

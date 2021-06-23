@@ -11,11 +11,8 @@
 #include "UIKit/Component/label.h"
 #include "UIKit/buildable.h"
 #include "UIKit/decoder.h"
-#include "common/app_log.h"
 #include "common/extension/vector.h"
-
-#undef LOG_TAG
-#define LOG_TAG "UI::ViewController"
+#include "device_model/fbtools.h"
 
 UI::ViewController::ViewController(UI::Coder decoder)
     : view_(UI::View::init(decoder)),
@@ -24,7 +21,7 @@ UI::ViewController::ViewController(UI::Coder decoder)
       pan_start_from_(UI::ViewController::RectEdge::not_edge),
       is_pan_(false) {}
 
-UI::ViewController::~ViewController() { db_info(""); }
+UI::ViewController::~ViewController() {}
 
 void UI::ViewController::Layout(UI::Coder decoder) {
 #if 0
@@ -41,7 +38,6 @@ void UI::ViewController::Layout(UI::Coder decoder) {
 }
 
 void UI::ViewController::ViewDidLoad() {
-  db_info("");
   view_->next_ = shared_from_this();
   view_->SetNeedDisplay();
 }
@@ -50,7 +46,6 @@ void UI::ViewController::ViewWillAppear() {
   for (auto const &view : view_->subviews_) {
     // view->set_hidden(false);
   }
-  db_info("");
   ViewDidAppear();
 }
 
@@ -58,7 +53,6 @@ void UI::ViewController::ViewDidAppear() {
   for (auto const &view : view_->subviews_) {
     view->layer_->LayoutIfNeed();
   }
-  db_info("");
 }
 
 void UI::ViewController::ViewWillDisappear() {
@@ -70,7 +64,7 @@ void UI::ViewController::ViewWillDisappear() {
   ViewDidDisappear();
 }
 
-void UI::ViewController::ViewDidDisappear() { db_info(""); }
+void UI::ViewController::ViewDidDisappear() {}
 
 void UI::ViewController::AddChild(
     std::shared_ptr<UI::ViewController> view_controller) {
@@ -100,6 +94,7 @@ void UI::ViewController::Present(
 
 void UI::ViewController::Dismiss(bool with_animated,
                                  std::function<void()> completion) {
+  fb_clean();                                     
   parent_->ViewWillAppear();
   ViewWillDisappear();
   RemoveFromParent();

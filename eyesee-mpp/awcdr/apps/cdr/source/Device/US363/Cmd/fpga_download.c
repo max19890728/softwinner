@@ -199,7 +199,6 @@ int FpgaDownload(const char *buf, const int size) {
 //extern int Waiting_State;
 int DownloadProc() {
 	int ret;
-    int c_mode = getCameraMode();
 	
 	if(ReadFile() < 0)
 		return -1;
@@ -229,7 +228,7 @@ int DownloadProc() {
 	
     // init other function
     set_Init_Gamma_Table_En();         // rex+ 180913
-//tmp    if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
+//tmp    if(CameraMode == 6 || CameraMode == 7 || CameraMode == 12)		//Night / NightHDR / M-Mode
 //tmp      	Set_Skip_Frame_Cnt(3);
 //tmp    else
 //tmp       	Set_Skip_Frame_Cnt(6);
@@ -244,7 +243,7 @@ int fpgaPowerOff() {
     // close fpga power
 //tmp	setImgReadyFlag(0);
 	setSensorPowerOff();
-	setFpgaStandbyEn(0);
+	FPGA_Sleep_En = 0;	//SetFPGASleepEn(0);	//tmp
 
     int ret;
 	ret = GPIO_Open();

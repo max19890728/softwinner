@@ -144,7 +144,7 @@ status_t CameraJpegDecoder::loadSrcFile(VDEC_STREAM_S *pStreamInfo, char *srcPat
 	file.seekg(0, ios::beg);
 	vector<char> buffer(pStreamInfo->mLen);
     file.read(buffer.data(), pStreamInfo->mLen);
-	pStreamInfo->pAddr = (unsigned char*) malloc(4096*1024);	//(unsigned char*) malloc(pStreamInfo->mLen);
+	pStreamInfo->pAddr = (unsigned char*) malloc(pStreamInfo->mLen);    //(unsigned char*) malloc(4096*1024);
 	if(pStreamInfo->pAddr != NULL)
 		copy(buffer.begin(), buffer.end(), pStreamInfo->pAddr);
     pStreamInfo->mbEndOfFrame = 1;

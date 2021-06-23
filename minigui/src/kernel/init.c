@@ -367,8 +367,13 @@ static void* EventLoop (void* data)
             }
         }
 #else
-        if (event & IAL_MOUSEEVENT && kernel_GetLWEvent (IAL_MOUSEEVENT, &lwe))
-            ParseEvent (&lwe);
+        if (event & IAL_MOUSEEVENT) {
+            while (kernel_GetLWEvent (IAL_MOUSEEVENT, &lwe)) {
+                ParseEvent (&lwe);
+            }
+        }
+        // if (event & IAL_MOUSEEVENT && kernel_GetLWEvent (IAL_MOUSEEVENT, &lwe))
+        //     ParseEvent (&lwe);
 #endif
 
         lwe.status = 0L;

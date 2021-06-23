@@ -25,7 +25,7 @@ class ViewController : public std::enable_shared_from_this<UI::ViewController>,
   }
 
  public:
-  enum class RectEdge { top, left, right, bottom, not_edge };
+  enum RectEdge { top, left, right, bottom, not_edge };
 
   UIView view_;
   std::shared_ptr<UI::ViewController> parent_;
@@ -70,4 +70,4 @@ class ViewController : public std::enable_shared_from_this<UI::ViewController>,
 };
 }  // namespace UI
 
-typedef std::shared_ptr<UI::ViewController> UIViewController;
+using UIViewController = std::shared_ptr<UI::ViewController>;

@@ -27,8 +27,7 @@ SRCCS := \
     iosched_policy.c \
     str_parms.c \
     fs.c \
-    memory.c \
-	uevent.c
+    memory.c
 #SRCCS += atomic.c.arm arch-arm/memset32.S
 
 #include directories

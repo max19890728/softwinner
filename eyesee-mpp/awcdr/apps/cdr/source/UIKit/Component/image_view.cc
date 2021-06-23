@@ -30,7 +30,7 @@ void UI::ImageView::SetHighlight(bool to_hightlight) {
 
 void UI::ImageView::Draw(UILayer layer, HDC context) {
   this->UI::View::Draw(layer, context);
-  if (!IsHidden()) {
+  if (!is_hidden_) {
     if (highlight_image_) {
       auto content = is_highlighted_ ? highlight_image_ : image_;
       Load(content, context, layer->Convert(layer->frame_, Convert::to));

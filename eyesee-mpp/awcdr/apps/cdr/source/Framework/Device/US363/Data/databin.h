@@ -6,6 +6,8 @@
 #define __DATABIN_H__
 
 #ifdef __cplusplus
+#include "Device/databin.h"
+
 extern "C" {
 #endif
 
@@ -106,7 +108,6 @@ void Set_DataBin_RemoveHdrAutoStrength(int val);
 void Set_DataBin_LiveBitrate(int bitrate);
 void Set_DataBin_PowerSaving(int mode);
 
-
 int Get_DataBin_Version();
 int Get_DataBin_DemoMode();
 int Get_DataBin_CamPositionMode();
@@ -204,15 +205,22 @@ int Get_DataBin_RemoveHdrAutoStrength();
 int Get_DataBin_LiveBitrate();
 int Get_DataBin_PowerSaving();
 
-int Get_DataBin_Now_Version(void);
+int GetDataBinVersionDate(void);
+
+void SetDataBinVersionDate(int ver);
+
 int split_c(char **buf, char *str, char *del);
+
 void WriteUS360DataBin();
+
 void ReadUS360DataBin(int country, int customer);
+
 void DeleteUS360DataBin();
+
 int CheckExpFreqDefault(int country);
 
 #ifdef __cplusplus
-}   // extern "C"
+}  // extern "C"
 #endif
 
-#endif	//__DATABIN_H__
+#endif  //__DATABIN_H__

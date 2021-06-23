@@ -565,6 +565,8 @@ extern int Total_tilt;
 extern struct YUVC_Line_Struct   YUVC_Line[32];
 
 extern int Send_SL_Idx;
+extern int CtrlCameraPositionMode;		// 0:手動 1:自動(G Sensor)
+extern int CameraPositionMode;		// 0:0 1:180 2:90
 
 extern unsigned short Trans_ZY_phi[129][256];
 extern unsigned short Trans_ZY_thita[129][256];

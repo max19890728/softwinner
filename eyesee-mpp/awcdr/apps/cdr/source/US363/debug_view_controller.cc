@@ -102,7 +102,7 @@ void Self::InertialMeasurementUnitChangeAction(Any) {
 void Self::Layout(UI::Coder) {
   view_->frame(UI::Screen::bounds);
   view_->background_color_ = UI::Color::white;
-  touch_point_test_->IsHidden(true);
+  touch_point_test_->is_hidden_ = true;
   view_->addSubView(touch_point_test_);
   touch_point_test_->background_color_ = UI::Color{0xFFFF0000};
   time_label_->frame(UI::Rect{
@@ -141,7 +141,7 @@ void Self::TouchesBegan(UITouch const &touch, UIEvent const &event) {
     origin : {x : touch->touch_point_.x - 40, y : touch->touch_point_.y - 40},
     size : touch_point_test_->frame().size
   });
-  touch_point_test_->IsHidden(false);
+  touch_point_test_->is_hidden_ = false;
 }
 
 void Self::TouchesMoved(UITouch const &touch, UIEvent const &event) {
@@ -152,7 +152,7 @@ void Self::TouchesMoved(UITouch const &touch, UIEvent const &event) {
 }
 
 void Self::TouchesEnded(UITouch const &touch, UIEvent const &event) {
-  touch_point_test_->IsHidden(true);
+  touch_point_test_->is_hidden_ = true;
 }
 
 #undef LOG_TAG

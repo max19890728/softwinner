@@ -34,7 +34,7 @@ class ScrollViewDelegate {
 
 class ScrollView : public UI::View {
  public:
-  static inline std::shared_ptr<UI::ScrollView> init() {
+  static inline auto init() {
     auto building = std::make_shared<UI::ScrollView>();
     building->Layout();
     return building;

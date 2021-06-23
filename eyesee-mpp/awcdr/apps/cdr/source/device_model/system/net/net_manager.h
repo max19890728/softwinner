@@ -134,7 +134,7 @@ class NetManager
         int DisableNetDevDhcpd(void);
         int GetNetDevDhcpdStatus(const std::string &netdev_name) const;
 
-        int SwitchToSoftAp(const char *ssid, const char *pwd, int mode, int encrypt, int freq);
+        int SwitchToSoftAp(const char *ssid, const char *pwd, int ch, int mode, int encrypt, int freq);
         int DisableAllNetLink();
 
         int EnableMonitorMode(const std::string &interface, const std::string &ssid, const std::string &pwd);

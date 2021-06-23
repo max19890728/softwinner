@@ -11,9 +11,12 @@
 #include "Framework/Foundation/property.h"
 #include "Framework/Foundation/shared_from.h"
 #include "Framework/Foundation/string.h"
+#include "common/utils/json.hpp"
 
 #define Selector(function) std::bind(&function, this, std::placeholders::_1)
 
 using Any = void*;
 
 using UInt = Variable<uint>;
+
+using Json = nlohmann::json;

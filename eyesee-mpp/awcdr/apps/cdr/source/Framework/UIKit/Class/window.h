@@ -17,7 +17,7 @@ class ViewController;
 
 class Window : public UI::View {
  public:
-  static std::shared_ptr<UI::Window> init() {
+  static inline auto init() {
     auto building = std::make_shared<UI::Window>();
     building->window_ = building;
     building->layer_->delegate_ = building;

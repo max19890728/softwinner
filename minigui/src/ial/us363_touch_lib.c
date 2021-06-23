@@ -38,13 +38,8 @@ static int update_touch_point(void) {
     goto error;
   }
   if (ts_read(touch_screen, &sample, 1) > 0) {
-    if (sample.pressure > 0) {
-      point_x = sample.x;
-      point_y = sample.y;
-      pressure = IAL_MOUSE_LEFTBUTTON;
-    } else {
-      pressure = 0;
-    }
+    point_x = sample.x;
+    point_y = sample.y;
   } else {
     goto error;
   }
@@ -118,17 +113,27 @@ static int wait_event(int which, int maxfd, fd_set* in, fd_set* out,
       if (!!event.code) {
         switch (event.type) {
           case EV_KEY:
-            pressued_key = event.value > 0 ? event.code : -1;
-            result |= IAL_KEYEVENT;
+            if (event.code == BTN_TOUCH) {
+              pressure = event.value;
+              result |= IAL_MOUSEEVENT;
+            } else {
+              pressued_key = event.value > 0 ? event.code : -1;
+              result |= IAL_KEYEVENT;
+            }
             break;
           case EV_ABS:
             result |= IAL_MOUSEEVENT;
+            break;
+          default:
+            fprintf(stderr, "Other Event: %d\n", event.type);
             break;
         }
       }
     }
   } else {
-    // fprintf(stderr, "[%s:%d] Select timeout!\n", __FILE__, __LINE__);
+#if 0
+    fprintf(stderr, "[%s:%d] Select timeout!\n", __FILE__, __LINE__);
+#endif
   }
   return result;
 }
@@ -137,13 +142,13 @@ static int wait_event(int which, int maxfd, fd_set* in, fd_set* out,
 
 BOOL InitUS363TouchLibInput(INPUT* input, const char* mdev, const char* mtype) {
   // - Open the event of power key
-  fd_power_key = open(input->mdev0, O_RDONLY);
+  fd_power_key = open(input->mdev1, O_RDONLY);
   if (fd_power_key < 0) {
     fprintf(stderr, "Power Key input node open failed.\n");
   }
 
   // - Open the event of touch
-  touch_screen = ts_open(input->mdev2, TRUE);
+  touch_screen = ts_open(input->mdev0, TRUE);
   if (touch_screen) {
     fd_touch_screen = ts_fd(touch_screen);
     if (fd_touch_screen < 0) {

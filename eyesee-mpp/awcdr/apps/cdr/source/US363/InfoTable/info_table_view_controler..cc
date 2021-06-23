@@ -38,7 +38,14 @@ void Self::Layout(UI::Coder decoder) {
     size : UI::Size{width : 240, height : 38}
   });
   title_view_->addSubView(title_view);
+  #if 0
   table_view_->content_inset_ = UI::EdgeInsets(53, 0, 0, 0);
+  #else
+  table_view_->frame(UI::Rect{
+    origin : UI::Point{x : 0, y : 53},
+    size : UI::Size{width: 240, height: 320 - 53}
+  });
+  #endif
   table_view_->content_size_ = UI::Size{width : 240, height : 320 - 53};
 }
 

@@ -140,7 +140,7 @@ Fbm* FbmCreateBuffer(FbmCreateInfo* pFbmCreateInfo, VideoFbmInfo* pFbmInfo)
 #endif
 
     //logd("FbmCreate, total fbm number: %d, decoder needed: %d,  \
-    //        nWidth=%d, nHeight=%d nAlignStride = %d",
+    //    nWidth=%d, nHeight=%d nAlignStride = %d",
     //       pFbmCreateInfo->nFrameNum,
     //       pFbmCreateInfo->nDecoderNeededMiniFrameNum,
     //       nWidth, nHeight, nAlignStride);

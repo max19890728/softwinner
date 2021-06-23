@@ -20,6 +20,7 @@
 
 UI::View::View()
     : background_color_(UI::Color::init()),
+      is_hidden_(false),
       clears_context_before_drawing_(false),
       layer_(nullptr),
       is_user_interaction_enable_(true),
@@ -27,26 +28,24 @@ UI::View::View()
       frame_(UI::Rect::zero),
       tag_(0) {
   background_color_.didSet = std::bind(&View::BackgroundColorDidSet, this);
-  #if 0
-  // frame_.getter = std::bind(&View::FrameGet, this);
-  // frame_.didSet = std::bind(&View::FrameDidSet, this);
-  frame_.getter = [this] {
-    db_debug("");
-    return this->layer_->frame_;
-  };
-  frame_.didSet = [this] {
-    this->layer_->frame_ = this->frame_;
-    db_debug("Test");
-  };
-  #endif
+#if 0
+  frame_.getter = std::bind(&View::FrameGet, this);
+  frame_.didSet = std::bind(&View::FrameDidSet, this);
+#endif
+  is_hidden_.getter = std::bind(&View::IsHiddenGetter, this);
+  is_hidden_.didSet = std::bind(&View::IsHiddenDidSet, this);
 }
 
 // MARK: - 視圖渲染管理
 
-// 當 `background_color_` 被修改時會自動呼叫此方法
+// 當 `background_color_` 被修改完後會自動呼叫此方法
 void UI::View::BackgroundColorDidSet() { SetNeedDisplay(); }
 
-void UI::View::IsHidden(bool to_hidden) { layer_->SetHidden(to_hidden); }
+auto UI::View::IsHiddenGetter() const -> const bool& {
+  return layer_->is_hidden_;
+}
+
+void UI::View::IsHiddenDidSet() { layer_->is_hidden_ = is_hidden_; }
 
 UILayer UI::View::LayerClass() {
   auto layer = std::make_shared<UI::Layer>();
@@ -56,13 +55,9 @@ UILayer UI::View::LayerClass() {
 
 // MARK: - 邊界與框架範圍配置
 
-auto UI::View::frame() const -> const UI::Rect& {
-  return layer_->frame_;
-}
+auto UI::View::frame() const -> const UI::Rect& { return layer_->frame_; }
 
-void UI::View::frame(UI::Rect const& new_frame) {
-  layer_->frame_ = new_frame;
-}
+void UI::View::frame(UI::Rect const& new_frame) { layer_->frame_ = new_frame; }
 
 auto UI::View::FrameGet() const -> const UI::Rect& {
   db_debug("");
@@ -181,7 +176,7 @@ void UI::View::TouchesEnded(UITouch const& touch, UIEvent const& event) {
 
 void UI::View::Draw(UILayer layer, HDC context) {
   auto on_screen_frame = layer->Convert(layer->frame_, Convert::to);
-  if (!IsHidden()) {
+  if (!is_hidden_) {
     if (background_color_ != 0x00000000) {
       // SetBrushType(context, BT_STIPPLED);
       SetBrushColor(context, background_color_);
