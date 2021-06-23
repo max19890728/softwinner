@@ -35,7 +35,7 @@
 #undef LOG_TAG
 #define LOG_TAG "US363Camera"
 
-//==================== parameter ====================
+//==================== main parameter ====================
 char mUS363Version[64] = "v1.00.00\0";          /** VersionStr */
 
 char mWifiApSsid[32] = "US_0000\0";             /** ssid */
