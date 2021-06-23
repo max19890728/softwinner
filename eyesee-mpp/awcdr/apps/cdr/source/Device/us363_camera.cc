@@ -46,6 +46,9 @@ int mWifiApChannel = 6;
 
 //==================== get/set =====================
 
+void getWifiApSsid(char *ssid) {
+    memcpy(ssid, &mWifiApSsid[0], sizeof(mWifiApSsid));
+}
 
 //==================== fucntion ====================
 

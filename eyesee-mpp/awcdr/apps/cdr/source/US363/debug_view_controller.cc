@@ -13,6 +13,7 @@
 
 #include <string>
 
+#include "Device/us363_camera.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG
@@ -27,6 +28,7 @@ Self::Self()
       battery_label_(UI::Label::init()),
       light_sensor_label_(UI::Label::init()),
       inertial_measurement_unit_label_(UI::Label::init()),
+      ssid_label_(UI::Label::init()),
       touch_point_test_(UI::View::init(UI::Rect{
         origin : UI::Point{x : 0, y : 0},
         size : UI::Size{width : 80, height : 80}
@@ -47,6 +49,11 @@ Self::Self()
       std::bind(&Self::InertialMeasurementUnitChangeAction, this,
                 std::placeholders::_1),
       Device::Observable::Event::value_change);
+      
+      char ssid[32];
+      getWifiApSsid(&ssid[0]);
+      std::string ssid_str(ssid);
+      ssid_label_->text_ = "SSID: " + ssid_str;
 }
 
 /* * * * * 其他成員 * * * * */
@@ -125,6 +132,11 @@ void Self::Layout(UI::Coder) {
     size : UI::Size{width : 240, height : 112}
   });
   view_->addSubView(inertial_measurement_unit_label_);
+  ssid_label_->frame(UI::Rect{
+    origin : UI::Point{x : 0, y : 224},
+    size : UI::Size{width : 240, height : 16}
+  });
+  view_->addSubView(ssid_label_);
 }
 
 void Self::ViewWillDisappear() {

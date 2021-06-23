@@ -26,6 +26,7 @@ class DebugViewController final : public UI::ViewController {
   UILabel battery_label_;
   UILabel light_sensor_label_;
   UILabel inertial_measurement_unit_label_;
+  UILabel ssid_label_;
 
  private:
   UIView touch_point_test_;

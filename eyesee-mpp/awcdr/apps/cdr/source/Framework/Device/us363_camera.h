@@ -12,6 +12,8 @@ extern "C" {
 void initCamera();
 void startPreview();
 void destroyCamera();	
+
+void getWifiApSsid(char *ssid);
 	
 #ifdef __cplusplus
 }   // extern "C"
