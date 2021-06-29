@@ -3,3 +3,8 @@
 ._.DS_Store
 *.bak
 *.o
+*.lo
+*.a
+*.in
+*.la
+*.so

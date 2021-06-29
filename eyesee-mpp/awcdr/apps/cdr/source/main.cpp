@@ -10,10 +10,11 @@
 #include <iostream>
 #include <thread>
 #include <utility>
+#include <iostream>
+#include <mpi_sys.h>
 
 #include "Device/us363_camera.h"
 #include "Device/audio.h"
-#include "Device/camera.h"
 #include "Device/frame_buffer.h"
 #include "US363/Updater/updating_view_controller.h"
 #include "US363/preview_view_controller.h"

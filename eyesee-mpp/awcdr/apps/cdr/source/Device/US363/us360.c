@@ -57,9 +57,9 @@
 #include "Device/US363/Cmd/defect.h"
 #include "Device/US363/Cmd/Smooth.h"
 #include "Device/US363/Test/test.h"
-#include "Device/US363/Test/pcb_ver.h"
-#include "Device/US363/Test/customer.h"
-#include "Device/US363/Test/country.h"
+#include "Device/US363/Data/pcb_version.h"
+#include "Device/US363/Data/customer.h"
+#include "Device/US363/Data/country.h"
 #include "Device/US363/Kernel/FPGA_Pipe.h"
 #include "Device/US363/Kernel/k_spi_cmd.h"
 #include "Device/US363/Driving/driving_mode.h"
@@ -426,6 +426,9 @@ int CpuAutoMoveSpeed = 600000;  	// 4®Ö x 600Mhz
 int CpuHighSpeed     = 600000;     	// 2®Ö x 600Mhz        // 480000, 2MB Live·|¤£¶¶
 int CpuMiddleSpeed   = 480000;    	// 4®Ö x 480Mhz
 int CpuLowSpeed      = 480000;  	// 2®Ö x 480Mhz
+
+//210629+
+char mPcbVersion[8] = "V0.0\0";                                                     /** PCB_Ver */
 
 //fpga dbt
 fpga_ddr_rw_struct ddrReadWriteCmd;
@@ -6839,7 +6842,7 @@ db_debug("databinInit() End\n");
 
 //--------------------------------------------------------------------------
 void initCountryFunc() {  
-	LangCode = getCountryNum();
+	LangCode = readCountryCode();
 //tmp	waitLanguage(LangCode);
     db_debug("initLensFunc() LangCode=%d\n", LangCode);
 }
@@ -6848,7 +6851,7 @@ void initCustomerFunc() {
     char name[16] = "AletaS2\0";
 	char *ptr = NULL;
 
-    customerCode = getCustomerNum();
+    customerCode = readCustomerCode();
 	sprintf(wifiAPssid, "%s\0", mSSID);
 //tmp    ledStateArray[showSsidHead] = 0;
         
@@ -6933,7 +6936,7 @@ void US360_OnCreate() {
         
 //    SetmMcuVersion(mMcuVersion);
         
-    Read_PCB_Ver();
+    readPcbVersion(&mPcbVersion[0]);
         
 //tmp    int led_mode = GetLedControlMode();
 //tmp    ChangeLedMode(led_mode);

@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "Device/US363/Util/ux360_byteutil.h"
+#include "Device/US363/Util/byte_util.h"
 #include "Device/US363/System/sys_time.h"
 
 
@@ -63,6 +63,6 @@ double byte2Double(char *buf, int size) {
   * @param b
   * @return
   */
-void swap32(unsigned int *val) {
+void swap32(int *val) {
 	*val = ((*val>>24) | ((*val&0x00FF0000)>>8) | ((*val&0x0000FF00)<<8) | (*val<<24));
 }
