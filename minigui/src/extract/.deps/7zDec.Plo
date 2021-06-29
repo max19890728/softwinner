@@ -1,0 +1,52 @@
+7zDec.lo: 7zDec.c \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/string.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/string.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/strings.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/strings.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h \
+ 7z.h 7zBuf.h Types.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stddef.h \
+ Bcj2.h Bra.h CpuArch.h LzmaDec.h Lzma2Dec.h
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/string.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/string.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/strings.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/strings.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h:
+
+7z.h:
+
+7zBuf.h:
+
+Types.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stddef.h:
+
+Bcj2.h:
+
+Bra.h:
+
+CpuArch.h:
+
+LzmaDec.h:
+
+Lzma2Dec.h:

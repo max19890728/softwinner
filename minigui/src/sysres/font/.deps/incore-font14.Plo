@@ -1,0 +1,4 @@
+incore-font14.lo: incore-font14.c \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h:

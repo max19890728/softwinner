@@ -147,7 +147,7 @@ void *live360_thread(void)
                     Get_M_Mode(&M_Mode, &S_Mode);
                     pcm_buf_init(freq, M_Mode, get_mic_is_alive(), 1);
                     Live360_Buf.state = cmd_d;
-                    if(Time_Lapse_Mode == 0) pcm_buf.state = cmd_d;
+                    if(getTimeLapseMode() == 0) pcm_buf.state = cmd_d;
                 }
 
                 cmd_p2++;
@@ -157,7 +157,7 @@ void *live360_thread(void)
             else if(cmd_d == -1){                            // stop
                 if(Live360_Buf.state == 0 || Live360_Buf.state == 1){
                 	Live360_Buf.state = cmd_d;
-                    if(Time_Lapse_Mode == 0) pcm_buf.state = cmd_d;
+                    if(getTimeLapseMode() == 0) pcm_buf.state = cmd_d;
                 }
 
                 cmd_p2++;

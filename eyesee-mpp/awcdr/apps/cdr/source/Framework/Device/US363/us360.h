@@ -49,10 +49,6 @@ extern "C" {
 #define CUSTOMER_CODE_ALIBABA   	2067001
 #define CUSTOMER_CODE_PIIQ   		20141
 
-#define POWER_SAVING_INIT_OVERTIME    	35000000
-#define POWER_SAVING_CMD_OVERTIME_5S  	 5000000
-#define POWER_SAVING_CMD_OVERTIME_15S 	15000000
-
 #define  BOTTOM_FILE_NAME_DEFAULT	"background_bottom"
 #define  BOTTOM_FILE_NAME_USER		"background_bottom_user"
 #define  BOTTOM_FILE_NAME_ORG		"background_bottom_org"
@@ -246,7 +242,7 @@ void *pcm_thread(void);
 void *rec_thread(void);
 int read_pcm_buf(pcm_buf_struct *buf, unsigned char *a_buf, int size);
 //int RecoderFillBlack(unsigned char *vbuf, int len, unsigned char *vbuf_tmp, int cnt);
-char *get_storage_path(void);
+//char *get_storage_path(void);
 //void set_read_proc(char *jpeg_proc, char *h264_proc);
 //void enable_debug_message(void);
 unsigned long long get_sd_free_size(char *path);
@@ -277,7 +273,6 @@ void SetPlaySoundFlag(int flag);
 void SetMCUData(int cpuNowTemp);
 void free_us360_buf();
 int malloc_us360_buf();
-int isNumeric(char *str);
 int errnoexit(const char *s);
 void get_timelapse_ms(unsigned long long *time);
 int getTimeLapseMode(void);
@@ -286,9 +281,15 @@ void set_rec_proc_en(int en);
 void set_sd_card_state(int state);
 int get_sd_card_state();
 void set_write_file_error(int err);
-void setRecEn(int recState, int time_lapse, unsigned long long freesize, int fpga_enc);
+void setRecEn(int recState, int time_lapse, unsigned long long freesize, int timelapse_enc);
 
+//-----------------------------------------------------
 void us360_init();
+
+void calSdFreeSize(unsigned long long *size);
+int ResolutionModeToKPixel(int res_mode);
+void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_mdoe);
+
 void setDbtDdrRWCmd(fpga_dbt_rw_cmd_struct *ddr_cmd);
 void copyDataToDbtDdrRWBuf(char *buf, int size, int offset);
 void getDbtDdrRWStruct(fpga_ddr_rw_struct *ddr_p);

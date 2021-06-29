@@ -28,7 +28,7 @@
 #include "Device/US363/Net/ux360_sock_cmd_sta_header.h"
 #include "Device/US363/Net/ux360_sock_cmd_sta_header2.h"
 #include "Device/US363/Net/ux360_sock_cmd_sta.h"
-#include "Device/US363/Util/ux360_byteutil.h"
+#include "Device/US363/Util/byte_util.h"
 #include "Device/US363/System/sys_time.h"
 #include "Device/US363/Util/ux360_list.h"
 #include "Device/US363/Debug/fpga_dbt.h"
@@ -37,6 +37,17 @@
 
 #undef LOG_TAG
 #define LOG_TAG "US363::WifiServer"
+
+
+//#define DB_WIFI_COMMAND
+#ifdef DB_WIFI_COMMAND
+ #define db_wifi_cmd(fmt, arg...)            \
+  do {                                   \
+    printf(fmt, ##arg); \
+  } while (0)
+#else
+ #define db_wifi_cmd(fmt, arg...)
+#endif
 
 
 //thread
@@ -610,7 +621,7 @@ void runLiveMode(float *fval) {
 		if(touch_pan_tilt_init == 0) {		//連線一開始 init touch_pan touch_tilt
 			touch_pan_tilt_init = 1;
 			mModeSelectEn = 2;
-//			mPlayMode = Main.PlayMode2;
+			mPlayMode = getPlayMode();
 		}
 	    if(mModeSelectEn == 2) mModeSelectEn = 0;
 		    
@@ -1089,7 +1100,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'TOUH'\n");			
 		// 使用Touch Screen調整角度 
 	   	for(i = 0; i < 16; i++){
 	   		nbyte[i] = buf[i+4];
@@ -1109,7 +1120,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 			*m += (20+*skip);
 			*ost -= (20+*skip);
 			*skip = 0;
-			
+db_wifi_cmd("old_sock_command: 'SNAP'\n");			
 	    	// 控制拍照開始
 			char b[4];
 			for(i=0; i<4; i++)	{ b[i] = buf[4+i];}
@@ -1129,7 +1140,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
     	*ost -= (20+*skip);
     	*skip = 0;
-			
+db_wifi_cmd("old_sock_command: 'RECE'\n");			
     	// 控制攝影開始
     	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	    if(mAdjustValue[0] == 'R' && mAdjustValue[1] == 'E' && mAdjustValue[2] == 'C' && mAdjustValue[3] == 'M'){	//Time-Lapse MODE check code
@@ -1154,7 +1165,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'RECD'\n");		
 		// 控制攝影結束
 	   	mRecordEn = 0;
 //	   	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mRecordEn", ""+mRecordEn);
@@ -1169,7 +1180,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'MJPG'\n");			
 	   	// 啟動mjpg預覽模式
 	   	mMjpegEn = 1;
 	   	mRTSPEn = 0;
@@ -1186,7 +1197,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'AJEV'\n");		
 	   	// 調整EV, mEV=-6..0..6
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	mEV = byte2Int(&mAdjustValue[0], 4);
@@ -1204,7 +1215,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'AJMF'\n");		
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	if(mAdjustValue[0] == 'M' && mAdjustValue[1] == 'F' && mAdjustValue[2] == '1' && mAdjustValue[3] == '1'){
 			MFMode = 1;
@@ -1236,7 +1247,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'MODE'\n");		
 	   	// 選擇模式 (mode)
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	mPlayMode = byte2Int(&mAdjustValue[0], 4);		// 0:Global、1:Front、2:360、3:240、4:180、5:90x4、6:PIP
@@ -1256,7 +1267,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'ISOM'\n");		
 	   	// ISO選擇 (mode)
 		for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	ISOValue = byte2Int(&mAdjustValue[0], 4);
@@ -1274,7 +1285,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'SHUT'\n");		
 	   	// 快門選擇 (mode)
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	FValue = byte2Int(&mAdjustValue[0], 4);
@@ -1292,7 +1303,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'WBMD'\n");			
 	   	// WB選擇 (mode)
 	   	for(int i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	WBMode = byte2Int(&mAdjustValue[0], 4);
@@ -1310,7 +1321,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'DEMO'\n");		
 	   	// Demo Speed
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	mDemoSpeedEn = byte2Int(&mAdjustValue[0], 4);
@@ -1333,7 +1344,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'CAMS'\n");		
 	   	// Cam select
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	CamMode = byte2Int(&mAdjustValue[0], 4);
@@ -1351,7 +1362,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'SAVE'\n");		
 	   	// 儲存至 select
 	   	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	   	SaveToSel = byte2Int(&mAdjustValue[0], 4);
@@ -1369,7 +1380,7 @@ int old_sock_command(int *m, int *ost, int *skip, char *buf, char *tbuf, int max
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;	
-printf("Cmd:'DAST' 00\n");		
+db_wifi_cmd("old_sock_command: 'DAST'\n");			
 	   	// 第一次連線
 	   	char b[8];
 	   	for(i=0; i<8; i++)	{ b[i] = buf[4+i];}
@@ -1377,9 +1388,9 @@ printf("Cmd:'DAST' 00\n");
 	   	mSetTime = 1;
 	   	printf("Cmd:'DAST' mDataBinEn = 1\n");
 	   	//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mSysTime", ""+mSysTime);
-printf("Cmd:'DAST' 01\n");		
+	
 	   	if(lstTimeConnect < mSysTime)	lstTimeConnect = mSysTime;
-printf("Cmd:'DAST' 02\n");		
+		
 	   	mDataBinEn = 1;
 	   	mRecStateEn = 1;
 	   	mConnected = 1;
@@ -1387,23 +1398,20 @@ printf("Cmd:'DAST' 02\n");
         sendUninstallEn = 1;
         sendFeedBackEn = 1;
 		//sendFeedBackAction = {'D', 'A', 'S', 'T'};
-printf("Cmd:'DAST' 03\n");		
 		sprintf(sendFeedBackAction, "DAST");
-printf("Cmd:'DAST' 04\n");
     	sendFeedBackValue = 1;
-printf("Cmd:'DAST' 05 ost=%d\n", *ost);
+
 		if(*ost > 0) {
 			memcpy(&tbuf[0], &buf[20], *ost);
 			memcpy(&buf[0], &tbuf[0], *ost);
 		}
-		ret = 1;
-printf("Cmd:'DAST' End\n");		
+		ret = 1;	
 	}
 	else if(buf[0] == 'F' && buf[1] == 'M' && buf[2] == 'A' && buf[3] == 'T'){		// Format SD
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'FMAT'\n");		
 	   	// Format SD
 	   	printf("Cmd:'FMAT' mFormatEn = 1\n");
 //	   	Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Do Format SD Card.", "---");
@@ -1419,7 +1427,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'SWAP'\n");		
 	   	// data交換
 	   	printf("Cmd:'SWAP' mDataSwapEn = 1\n");
 //	   	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mDataSwapEn", "1");
@@ -1437,7 +1445,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'STHM'\n");		
 	   	// 取THM檔
 	   	mImgEn = 5;
 	    clear_list(mExistFileName);		//mExistFileName.clear();
@@ -1454,7 +1462,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'PHOT'\n");		
 	   	// 取相簿圖
 	   	char a[4];
 	    for( i=0;i<4;i++)	{ a[i] = buf[4+i];}       							    	
@@ -1477,7 +1485,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'PHOK'\n");		
 	   	// 取相簿圖OK
 	   	mImgEn = 3;
 	   	printf("Cmd:'PHOK' mImgEn = 3\n");
@@ -1493,7 +1501,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'PSTP'\n");		
 	   	// 停止取相簿圖
 	   	printf("Cmd:'PSTP' mImgEn = 2");
 //	   	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "PSTP", "2");
@@ -1507,7 +1515,7 @@ printf("Cmd:'DAST' End\n");
 	}
 	else if(buf[0] == 'L' && buf[1] == 'O' && buf[2] == 'A' && buf[3] == 'D'){		// 下載圖
 		*skip = 0;
-				
+db_wifi_cmd("old_sock_command: 'LOAD'\n");				
 	   	// 下載圖
 		int i;
 	   	char c[4];
@@ -1545,7 +1553,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'LDOK'\n");		
 	   	// 下載圖名稱OK;
 	   	printf("Cmd:'LDOK' mDownloadEn = 3\n");
 //	   	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "LDOK", "3");
@@ -1561,7 +1569,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'LDSP'\n");		
 	   	// 停止下載圖
 	   	printf("Cmd:'LDSP' mDownloadEn = 2\n");
 //	   	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "LDSP", "0");
@@ -1577,7 +1585,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'DELE'\n");		
 		// 刪除圖
 	   	char a[4];
 	   	for(i=0; i<4; i++)	{ a[i] = buf[4+i];}       							    	
@@ -1600,7 +1608,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 	   	*ost -= (20+*skip);
 	   	*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'DEOK'\n");		
 	   	// 刪除圖名稱OK;
 	   	printf("Cmd:'DEOK' mDelete = 1\n");
 	   	mDeleteEn = 1;
@@ -1615,7 +1623,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'CPMD'\n");		
 	   	// 拍照模式
 		char b[4];
 		for(i=0; i<4; i++)	{ b[i] = buf[4+i];}
@@ -1634,7 +1642,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'TLMD'\n");		
 	    // Time-Lapse模式
 		char b[4];
 		for(i=0; i<4; i++)	{ b[i] = buf[4+i];}
@@ -1653,7 +1661,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'GREC'\n");	
 	   	// get rec state
 		mRecStateEn = 1;
 	   	printf("Cmd:'GREC' mRecStateEn = 1\n");
@@ -1668,7 +1676,7 @@ printf("Cmd:'DAST' End\n");
 		*m += (20+*skip);
 		*ost -= (20+*skip);
 		*skip = 0;
-		
+db_wifi_cmd("old_sock_command: 'SHAR'\n");		
 	   	// sharpness
 		mSharpnessEn = 1;
 	   	char b[4];
@@ -1685,7 +1693,7 @@ printf("Cmd:'DAST' End\n");
 	}
 	else if(buf[0] == 'B' && buf[1] == 'O' && buf[2] == 'T' && buf[3] == 'M' &&
 			buf[4] == 'T' && buf[5] == 'O' && buf[6] == 'T' && buf[7] == 'L'){
-		
+db_wifi_cmd("old_sock_command: 'BOTMTOTL'\n");		
 		char c[4];
 		for(i=0; i<4; i++){
 			c[i] = buf[8+i];
@@ -1707,7 +1715,7 @@ printf("Cmd:'DAST' End\n");
 	}
 	else if(buf[0] == 'B' && buf[1] == 'O' && buf[2] == 'T' && buf[3] == 'M' &&
 			buf[4] == 0x20 && buf[5] == 0x18 && buf[6] == 0x04 && buf[7] == 0x11 ){
-		
+db_wifi_cmd("old_sock_command: 'BOTM 0x20180411'\n");		
 		printf("Cmd:'BOTM' Bottom setup cmd\n");
 	   	int i;
 		char c[4];
@@ -1796,7 +1804,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 	   		if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'S' && sock_cmd_h.keyword[2] == 'E' && sock_cmd_h.keyword[3] == 'R'){	// 新Gsensor Command
 	   			int dataLen = sock_cmd_h.dataLength;
 	   			if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GSER'\n");				
 	   			char data[16];
 				memcpy(&data[0], &buf[16], 16);
 	   			float value[4];
@@ -1826,7 +1834,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     			int dataLen = sock_cmd_h.dataLength;
     			char data[dataLen];
     			if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'ZONE'\n");		
 				memcpy(&data[0], &buf[16], dataLen);
 			    			
 				sprintf(wifiZone, "%s", data);
@@ -1846,7 +1854,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'H' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'T'){	// 取相簿圖
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-		    			
+db_wifi_cmd("new_sock_command1: 'PHOT'\n");		    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);    							    	
 		    	int FileNameLen	= byte2Int(&a[0], 4);
@@ -1870,7 +1878,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'H' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'K'){	// 取相簿圖OK
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-					    	
+db_wifi_cmd("new_sock_command1: 'PHOK'\n");					    	
 		    	mImgEn = 3;	
 		    	printf("Cmd1:'PHOK' mImgEn = 3\n");
 			    			
@@ -1886,7 +1894,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'L' && sock_cmd_h.keyword[3] == 'E'){	// 刪除圖
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-					    	
+db_wifi_cmd("new_sock_command1: 'DELE'\n");					    	
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
 		    	int deletedFileNameLen	= byte2Int(&a[0], 4);
@@ -1911,7 +1919,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'K'){	// 刪除圖OK
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					    	
+db_wifi_cmd("new_sock_command1: 'DEOK'\n");					    	
 				printf("Cmd1:'DEOK' mDelete = 1\n");
 			  	mDeleteEn = 1;
 			    			
@@ -1927,7 +1935,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 /*			else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'I' && sock_cmd_h.keyword[2] == 'F' && sock_cmd_h.keyword[3] == 'I'){	// wifi關閉時間
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'WIFI'\n");			    			
 				char a[4];
 				memcpy(&a[0], &buf[16], 4); 
 				wifiDisableTime = byte2Int(&a[0], 4);
@@ -1948,7 +1956,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'C' && sock_cmd_h.keyword[2] == 'N' && sock_cmd_h.keyword[3] == 'T'){	// get captureCnt
 				int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'CCNT'\n");			    			
 				char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			captureCnt = byte2Int(&a[0], 4);
@@ -1969,7 +1977,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'N' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'S'){	// Ethernet Settings
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'NETS'\n");			    			
     			char a[4];
     			int pos = 16;
 				memcpy(&a[0], &buf[pos], 4); 
@@ -2028,7 +2036,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'P' && sock_cmd_h.keyword[3] == 'S'){	// change FPS
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'CFPS'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mFPS = byte2Int(&a[0], 4);
@@ -2049,7 +2057,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'H' && sock_cmd_h.keyword[1] == '2' && sock_cmd_h.keyword[2] == '6' && sock_cmd_h.keyword[3] == '4'){	// enable H264
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'H264'\n");			    			
     			mRTSPEn = 1;
     			mMjpegEn = 0;
     			printf("Cmd1:'H264' mRTSPEn = %d , mMjpegEn = %d\n", mRTSPEn, mMjpegEn);
@@ -2066,7 +2074,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'O' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'T'){	// change media port
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'PORT'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mPort = byte2Int(&a[0], 4);
@@ -2087,7 +2095,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'V' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'C'){	// DrivingRecord
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'DVRC'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mDrivingRecord = byte2Int(&a[0], 4);
@@ -2108,7 +2116,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'H'){	// Wifi Channel
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-		    			
+db_wifi_cmd("new_sock_command1: 'WFCH'\n");		    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mWifiChannel = byte2Int(&a[0], 4);
@@ -2129,7 +2137,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'E' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'F' && sock_cmd_h.keyword[3] == 'Q'){	// EP freq
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'EPFQ'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mEPFreq = byte2Int(&a[0], 4);
@@ -2150,7 +2158,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'F' && sock_cmd_h.keyword[1] == 'C' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'L'){	// fan control
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'FCTL'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mFanCtrl = byte2Int(&a[0], 4);
@@ -2171,7 +2179,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'P'){	// stop livestreaming
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'STOP'\n");			    			
     			mRTSPEn = 0;
     			mMjpegEn = 0;
     			printf("Cmd1:'STOP' stop : mjpeg = %d , h264 = %d\n", mMjpegEn, mRTSPEn);
@@ -2189,7 +2197,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'F'){ // wifi config
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-		    			
+db_wifi_cmd("new_sock_command1: 'WFCF'\n");		    			
     			int pos = 16;
     			char ssid[7];
 				memcpy(&ssid[0], &buf[pos], 7); 
@@ -2216,7 +2224,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'D'){ // wifi Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-	    			
+db_wifi_cmd("new_sock_command1: 'WFMD'\n");	    			
     			int pos = 16;
 			    			
     			char BytesWifiMode[4];
@@ -2307,16 +2315,16 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 					reboot = byte2Int(&BytesReboot[0], 4);	
 			    }
 			    			
-//    			Main.mWifiModeCmd = wifiMode;
-//				Main.wifiSSID = newSsid;
-//    			Main.wifiPassword = newPwd;
-//    			Main.wifiType = newType;
-//    			Main.wifiIP = newIP;
-//    			Main.wifiGateway = newGateway;
-//    			Main.wifiPrefix = newPrefix;
-//    			Main.wifiDns1 = newDns1;
-//    			Main.wifiDns2 = newDns2;
-//				Main.wifiReboot = reboot;
+    			setWifiModeCmd(wifiMode);
+//tmp				Main.wifiSSID = newSsid;
+//tmp    			Main.wifiPassword = newPwd;
+//tmp    			Main.wifiType = newType;
+//tmp    			Main.wifiIP = newIP;
+//tmp    			Main.wifiGateway = newGateway;
+//tmp    			Main.wifiPrefix = newPrefix;
+//tmp    			Main.wifiDns1 = newDns1;
+//tmp    			Main.wifiDns2 = newDns2;
+//tmp				Main.wifiReboot = reboot;
 			    			
     			printf("Cmd1:'WFMD' mWifiModeCmd : Mode = %d Ssid = %s , Pwd = %s reboot = %d\n", wifiMode, newSsid, newPwd, reboot);
     			printf("Cmd1:'WFMD' mWifiModeCmd : type = %d ip = %s , gateway = %s prefix = %s dns1 = %s dns2 = %s\n", wifiMode, newIP, newGateway, newPrefix, newDns1, newDns2);
@@ -2333,7 +2341,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'L'){ // debugtool connect
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'DBTL'\n");			    			
     			fromWhereConnect = 1;
     			mChangeDebugToolStateEn = 1;
     			isDebugToolConnect = 1;
@@ -2352,7 +2360,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'S' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'A'){ // get statetool
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GSTA'\n");				
     			mGetStateToolEn = 1;
     			printf("Cmd1:'GSTA' mGetStateToolEn = 1\n");
 //    			Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mGetStateToolEn", ""+mGetStateToolEn);
@@ -2369,7 +2377,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'A' && sock_cmd_h.keyword[3] == 'R'){ // get parameterstool
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GPAR'\n");				
     			mGetParametersToolEn = 1;
     			printf("Cmd1:'GPAR' mGetParametersToolEn = 1\n");
 //    			Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mGetParametersToolEn", ""+mGetParametersToolEn);
@@ -2386,7 +2394,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'J' && sock_cmd_h.keyword[3] == 'S'){ // get sensortool
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'GAJS'\n");			    			
     			mGetSensorToolEn = 1;
     			printf("Cmd1:'GAJS' mGetSensorToolEn = 1\n");
 			    			
@@ -2402,7 +2410,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'I'){ // set adj sensor idx
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'SASI'\n");			    			
     			char tmp[4];
     			int /*idx,*/ pos = 16;
 				memcpy(&tmp[0], &buf[pos], 4); 
@@ -2422,7 +2430,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'O' && sock_cmd_h.keyword[1] == 'L' && sock_cmd_h.keyword[2] == 'E' && sock_cmd_h.keyword[3] == 'D'){ // get oled num
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'OLED'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			ctrlOLEDNum = byte2Int(&a[0], 4);
@@ -2443,7 +2451,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'A' && sock_cmd_h.keyword[3] == 'R'){ // set Parameterstool
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'SPAR'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mParametersNum = byte2Int(&a[0], 4);
@@ -2467,7 +2475,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'J' && sock_cmd_h.keyword[3] == 'S'){ // set Sensortool
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'SAJS'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			mSensorToolNum = byte2Int(&a[0], 4);
@@ -2490,7 +2498,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'L'){ // set GPS Location
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			 
+db_wifi_cmd("new_sock_command1: 'GPSL'\n");			    			 
     			char data[8];
 				memcpy(&data[0], &buf[16], 8); 
     			mGPSLocation[0] = byte2Double(&data[0], 8);
@@ -2524,8 +2532,8 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'U' && sock_cmd_h.keyword[2] == 'D' && sock_cmd_h.keyword[3] == 'O'){ // get audio data
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-/*			    			
-				// rtmp audio
+db_wifi_cmd("new_sock_command1: 'AUDO'\n");			    			
+/*				// rtmp audio
 				if(Main.rtmp_switch == 0 && Main.mPublisher != null){
 					if(Main.mPublisher.sumAudioBufSize >= (Main.mPublisher.maxAudioBufSize*2/5) && Main.mPublisher.bufferRound == 0){
 						Main.mPublisher.audioBufInPos -= (Main.mPublisher.maxAudioBufSize/5);
@@ -2568,7 +2576,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 				}
 			    			
     			// record audio
-    			if(Main.Time_Lapse_Mode == 0){
+    			if(getTimeLapseMode() == 0){
     				//if(Main.ls_audioTS.size() >= 200 && mAudioEn == 0){
 					//	Main.ls_audioTS.clear();
     				//	Main.ls_readBufSize.clear();
@@ -2608,7 +2616,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'I' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'K'){ // id check
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'IDCK'\n");				
     			mIdCheckEn = 1;
     			printf("Cmd1:'IDCK' mIdCheck = %d\n", mIdCheckEn);
 			    		
@@ -2625,7 +2633,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'Q' && sock_cmd_h.keyword[3] == 'T'){ // wifi quest
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'WFQT'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int wifiQuest = byte2Int(&a[0], 4);
@@ -2647,7 +2655,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'S' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'M'){ // Color ST Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'CSTM'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int mode = byte2Int(&a[0], 4);
@@ -2669,7 +2677,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'T' && sock_cmd_h.keyword[1] == 'R' && sock_cmd_h.keyword[2] == 'N' && sock_cmd_h.keyword[3] == 'S'){ // Translucent control
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'TRNS'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int mode = byte2Int(&a[0], 4);
@@ -2692,7 +2700,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'G' && sock_cmd_h.keyword[2] == 'P' && sock_cmd_h.keyword[3] == 'M'){ // Auto Global Phi Adj Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'AGPM'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int mode = byte2Int(&a[0], 4);
@@ -2715,7 +2723,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
     		else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'G' && sock_cmd_h.keyword[2] == 'P' && sock_cmd_h.keyword[3] == 'O'){ // do Auto Global Phi Adj One Time
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'AGPO'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int mode = byte2Int(&a[0], 4);
@@ -2737,7 +2745,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'E' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'H' && sock_cmd_h.keyword[3] == 'S'){	// eth state
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-					    	
+db_wifi_cmd("new_sock_command1: 'ETHS'\n");					    	
 		    	sendEthStateEn = 1;
 			    			
     			*m += (16+dataLen+*skip);
@@ -2752,7 +2760,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'H' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'V'){ // HDMI TextView visibility
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'HDTV'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4); 
     			int mode = byte2Int(&a[0], 4);
@@ -2774,7 +2782,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'I' && sock_cmd_h.keyword[3] == 'D'){ // wifi ssid
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'WFID'\n");			    			
     			mWifiSsidEn = 1;
 				
     			*m += (16+dataLen+*skip);
@@ -2790,7 +2798,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'F'){ // RTMP Configure
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'RMCF'\n");			    			
     			char a[512];
 				memcpy(&a[0], &buf[16], 512);
 //    			Main.rtmpUrl = (new String(a)).trim();
@@ -2810,7 +2818,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'I' && sock_cmd_h.keyword[3] == 'F'){ // Audio Infomation
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'ADIF'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
 //    			int rate = byte2Int(&a[0], 4);
@@ -2838,7 +2846,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'U' && sock_cmd_h.keyword[1] == 'N' && sock_cmd_h.keyword[2] == 'I' && sock_cmd_h.keyword[3] == 'N'){ // uninstalldates
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'UNIN'\n");			    			
     			mUninstalldatesEn = 1;
 				
     			*m += (16+dataLen+*skip);
@@ -2854,7 +2862,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'B' && sock_cmd_h.keyword[1] == 'I' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'R'){ // Rec Bitrate控制
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'BITR'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -2877,7 +2885,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'L' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'R'){ // Live Bitrate控制
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'LBTR'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -2900,7 +2908,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'I' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'G' && sock_cmd_h.keyword[3] == 'Q'){ // JPEG Quality Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'IMGQ'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -2921,7 +2929,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'K' && sock_cmd_h.keyword[3] == 'S'){ // speaker Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'SPKS'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -2943,7 +2951,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'L' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'D' && sock_cmd_h.keyword[3] == 'B'){ // ledBrightness Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'LEDB'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int value = byte2Int(&a[0], 4);
@@ -2965,7 +2973,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'O' && sock_cmd_h.keyword[1] == 'L' && sock_cmd_h.keyword[2] == 'D' && sock_cmd_h.keyword[3] == 'S'){ // oledControl Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'OLDS'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -2987,7 +2995,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'O'){ // 解析度儲存 
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'RESO'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int mode = byte2Int(&a[0], 4);
@@ -3014,7 +3022,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'D'){ // 延遲拍照/錄影
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'CMCD'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int time = byte2Int(&a[0], 4);
@@ -3036,7 +3044,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'L' && sock_cmd_h.keyword[3] == 'Y'){ // 延遲參數
 				int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'DELY'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int delay = byte2Int(&a[0], 4);
@@ -3058,7 +3066,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'O' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'P'){ // 電子羅盤校正
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'COMP'\n");			    			
     			char a[4];
 				memcpy(&a[0], &buf[16], 4);
     			int val = byte2Int(&a[0], 4);
@@ -3079,7 +3087,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'D'){ // wifi Mode
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'WFMD'\n");			    			
     			int pos = 16;
 	    			
     			char BytesWifiMode[4];
@@ -3170,16 +3178,16 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 				    reboot = byte2Int(&BytesReboot[0], 4);	
 			    }
 			    			
-//			    Main.mWifiModeCmd = wifiMode;
-//			    Main.wifiSSID = newSsid;
-//			    Main.wifiPassword = newPwd;
-//			    Main.wifiType = newType;
-//			    Main.wifiIP = newIP;
-//			    Main.wifiGateway = newGateway;
-//			    Main.wifiPrefix = newPrefix;
-//			    Main.wifiDns1 = newDns1;
-//			    Main.wifiDns2 = newDns2;
-//				Main.wifiReboot = reboot;
+			    setWifiModeCmd(wifiMode);
+//tmp			    Main.wifiSSID = newSsid;
+//tmp			    Main.wifiPassword = newPwd;
+//tmp			    Main.wifiType = newType;
+//tmp			    Main.wifiIP = newIP;
+//tmp			    Main.wifiGateway = newGateway;
+//tmp			    Main.wifiPrefix = newPrefix;
+//tmp			    Main.wifiDns1 = newDns1;
+//tmp			    Main.wifiDns2 = newDns2;
+//tmp				Main.wifiReboot = reboot;
 			    			
 			    printf("Cmd1:'WFMD' mWifiModeCmd : Mode = %d Ssid = %s , Pwd = %s reboot = %d\n", wifiMode, newSsid, newPwd, reboot);
 			    printf("Cmd1:'WFMD' mWifiModeCmd : type = %d ip = %s , gateway = %s prefix = %s dns1 = %s dns2 = %s\n", wifiMode, newIP, newGateway, newPrefix, newDns1, newDns2);
@@ -3196,7 +3204,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'D'){ // Camera Mode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'CMMD'\n");			    			
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3218,7 +3226,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'L' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'D'){ // playmode cmd Mode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'PLMD'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);				    			
@@ -3261,7 +3269,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'D'){ // DebugLogMode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'DBMD'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3283,7 +3291,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'Y' && sock_cmd_h.keyword[2] == 'N' && sock_cmd_h.keyword[3] == 'C'){ //設定同步請求
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'SYNC'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3305,7 +3313,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'B' && sock_cmd_h.keyword[1] == 'O' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'W'){ //底圖設定
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'BOSW'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int mode = byte2Int(&a[0], 4);
@@ -3332,7 +3340,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'H' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'E'){ // HdrEvMode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'HDRE'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3382,7 +3390,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'I'){ // getBottomImage
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GBMI'\n");				
 				mBotmEn = 3;
 				
 				*m += (16+dataLen+*skip);
@@ -3399,7 +3407,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'I' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'B'){ // initialize databin
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'IDTB'\n");				
 				mInitializeDataBinEn = 1;
 				
 				*m += (16+dataLen+*skip);
@@ -3415,7 +3423,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'H' && sock_cmd_h.keyword[3] == 'M'){ // get thm list
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-			
+db_wifi_cmd("new_sock_command1: 'GTHM'\n");			
 				mGetTHMListEn = 1;
 				
 				*m += (16+dataLen+*skip);
@@ -3431,7 +3439,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'H' && sock_cmd_h.keyword[3] == 'M'){ // send thm list
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'STHM'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				mSendTHMListSize = byte2Int(&a[0], 4);
@@ -3458,7 +3466,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'N' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'L'){ //感測器開關
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'SNCL'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int compassMode = byte2Int(&a[0], 4);
@@ -3485,7 +3493,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'B' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'T'){ //底圖文字控制
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'BMTT'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int mode = byte2Int(&a[0], 4);
@@ -3526,7 +3534,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'F' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'E'){ // FETE 縮時檔案類型
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'FETE'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3548,7 +3556,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'B' && sock_cmd_h.keyword[3] == 'C'){ // set WBRGB
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'SWBC'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int r = byte2Int(&a[0], 4);
@@ -3581,7 +3589,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'B' && sock_cmd_h.keyword[3] == 'C'){ // need WBRGB
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'GWBC'\n");					
 				mGetWBColorEn = 1;
 				
 				*m += (16+dataLen+*skip);
@@ -3598,7 +3606,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'C' && sock_cmd_h.keyword[2] == 'N' && sock_cmd_h.keyword[3] == 'T'){ // set contrast
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'SCNT'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3620,7 +3628,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'S' && sock_cmd_h.keyword[2] == 'U' && sock_cmd_h.keyword[3] == 'N'){ // set saturation
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'SSUN'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3642,7 +3650,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'H'){ // 白平衡參考點
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'WBTH'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int x = byte2Int(&a[0], 4);
@@ -3668,7 +3676,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'B' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'D'){ // bmode B快門參數
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'BMOD'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int mSec = byte2Int(&a[0], 4);
@@ -3694,7 +3702,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'P' && sock_cmd_h.keyword[2] == 'P' && sock_cmd_h.keyword[3] == 'M'){ // app mode APP類型
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'APPM'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int mode = byte2Int(&a[0], 4);
@@ -3714,7 +3722,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'F' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'D'){ // getfolder
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-					
+db_wifi_cmd("new_sock_command1: 'GFOD'\n");					
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int len = byte2Int(&a[0], 4);
@@ -3738,7 +3746,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'B' && sock_cmd_h.keyword[3] == 'E'){ // AEBMode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'AEBE'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3765,7 +3773,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'L' && sock_cmd_h.keyword[1] == 'I' && sock_cmd_h.keyword[2] == 'V' && sock_cmd_h.keyword[3] == 'Q'){ // LiveQualityMode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'LIVQ'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3787,7 +3795,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'H' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'D'){ // 請求HDR預設值
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GHRD'\n");				
 				mSendHdrDefaultEn = 1;
 				
 				*m += (16+dataLen+*skip);
@@ -3804,7 +3812,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'T' && sock_cmd_h.keyword[1] == 'O' && sock_cmd_h.keyword[2] == 'N' && sock_cmd_h.keyword[3] == 'E'){ // TONE(WDR)設定
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'TONE'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3826,7 +3834,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'T'){ // estimate time獲取預估時間
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GEST'\n");				
 				mGetEstimateEn = 1;
 
 				*m += (16+dataLen+*skip);
@@ -3843,7 +3851,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'D' && sock_cmd_h.keyword[2] == 'F' && sock_cmd_h.keyword[3] == 'P'){ // 執行去除壞點
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-
+db_wifi_cmd("new_sock_command1: 'GDFP'\n");
 				mGetDefectivePixelEn = 1;
 				
 				*m += (16+dataLen+*skip);
@@ -3860,7 +3868,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'W' && sock_cmd_h.keyword[1] == 'B' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'P'){ //wbtp 白平衡色溫設定
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'WBTP'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3890,7 +3898,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'R' && sock_cmd_h.keyword[2] == 'M' && sock_cmd_h.keyword[3] == 'V'){ //grmv動態移除hdr設定
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'GRMV'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3920,7 +3928,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'C' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'G'){ //cmd message
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'CMSG'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int code = byte2Int(&a[0], 4);
@@ -3950,7 +3958,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'A' && sock_cmd_h.keyword[1] == 'L' && sock_cmd_h.keyword[2] == 'I' && sock_cmd_h.keyword[3] == 'A'){ //Anti-Aliasing
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'ALIA'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3972,7 +3980,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'L' && sock_cmd_h.keyword[3] == 'A'){ //Removal Anti-Aliasing
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'RALA'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -3994,7 +4002,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'M'){ // Power Saving Mode
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'PWSM'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int mode = byte2Int(&a[0], 4);
@@ -4017,15 +4025,16 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'T' && sock_cmd_h.keyword[3] == 'S'){ // Seting UI State
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'SETS'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int state = byte2Int(&a[0], 4);
 				
 				mSetingUIEn = 1;
 				mSetingUIState = state;
-				//Main.Send_Data_State_t = System.currentTimeMillis();
-				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Seting UI En.", String.valueOf(mSetingUIState));
+                unsigned long long now_time;
+                get_current_usec(&now_time);
+                setPowerSavingSendDataStateTime(now_time);
 				
 				*m += (16+dataLen+*skip);
 				*ost -= (16+dataLen+*skip);
@@ -4040,7 +4049,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'T'){ // Do Auto Stitching
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (16+dataLen))	return -1;
-				
+db_wifi_cmd("new_sock_command1: 'DAST'\n");				
 				char a[4];
 				memcpy(&a[0], &buf[16], 4);
 				int val = byte2Int(&a[0], 4);
@@ -4063,7 +4072,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'G' && sock_cmd_h.keyword[1] == 'S' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'S'){ // Do Gensor reset
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'GSRS'\n");			    			
     			char a[4];
     			memcpy(&a[0], &buf[16], 4);
     			int val = byte2Int(&a[0], 4);
@@ -4086,7 +4095,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
 			else if(sock_cmd_h.keyword[0] == 'L' && sock_cmd_h.keyword[1] == 'A' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'S'){ // Laser 開關
     			int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'LASS'\n");			    			
     			char a[4];
     			memcpy(&a[0], &buf[16], 4);
     			int val = byte2Int(&a[0], 4);
@@ -4108,7 +4117,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
             else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'D' && sock_cmd_h.keyword[3] == 'C'){ // DBT Write DDR Cmd
                 int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'DWDC'\n");			    			
     			fpga_dbt_rw_cmd_struct cmd;
     			memcpy(&cmd, &buf[16], dataLen);
                 					
@@ -4136,7 +4145,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
                     printf("Cmd:'DWDR' size error, buf[0x%x, 0x%x, 0x%x, 0x%x]\n", buf[0], buf[1], buf[2], buf[3]);
                     return -1;
                 }
-                
+db_wifi_cmd("new_sock_command1: 'DWDR'\n");	                
                 int offset, size;
                 memcpy(&offset, &buf[16], sizeof(offset));
 				size = (dataLen - sizeof(offset));
@@ -4174,7 +4183,7 @@ int new_sock_command1(int *m, int *ost, int *skip, char *buf, char *tbuf, int *a
             else if(sock_cmd_h.keyword[0] == 'D' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'R' && sock_cmd_h.keyword[3] == 'G'){ // DBT Write Reg Cmd + Data
                 int dataLen = sock_cmd_h.dataLength;
     			if(*ost < (16+dataLen))	return -1;
-			    			
+db_wifi_cmd("new_sock_command1: 'DWRG'\n");				    			
     			fpga_reg_rw_struct cmd;
     			memcpy(&cmd, &buf[16], dataLen);
                 						    			
@@ -4254,7 +4263,7 @@ int new_sock_command2(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'E'){		// record enable
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command2: 'RECE'\n");				
 				if(getSockCmdSta_tId_Record() != sock_cmd_h.sourceId){
 					setSockCmdSta_recStatus(0);
 					setSockCmdSta_tId_Record(sock_cmd_h.sourceId);
@@ -4292,7 +4301,7 @@ int new_sock_command2(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'D'){		// record disable
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command2: 'RECD'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Record()){
 					setSockCmdSta_recStatus(0);
 					setSockCmdSta_tId_Record(sock_cmd_h.sourceId);
@@ -4319,7 +4328,7 @@ int new_sock_command2(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'H' && sock_cmd_h.keyword[3] == 'M'){		// 取THM檔
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command2: 'STHM'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Thumbnail()){
 					setSockCmdSta_thmStatus(0);
 					setSockCmdSta_tId_Thumbnail(sock_cmd_h.sourceId);
@@ -4342,7 +4351,7 @@ int new_sock_command2(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'H' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'K'){	// 取相簿圖OK
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command2: 'PHOK'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Image()){
 					setSockCmdSta_imgStatus(0);
 					setSockCmdSta_tId_Image(sock_cmd_h.sourceId);
@@ -4423,7 +4432,7 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'E'){		// record enable
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-
+db_wifi_cmd("new_sock_command3: 'RECE'\n");
 				unsigned long long nowTime;
 				get_current_usec(&nowTime);
 				if((nowTime - recStTime) > 3000){
@@ -4466,7 +4475,7 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'E' && sock_cmd_h.keyword[2] == 'C' && sock_cmd_h.keyword[3] == 'D'){		// record disable
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-
+db_wifi_cmd("new_sock_command3: 'RECD'\n");
 				unsigned long long nowTime;
 				get_current_usec(&nowTime);
 				if((nowTime - recStTime) > 3000){
@@ -4497,7 +4506,7 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'T' && sock_cmd_h.keyword[2] == 'H' && sock_cmd_h.keyword[3] == 'M'){		// 取THM檔
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command3: 'STHM'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Thumbnail()){
 					setSockCmdSta_tId_Thumbnail(sock_cmd_h.sourceId);
 					
@@ -4519,7 +4528,7 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'P' && sock_cmd_h.keyword[1] == 'H' && sock_cmd_h.keyword[2] == 'O' && sock_cmd_h.keyword[3] == 'K'){	// 取相簿圖OK
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command3: 'PHOK'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Image()){
 					setSockCmdSta_tId_Image(sock_cmd_h.sourceId);
 					
@@ -4540,17 +4549,17 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'S' && sock_cmd_h.keyword[1] == 'W' && sock_cmd_h.keyword[2] == 'A' && sock_cmd_h.keyword[3] == 'P'){		// data交換
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command3: 'SWAP'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Data()){
 					setSockCmdSta_tId_Data(sock_cmd_h.sourceId);
 					
 					setSockCmdSta_dataStatus(0);
 					sendDataStatusCmd = 1;
 					mConnected = 1;
-//					setWifiOledEn(1);
-//					unsigned long long nowTime;
-//					get_current_usec(&nowTime);
-//					Main.Send_Data_State_t = nowTime;
+//tmp					setWifiOledEn(1);
+					unsigned long long now_time;
+					get_current_usec(&now_time);
+					setPowerSavingSendDataStateTime(now_time);
 				}
 				printf("Cmd3:'SWAP' [Cmd Status2] mDataSwapEn = 1\n");
 				
@@ -4567,7 +4576,7 @@ int new_sock_command3(int *m, int *ost, int *skip, char *buf, char *tbuf) {
 			else if(sock_cmd_h.keyword[0] == 'R' && sock_cmd_h.keyword[1] == 'M' && sock_cmd_h.keyword[2] == 'S' && sock_cmd_h.keyword[3] == 'W'){		// rtmp開關
 				int dataLen = sock_cmd_h.dataLength;
 				if(*ost < (32+dataLen)) return -1;
-				
+db_wifi_cmd("new_sock_command3: 'RMSW'\n");				
 				if(sock_cmd_h.sourceId != getSockCmdSta_tId_Rtmp()){
 					setSockCmdSta_tId_Rtmp(sock_cmd_h.sourceId);
 					
@@ -4624,7 +4633,7 @@ int process_input_stream(int type) {
 	int appMode=0;
 	int socketOst=0;
 	char *socketDataQ = NULL, *tbuf = NULL;
-
+	
 	if(type == 1){						//location模式
 		socketOst = gSocketOst;
 		socketDataQ = &gSocketDataQ[0];
@@ -4985,8 +4994,9 @@ void process_output_stream(int mw, int gw) {
 		mDataBinEn = 0;
 		ver = 0x20151117;
 		sprintf(cmd, "DATA");
-        printf("SCmd:'DATA' 01\n");	
-//		int len = Main.databin.getBytes().length;
+db_wifi_cmd("process_output_stream: 'DATA'\n");		
+		//int len = 0;	//Main.databin.getBytes().length;
+		//char dataBinBuf[1024];
 //		if(Main.databin != null){
 			if(mw){
 				send_data(&mSocket, &cmd[0], 4);
@@ -5002,13 +5012,13 @@ void process_output_stream(int mw, int gw) {
 //				send_data(&gSocket, (char*)&len, sizeof(len));
 //				send_data(&gSocket, (char*)&Main.databin, sizeof(Main.databin));
 			}
-//		}	
-        printf("SCmd:'DATA' 02\n");	
+//		}		
 	}
 	if(mRecStateEn == 1){
 		mRecStateEn = 0;
 		ver = 0x20151222;
 		sprintf(cmd, "RECS");
+db_wifi_cmd("process_output_stream: 'RECS'\n");		
 		int val=0;
 		if(mw){
 			send_data(&mSocket, &cmd[0], 4);
@@ -5032,6 +5042,7 @@ void process_output_stream(int mw, int gw) {
 		mDataSwapEn = 0;
 		ver = 0x20151222;
 		sprintf(cmd, "SWAP");
+db_wifi_cmd("process_output_stream: 'SWAP'\n");		
 		int val=0;
 		unsigned long long nowTime;
 		get_current_usec(&nowTime);
@@ -5081,6 +5092,7 @@ void process_output_stream(int mw, int gw) {
 			printf("SCmd:'PHOT' THM Func: file len = %d\n", nLen);
 			ver = 0x20151123;
 			sprintf(cmd, "PHOT");
+db_wifi_cmd("process_output_stream: 'PHOT'\n");			
 			if(mw) {
 				send_data(&mSocket, &cmd[0], 4);
 				send_data(&mSocket, (char*)&ver, sizeof(ver));
@@ -5099,6 +5111,7 @@ void process_output_stream(int mw, int gw) {
 	if(mImgEn == 5){
 		if(mImgTotle != -1){
 			sprintf(cmd, "STHMTOTL");
+db_wifi_cmd("process_output_stream: 'STHMTOTL'\n");				
 			if(mw){
 				send_data(&mSocket, &cmd[0], 8);
 				send_data(&mSocket, (char*)&mImgTotle, sizeof(mImgTotle));
@@ -5116,6 +5129,7 @@ void process_output_stream(int mw, int gw) {
 	if(mImgEn == 8){
 		if(mImgTotle != -1){
 			sprintf(cmd, "STHMTOTL");
+db_wifi_cmd("process_output_stream: 'STHMTOTL'\n");			
 			if(mw){
 				send_data(&mSocket, &cmd[0], 8);
 				send_data(&mSocket, (char*)&mImgTotle, sizeof(mImgTotle));
@@ -5131,6 +5145,7 @@ void process_output_stream(int mw, int gw) {
 		}
 	}
 	if(mImgEn == 6){
+db_wifi_cmd("process_output_stream: mImgEn == 6\n");		
 		if(mImgLen > 0){
 			if(mw){
 				send_data(&mSocket, &mImgData[0], mImgLen);
@@ -5152,6 +5167,7 @@ void process_output_stream(int mw, int gw) {
 		mImgEn = 0;		
 		ver = 0x20151230;
 		sprintf(cmd, "STHMISOK");
+db_wifi_cmd("process_output_stream: 'STHMISOK'\n");
 		if(mw){
 			send_data(&mSocket, &cmd[0], 8);
 			send_data(&mSocket, (char*)&ver, sizeof(ver));
@@ -5166,6 +5182,7 @@ void process_output_stream(int mw, int gw) {
 	if(mImgEn == 3){
 		if(mImgTotle != -1){
 			sprintf(cmd, "SIMGTOTL");
+db_wifi_cmd("process_output_stream: 'SIMGTOTL'\n");			
 			if(mw){
 				send_data(&mSocket, &cmd[0], 8);
 				send_data(&mSocket, (char*)&mImgTotle, sizeof(mImgTotle));
@@ -5180,6 +5197,7 @@ void process_output_stream(int mw, int gw) {
 		}
 	}
 	if(mImgEn == 1){
+//db_wifi_cmd("process_output_stream: mImgEn == 1\n");		
 		if(mImgLen > 0){
 			if(mw){
 				send_data(&mSocket, &mImgData[0], mImgLen);
@@ -5201,6 +5219,7 @@ void process_output_stream(int mw, int gw) {
 		mImgEn = 0;		
 		ver = 0x20151124;
 		sprintf(cmd, "SIMGISOK");
+db_wifi_cmd("process_output_stream: 'SIMGISOK'\n");		
 		if(mw){
 			send_data(&mSocket, &cmd[0], 8);
 			send_data(&mSocket, (char*)&ver, sizeof(ver));
@@ -5226,6 +5245,7 @@ void process_output_stream(int mw, int gw) {
 	if(mDownloadEn == 3){
 		if(mDownloadTotle != -1){
 			sprintf(cmd, "DOWNTOTL");
+db_wifi_cmd("process_output_stream: 'DOWNTOTL'\n");			
 			if(mw){
 				send_data(&mSocket, &cmd[0], 8);
 				send_data(&mSocket, (char*)&mDownloadTotle, sizeof(mDownloadTotle));
@@ -5240,6 +5260,7 @@ void process_output_stream(int mw, int gw) {
 		}
 	}
 	if(mDownloadEn == 1){
+db_wifi_cmd("process_output_stream: mDownloadEn == 1\n");		
 		if(mDownloadLen > 0){
 			if(mw){
 				send_data(&mSocket, &mDownloadData[0], mDownloadLen);
@@ -5261,6 +5282,7 @@ void process_output_stream(int mw, int gw) {
 		mDownloadEn = 0;
 		ver = 0x20151130;
 		sprintf(cmd, "DOWNISOK");
+db_wifi_cmd("process_output_stream: 'DOWNISOK'\n");		
 		if(mw){
 			send_data(&mSocket, &cmd[0], 8);
 			send_data(&mSocket, (char*)&ver, sizeof(ver));
@@ -5279,6 +5301,7 @@ void process_output_stream(int mw, int gw) {
 		mDeleteEn = 0;
 		ver = 0x20151203;
 		sprintf(cmd, "DELEISOK");
+db_wifi_cmd("process_output_stream: 'DELEISOK'\n");		
 		if(mw){
 			send_data(&mSocket, &cmd[0], 8);
 			send_data(&mSocket, (char*)&ver, sizeof(ver));
@@ -5292,6 +5315,7 @@ void process_output_stream(int mw, int gw) {
 	}
 	// rex+ 151016,  傳送mjpg圖檔到手機, 
 	if(mMjpegEn == 1){
+db_wifi_cmd("process_output_stream: mMjpegEn == 1\n");		
 		if(mOutputLength > 0){
 			int nLen = mOutputLength;
 			ver = 0x20150814;
@@ -5319,6 +5343,7 @@ void process_output_stream(int mw, int gw) {
 	}
 	// weber+ 160418, rtsp
 	if(mRTSPEn == 1){
+db_wifi_cmd("process_output_stream: mRTSPEn == 1\n");		
 		get_current_usec(&originalRtspTimer);
 //		if(wifiSerCB != null)	wifiSerCB.copyRTSP(); 
 		if(rtspBufLength > 0){
@@ -5369,6 +5394,7 @@ void process_output_stream(int mw, int gw) {
 	}
 	if(mBotmTotle != -1){
 		sprintf(cmd, "BOTMTOTL");
+db_wifi_cmd("process_output_stream: 'BOTMTOTL'\n");		
 		if(mw){
 			send_data(&mSocket, &cmd[0], 8);
 			send_data(&mSocket, (char*)&mBotmTotle, sizeof(mBotmTotle));
@@ -5382,6 +5408,7 @@ void process_output_stream(int mw, int gw) {
 		mBotmEn = 1;
 	}
 	if(mBotmEn == 1){
+db_wifi_cmd("process_output_stream: mBotmEn == 1\n");			
 		if(mBotmLen > 0){
 			if(mw){
 				send_data(&mSocket, &mBotmData[0], mBotmLen);
@@ -5402,14 +5429,11 @@ void process_output_stream(int mw, int gw) {
 	if(sendFeedBackEn == 1){		// send feedback
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "FDBK");
-printf("SCmd:'FDBK' 00\n");		
+db_wifi_cmd("process_output_stream: 'FDBK'\n");		
 		set_sock_cmd_header(&cmd[0], 8, &cmdHeader);
-		if(mw){
-printf("SCmd:'FDBK' 01-1\n");			
-			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
-printf("SCmd:'FDBK' 01-2\n");			
+		if(mw){			
+			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));			
 			send_data(&mSocket, &sendFeedBackAction[0], 4);
-printf("SCmd:'FDBK' 01-3\n");
 			send_data(&mSocket, (char*)&sendFeedBackValue, sizeof(sendFeedBackValue));		
 		}
 		if(gw){			
@@ -5423,6 +5447,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mWifiPwdEn == 1){			// send wifi password
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "WFPW");
+db_wifi_cmd("process_output_stream: 'WFPW'\n");		
 		set_sock_cmd_header(&cmd[0], 8, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5439,6 +5464,7 @@ printf("SCmd:'FDBK' 01-3\n");
 //		if(Main.stateTool != null
 			struct socket_cmd_header_struct cmdHeader;
 			sprintf(cmd, "SSTA");
+db_wifi_cmd("process_output_stream: 'SSTA'\n");			
 //			set_sock_cmd_header(&cmd[0], Main.stateTool.getBytes().length + 4, &cmdHeader);
 			if(mw){
 				send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5457,6 +5483,7 @@ printf("SCmd:'FDBK' 01-3\n");
 //		if(Main.parametersTool != null){
 			struct socket_cmd_header_struct cmdHeader;
 			sprintf(cmd, "SPAR");
+db_wifi_cmd("process_output_stream: 'SPAR'\n");			
 //			set_sock_cmd_header(&cmd[0], Main.parametersTool.getBytes().length + 4, &cmdHeader);
 			if(mw){
 				send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5475,6 +5502,7 @@ printf("SCmd:'FDBK' 01-3\n");
 //		if(Main.sensorTool != null){
 			struct socket_cmd_header_struct cmdHeader;
 			sprintf(cmd, "SAJS");
+db_wifi_cmd("process_output_stream: 'SAJS'\n");			
 //			set_sock_cmd_header(&cmd[0], Main.sensorTool.getBytes().length + 4, &cmdHeader);
 			if(mw){
 				send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5493,6 +5521,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		int val = 0;
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "IDCK");
+db_wifi_cmd("process_output_stream: 'IDCK'\n");		
 		set_sock_cmd_header(&cmd[0], 8, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5510,6 +5539,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mSyncEn == 1){			// send sync databin
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "SYNC");
+db_wifi_cmd("process_output_stream: 'SYNC'\n");		
 //		set_sock_cmd_header(&cmd[0], Main.databin.getBytes().length + 8, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5529,6 +5559,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(sendUninstallEn == 1){
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "UNIN");
+db_wifi_cmd("process_output_stream: 'UNIN'\n");			
 		set_sock_cmd_header(&cmd[0], 4, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5547,6 +5578,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		int len = strlen(data);
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "MACA");
+db_wifi_cmd("process_output_stream: 'MACA'\n");		
 		set_sock_cmd_header(&cmd[0], 4 + len, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5561,13 +5593,14 @@ printf("SCmd:'FDBK' 01-3\n");
 		printf("SCmd:'MACA' sendMacAddressEn : macData = %s\n", data);
 		sendMacAddressEn = 0;
 	}
-	if(fromWhereConnect == 0){
+	if(fromWhereConnect == 0){		
 		int i, sid, tid;
 		int size = sizeof(sendFeedBackSTEn) / sizeof(int);
 		struct sock_cmd_sta_header_struct cmdHeader;
 		char req[8];
 		for(i=0; i<size; i++){
 			if(sendFeedBackSTEn[i] == 1){
+db_wifi_cmd("process_output_stream: fromWhereConnect == 0, i=%d\n", i);				
 				switch(i){
 				case 0:
 					if(getSockCmdSta_recStatus() == 1){
@@ -5656,6 +5689,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mKelvinEn == 1){			// send id check
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "KELV");
+db_wifi_cmd("process_output_stream: 'KELV'\n");		
 		set_sock_cmd_header(&cmd[0], 8, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5673,6 +5707,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mMapItemEn == 1){		// send 3D data
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "MAPI");
+db_wifi_cmd("process_output_stream: 'MAPI'\n");		
 		set_sock_cmd_header(&cmd[0], 16, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5694,6 +5729,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mRoomDataEn == 1){		// send room data
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "RMDT");
+db_wifi_cmd("process_output_stream: 'RMDT'\n");		
 		set_sock_cmd_header(&cmd[0], 4 + mRoomDataLen*4, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5720,28 +5756,31 @@ printf("SCmd:'FDBK' 01-3\n");
 		int tid = getSockCmdSta_tId_Record();
 		int f_sta = getSockCmdSta_f_recStatus();
 		int p_sta = getSockCmdSta_p_recStatus();
+        int camera_mode = getCameraMode();
+        int timelapse_mode = getTimeLapseMode();
 		if(getSockCmdSta_recStatus() == 0){
 			setSockCmdSta_sId_Record(sid+1);
 			setSockCmdSta_recStatus(1);
 		}
 		struct sock_cmd_sta_header2_struct cmdHeader2;
 		sprintf(cmd, "CAMO");
+db_wifi_cmd("process_output_stream: 'CAMO'\n");		
 		set_sock_cmd_sta_header2(&cmd[0], 20, sid, tid, &cmdHeader2);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			send_data(&mSocket, (char*)&Main.databin.getCameraMode(), sizeof(Main.databin.getCameraMode()));
+			send_data(&mSocket, (char*)&camera_mode, sizeof(camera_mode));
 			send_data(&mSocket, (char*)&f_sta, sizeof(f_sta));
 			send_data(&mSocket, (char*)&p_sta, sizeof(p_sta));
 //			send_data(&mSocket, (char*)&Main.recTime, sizeof(Main.recTime));
-//			send_data(&mSocket, (char*)&Main.Time_Lapse_Mode, sizeof(Main.Time_Lapse_Mode));
+			send_data(&mSocket, (char*)&timelapse_mode, sizeof(timelapse_mode));
 		}
 		if(gw){
 			send_data(&gSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			send_data(&gSocket, (char*)&Main.databin.getCameraMode(), sizeof(Main.databin.getCameraMode()));
+			send_data(&gSocket, (char*)&camera_mode, sizeof(camera_mode));
 			send_data(&gSocket, (char*)&f_sta, sizeof(f_sta));
 			send_data(&gSocket, (char*)&p_sta, sizeof(p_sta));
 //			send_data(&gSocket, (char*)&Main.recTime, sizeof(Main.recTime));
-//			send_data(&gSocket, (char*)&Main.Time_Lapse_Mode, sizeof(Main.Time_Lapse_Mode));
+			send_data(&gSocket, (char*)&timelapse_mode, sizeof(timelapse_mode));
 		}
 		printf("SCmd:'CAMO' [Cmd Status2] send CAMO\n");
 	}
@@ -5755,6 +5794,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		}
 		struct sock_cmd_sta_header2_struct cmdHeader2;
 		sprintf(cmd, "THST");
+db_wifi_cmd("process_output_stream: 'THST'\n");			
 		set_sock_cmd_sta_header2(&cmd[0], 0, sid, tid, &cmdHeader2);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
@@ -5774,6 +5814,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		}
 		struct sock_cmd_sta_header2_struct cmdHeader2;
 		sprintf(cmd, "DTST");
+db_wifi_cmd("process_output_stream: 'DTST'\n");		
 		set_sock_cmd_sta_header2(&cmd[0], 84, sid, tid, &cmdHeader2);
 		int currentValue[3];
 		int val=0;
@@ -5782,18 +5823,20 @@ printf("SCmd:'FDBK' 01-3\n");
 //		getBma2x2orientationdata(sensorData, 1); 
 		int pitch = (int)(sensorData[1] * 100);
 		int roll = (int)(sensorData[2] * 100);
+        int free_cnt = getFreeCount();
+        int fps = getFPS();
 //		get_current_usec(&Main.systemTime);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(&mSocket, (char*)&val, sizeof(val));
 //			send_data(&mSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
 //			send_data(&mSocket, (char*)&Main.power, sizeof(Main.power));
 //			send_data(&mSocket, (char*)&Main.systemTime, sizeof(Main.systemTime));
-//			send_data(&mSocket, (char*)&Main.FPS, sizeof(Main.FPS));
-//			send_data(&mSocket, (char*)&Main.freeCount, sizeof(Main.freeCount));
+			send_data(&mSocket, (char*)&fps, sizeof(fps));
+			send_data(&mSocket, (char*)&free_cnt, sizeof(free_cnt));
 			send_data(&mSocket, (char*)&currentValue[0], sizeof(currentValue[0]));
 			send_data(&mSocket, (char*)&currentValue[1], sizeof(currentValue[1]));
 			send_data(&mSocket, (char*)&currentValue[2], sizeof(currentValue[2]));
@@ -5808,14 +5851,14 @@ printf("SCmd:'FDBK' 01-3\n");
 		if(gw){
 			send_data(&gSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
 //			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+//			else						   val = getSdState();
 			send_data(&gSocket, (char*)&val, sizeof(val));
 //			send_data(&gSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
 //			send_data(&gSocket, (char*)&Main.power, sizeof(Main.power));
 //			send_data(&gSocket, (char*)&Main.systemTime, sizeof(Main.systemTime));
-//			send_data(&gSocket, (char*)&Main.FPS, sizeof(Main.FPS));
-//			send_data(&gSocket, (char*)&Main.freeCount, sizeof(Main.freeCount));
+			send_data(&gSocket, (char*)&fps, sizeof(fps));
+			send_data(&gSocket, (char*)&free_cnt, sizeof(free_cnt));
 			send_data(&gSocket, (char*)&currentValue[0], sizeof(currentValue[0]));
 			send_data(&gSocket, (char*)&currentValue[1], sizeof(currentValue[1]));
 			send_data(&gSocket, (char*)&currentValue[2], sizeof(currentValue[2]));
@@ -5839,6 +5882,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		}
 		struct sock_cmd_sta_header2_struct cmdHeader2;
 		sprintf(cmd, "RMSW");
+db_wifi_cmd("process_output_stream: 'RMSW'\n");		
 		set_sock_cmd_sta_header2(&cmd[0], 4, sid, tid, &cmdHeader2);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
@@ -5857,6 +5901,7 @@ printf("SCmd:'FDBK' 01-3\n");
 			int dataLen = 4 + 4 + ipLen;
 			struct socket_cmd_header_struct cmdHeader;
 			sprintf(cmd, "ETHS");
+db_wifi_cmd("process_output_stream: 'ETHS'\n");			
 			set_sock_cmd_header(&cmd[0], dataLen, &cmdHeader);
 			if(mw){
 				send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5876,6 +5921,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mWifiSsidEn == 1){			// send wifi ssid
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "WFID");
+db_wifi_cmd("process_output_stream: 'WFID'\n");		
 		set_sock_cmd_header(&cmd[0], sendWifiSsidLen, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5892,6 +5938,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		int dataLen = 4 + mTHMListSize + 4 + mL63StatusSize + 4 + mPCDStatusSize;
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "GTHM");
+db_wifi_cmd("process_output_stream: 'GTHM'\n");		
 		set_sock_cmd_header(&cmd[0], dataLen, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5917,6 +5964,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mCompassResultEn == 1){
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "CPRS");
+db_wifi_cmd("process_output_stream: 'CPRS'\n");		
 		set_sock_cmd_header(&cmd[0], 4, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5932,6 +5980,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mSendWBColorEn == 1){
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "GWBC");
+db_wifi_cmd("process_output_stream: 'GWBC'\n");		
 		set_sock_cmd_header(&cmd[0], 12, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5953,6 +6002,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		int sizeLen = strlen(mSendFolderSizes);
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "SFOD");
+db_wifi_cmd("process_output_stream: 'SFOD'\n");		
 		set_sock_cmd_header(&cmd[0], 16+dataLen+sizeLen, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -5977,6 +6027,7 @@ printf("SCmd:'FDBK' 01-3\n");
 		int x, y;
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "SHRD");
+db_wifi_cmd("process_output_stream: 'SHRD'\n");		
 		set_sock_cmd_header(&cmd[0], 48, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -6000,6 +6051,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mSetEstimateEn == 1){
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "SEST");
+db_wifi_cmd("process_output_stream: 'SEST'\n");			
 		set_sock_cmd_header(&cmd[0], 24, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -6021,6 +6073,7 @@ printf("SCmd:'FDBK' 01-3\n");
 	if(mSendDefectivePixelEn == 1){
 		struct socket_cmd_header_struct cmdHeader;
 		sprintf(cmd, "SDFP");
+db_wifi_cmd("process_output_stream: 'SDFP'\n");		
 		set_sock_cmd_header(&cmd[0], 4, &cmdHeader);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader, sizeof(cmdHeader));
@@ -6036,6 +6089,7 @@ printf("SCmd:'FDBK' 01-3\n");
     if(mDbtOutputDdrDataEn == 1) {
         int ret, total_size = 0, step_size = 0, size = 0;
         struct socket_cmd_header_struct sock_cmd_h;
+db_wifi_cmd("process_output_stream: 'DRDR'\n");        
         fpga_ddr_rw_struct ddr_p;
         getDbtDdrRWStruct(&ddr_p);
         step_size = 8192;
@@ -6072,6 +6126,7 @@ printf("SCmd:'FDBK' 01-3\n");
         mDbtOutputRegDataEn = 0;
         struct socket_cmd_header_struct sock_cmd_h;
         fpga_reg_rw_struct reg_p;
+db_wifi_cmd("process_output_stream: 'DRRG'\n");        
         getDbtRegRWStruct(&reg_p);
         set_sock_cmd_header("DRRG", sizeof(reg_p.data), &sock_cmd_h);
         if(mw){
@@ -6082,12 +6137,12 @@ printf("SCmd:'FDBK' 01-3\n");
 			send_data(&gSocket, (char*)&sock_cmd_h, sizeof(sock_cmd_h));
 			send_data(&gSocket, (char*)&reg_p.data, sizeof(reg_p.data));
 		}
-        printf("SCmd:'DRRG'\n");
     }
     if(mDbtInputDdrDataFinish == 1) {
         mDbtInputDdrDataFinish = 0;
         struct socket_cmd_header_struct sock_cmd_h;
         int val = 1;
+db_wifi_cmd("process_output_stream: 'DWDF'\n");         
         set_sock_cmd_header("DWDF", sizeof(val), &sock_cmd_h);
         if(mw){
 			send_data(&mSocket, (char*)&sock_cmd_h, sizeof(sock_cmd_h));
@@ -6097,12 +6152,12 @@ printf("SCmd:'FDBK' 01-3\n");
 			send_data(&gSocket, (char*)&sock_cmd_h, sizeof(sock_cmd_h));
 			send_data(&gSocket, (char*)&val, sizeof(val));
 		}
-        printf("SCmd:'DWDF'\n");
     }
     if(mDbtInputRegDataFinish == 1) {
         mDbtInputRegDataFinish = 0;
         struct socket_cmd_header_struct sock_cmd_h;
         int val = 1;
+db_wifi_cmd("process_output_stream: 'DWRF'\n");        
         set_sock_cmd_header("DWRF", sizeof(val), &sock_cmd_h);
         if(mw){
 			send_data(&mSocket, (char*)&sock_cmd_h, sizeof(sock_cmd_h));
@@ -6112,7 +6167,6 @@ printf("SCmd:'FDBK' 01-3\n");
 			send_data(&gSocket, (char*)&sock_cmd_h, sizeof(sock_cmd_h));
 			send_data(&gSocket, (char*)&val, sizeof(val));
 		}
-        printf("SCmd:'DWRF'\n");
     }
 //	doType = 1;
 //	if(mLive){
@@ -6205,7 +6259,7 @@ void cmd_thread(void) {
 
 		//doType = 1;
 		if(mR == 1) {	//if(mLive) {
-			mLen = read_data(&mSocket, &mInputData[0], 0x10000);          
+			mLen = read_data(&mSocket, &mInputData[0], 0x10000);
 			if(mLen > 0){
 				get_current_usec(&lstTimeConnect);
 				if(mSocketOst < 0) mSocketOst = 0;
@@ -6363,21 +6417,18 @@ void webservice_thread(void) {
             lstTime = curTime;
         }
 		
-/*		if(Main.webServiceDataLen > 0 && ControllerServer.isServerProcessing == 0){
-			int len = Main.webServiceDataLen;
-			if(len > 0){
-				if(gSocketOst < 0) gSocketOst = 0;
-				if(gSocketOst + len < 0x10000){
-					memcpy(&gSocketDataQ[gSocketOst], &Main.webServiceData[0], len);
-					gSocketOst += len;
-					Main.webServiceDataLen = 0;
-					printf("webservice_thread() get webservice len: %d\n", gSocketOst);
-					process_input_stream(1);
-				}
-				else{
-					printf("webservice_thread() WifiServer: Err! socketOst=%d\n", gSocketOst);
-					gSocketOst = 0;
-				}
+/*tmp		if(getWebServiceDataLen() > 0 && ControllerServer.isServerProcessing == 0){
+			int len = getWebServiceDataLen();
+            if(gSocketOst < 0) gSocketOst = 0;
+			if(gSocketOst + len < 0x10000){
+                popWebServiceDataAll(&gSocketDataQ[gSocketOst]);
+				gSocketOst += len;
+				printf("webservice_thread() get webservice len: %d\n", gSocketOst);
+				process_input_stream(1);
+			}
+			else{
+				printf("webservice_thread() WifiServer: Err! socketOst=%d\n", gSocketOst);
+				gSocketOst = 0;
 			}
 		}*/
 		

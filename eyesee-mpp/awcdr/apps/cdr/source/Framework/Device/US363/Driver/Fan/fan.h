@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-#define CPU_TEMP_MAX	105                /* Cpu最高溫度 */
-
 void SetFanAlwaysOn(int en);
 int GetFanAlwaysOn();
 void SetTask1mLockFlag(int flag);
@@ -22,7 +20,7 @@ void SetFanSpeed(int speed);
 int GetFanSpeed();
 void SetFanLstLv(int speed);
 int GetFanLstLv();
-void FanCtrlFunc();
+void FanCtrlFunc(int fan_ctrl);
 void setFanRotateSpeed(int speed);
 
 #ifdef __cplusplus

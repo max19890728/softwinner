@@ -1,0 +1,52 @@
+videomem-bucket.lo: videomem-bucket.c \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdio.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdio.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdlib.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdlib.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/alloca.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/limits.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/assert.h \
+ videomem-bucket.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/list.h \
+ ../../mgconfig.h
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdio.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdio.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdlib.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdlib.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/alloca.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/limits.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/assert.h:
+
+videomem-bucket.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/list.h:
+
+../../mgconfig.h:

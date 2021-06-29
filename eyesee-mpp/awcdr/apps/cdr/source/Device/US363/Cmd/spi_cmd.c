@@ -42,8 +42,6 @@ unsigned Read_FX_HDR_Y = 400;
 unsigned char HDR_Img_Buf[7][2][1024];
 unsigned char HDR_Mo_Buf[7][2][1024];
 
-int FPGA_Sleep_En = 0;
-
 unsigned ST_Cmd_Cal_CheckSum[2] = {0};
 unsigned ST_Sen_Cmd_Cal_CheckSum[2] = {0};
 unsigned ST_Tran_Cmd_Cal_CheckSum[2] = {0};
@@ -476,6 +474,7 @@ void ReadFXDDR(unsigned f_id, unsigned addr) {
  * en: 0=Off, 1=On
  */
 void SetFPGASleepEn(int en) {
+    int c_mode = getCameraMode();
 	unsigned Data[2];
 	Data[0] = 0x708;
 	if(en == 0) Data[1] = 2;
@@ -488,16 +487,11 @@ void SetFPGASleepEn(int en) {
 		FPGA_Pipe_Init(1);
 		Set_FPGA_Pipe_Idx(0);
 		AS2_CMD_Start2();
-//tmp		if(CameraMode == 6 || CameraMode == 7 || CameraMode == 12)		//Night / NightHDR / M-Mode
+//tmp		if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
 //tmp			Set_Skip_Frame_Cnt(3);
 //tmp		else
 //tmp			Set_Skip_Frame_Cnt(6);
 	}
-	FPGA_Sleep_En = en;
-}
-
-int GetFPGASleepEn() {
-	return FPGA_Sleep_En;
 }
 
 /*
@@ -732,7 +726,7 @@ unsigned Read_FX_Cnt(void) {
 
 int CheckFXCnt(void) {
 	unsigned cnt=0;
-	unsigned fps_t = 1000000000 / get_MainFPS();		//1000000000 / (MainFPS / 10) / 10ns;
+	unsigned fps_t = 1000000000 / getFPS();		//1000000000 / (FPS / 10) / 10ns;
 	unsigned fps_t_max = (fps_t << 1);
 	static int err_cnt=0;
 	int chBinn = Get_FPGA_Com_In_Sensor_Change_Binn();

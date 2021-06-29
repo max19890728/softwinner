@@ -1248,11 +1248,16 @@ static int getBytes(char *buffer) { return get_raw_data_bin(buffer); }
 
 static void writeDatabin2Path(char *filePath) { save_data_bin(); }
 
-static int versionDate = 190507;
+//static int versionDate = 190507;
 
-int GetDataBinVersionDate(void) { return versionDate; }
+//int GetDataBinVersionDate(void) { return versionDate; }
 
-void SetDataBinVersionDate(int ver) { versionDate = ver; }
+//void SetDataBinVersionDate(int ver) { versionDate = ver; }
+
+#define DATABIN_VERSION_DATE    190507
+int Get_DataBin_Now_Version(void) {
+	return DATABIN_VERSION_DATE;
+}
 
 int split_c(char **buf, char *str, char *del) {
   int cnt = 0;

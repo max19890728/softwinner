@@ -757,7 +757,7 @@ db_error("max+ rec_thread() rec start\n");
 							rec_state = -3;
 						}
 						else if(save_flag == -2) {					//Over Free Size
-							if(DrivingRecord_Mode == 0) {	//DrivingRecord_Mode: Off
+							if(getDrivingRecordMode() == 0) {	//DrivingRecord_Mode: Off
 								rec_state = -1;
 								if(pcm_buf.state == 1)
 									pcm_buf.state = -1;
@@ -854,12 +854,12 @@ db_error("max+ rec_thread() rec stop\n");
 							set_fpga_encode_type(0);
 						}
 						else {
-							if(DrivingRecord_Mode == 1 && sd_freesize < SD_CARD_MIN_SIZE) {
+							if(getDrivingRecordMode() == 1 && sd_freesize < SD_CARD_MIN_SIZE) {
 								doDrivingModeDeleteFile();
 							}
 
 							//取得 SD 卡剩餘空間
-							getSDFreeSize(&sd_freesize);		//get_sd_free_size(sd_path);
+							calSdFreeSize(&sd_freesize);		//get_sd_free_size(sd_path);
 							if(sd_freesize < SD_CARD_MIN_SIZE) {
 								rec_state = -2;
 								set_fpga_encode_type(0);

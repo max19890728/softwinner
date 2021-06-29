@@ -18,8 +18,6 @@
 #undef LOG_TAG
 #define LOG_TAG "US363::DNA"
 
-int dna_check_ok = 0;
-
 void readDNA(unsigned *dna_h, unsigned *dna_l) {
     unsigned DNA_I[2]={0}, DNA_O[2]={0}, Data[2]={0};
     unsigned addr, temp;
@@ -59,11 +57,8 @@ void readDNA(unsigned *dna_h, unsigned *dna_l) {
     *dna_l = DNA_O[0];
 }
 
-int GetDNACheckOk() {
-	return dna_check_ok;
-}
-
 int dnaCheck() {
+    int ret;
 	unsigned FPGA_DNA[2]={0}, TOOL_DNA[2]={0};
 	FILE *fp;
 
@@ -75,15 +70,15 @@ int dnaCheck() {
 		fclose(fp);
 
 		if(FPGA_DNA[1] == TOOL_DNA[1] && FPGA_DNA[0] == TOOL_DNA[0])
-			dna_check_ok = 1;
+			ret = 1;
 		else
-			dna_check_ok = 0;
+			ret = 0;
     }
     else
-    	dna_check_ok = -1;
+    	ret = -1;
 
-    db_debug("dnaCheck: FPGA_DNA={0x%x,0x%x} TOOL_DNA={0x%x,0x%x} check=%d\n", FPGA_DNA[0], FPGA_DNA[1], TOOL_DNA[0], TOOL_DNA[1], dna_check_ok);
-    return dna_check_ok;
+    db_debug("dnaCheck: FPGA_DNA={0x%x,0x%x} TOOL_DNA={0x%x,0x%x} check=%d\n", FPGA_DNA[0], FPGA_DNA[1], TOOL_DNA[0], TOOL_DNA[1], ret);
+    return ret;
 }
 
 /*

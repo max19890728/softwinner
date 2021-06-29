@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "Device/US363/Util/ux360_byteutil.h"
+#include "Device/US363/Util/byte_util.h"
 #include "Device/US363/System/sys_time.h"
 #include "common/app_log.h"
 

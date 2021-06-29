@@ -596,8 +596,8 @@ int do_Defect_Func() {
 
    	switch(Defect_Step) {
    	case 1:		// Init / Change Mode
-//tmp   		Defect_CMode_lst = CameraMode;
-//tmp   		Defect_Res_lst   = ResolutionMode;
+//tmp   		Defect_CMode_lst = getCameraMode();
+//tmp   		Defect_Res_lst   = getResolutionMode();
 //tmp   		Defect_Ep_lst    = Get_DataBin_BmodeSec();
 //tmp   		Defect_Gani_lst  = Get_DataBin_BmodeGain();
 
@@ -605,15 +605,15 @@ int do_Defect_Func() {
     	set_A2K_ISP2_Defect_En(0);
     	Defect_State = 0;
 
-//tmp    	SetLedBrightness(0);		//ledBrightness = 0;
-//tmp    	setOledControl(1);
+    	setLedBrightness(0);		//ledBrightness = 0;
+    	setOledControl(OLED_CONTROL_OFF);
 
     	//change mode
-//tmp    	CameraMode     = 12;
-//tmp    	ResolutionMode = 1;
+//tmp    	setCameraMode(CAMERA_MODE_M_MODE);
+//tmp    	setResolutionMode(RESOLUTION_MODE_12K);
     	setAEGBExp1Sec(Defect_Ep);
     	setAEGBExpGain(0);
-//tmp        ModeTypeSelectS2(jniEnv, 0, ResolutionMode, HDMI_State, User_Ctrl, CameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
+//tmp        ModeTypeSelectS2(0, getResolutionMode(), getHdmiState(), getCameraMode());        // return: FPS、ResolutionWidth、ResolutionHeight
 //tmp        stopREC(12);
 //tmp        choose_mode_flag = 1;
 
@@ -664,20 +664,20 @@ int do_Defect_Func() {
 			Write_Defect_State(Defect_State);
 		}
 
-//tmp    	SetLedBrightness(Get_DataBin_LedBrightness() );
-//tmp    	setOledControl(Get_DataBin_OledControl() );
+    	setLedBrightness(Get_DataBin_LedBrightness());
+        setOledControl(Get_DataBin_OledControl());
 
    		//change mode
-//tmp    	CameraMode     = Defect_CMode_lst;
-//tmp    	ResolutionMode = Defect_Res_lst;
+//tmp    	setCameraMode(Defect_CMode_lst);
+//tmp    	setResolutionMode(Defect_Res_lst);
     	setAEGBExp1Sec(Defect_Ep_lst);
     	setAEGBExpGain(Defect_Gani_lst);
-//tmp        ModeTypeSelectS2(jniEnv, 0, ResolutionMode, HDMI_State, User_Ctrl, CameraMode);
+//tmp        ModeTypeSelectS2(0, getResolutionMode(), getHdmiState(), getCameraMode());
 //tmp        stopREC(13);
 //tmp        choose_mode_flag = 1;
         Defect_Step = 0;
 //tmp        get_current_usec(&nowTime);
-//tmp        Set_Cap_Rec_Finish_Time(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 11);
+//tmp        setPowerSavingCapRecFinishTime(nowTime, POWER_SAVING_CMD_OVERTIME_5S);
    		break;
    	}
 

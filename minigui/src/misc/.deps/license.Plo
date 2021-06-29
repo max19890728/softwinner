@@ -1,0 +1,217 @@
+license.lo: license.c \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdio.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdio.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdlib.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdlib.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/alloca.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/limits.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/string.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/string.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/strings.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/strings.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/assert.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fcntl.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/fcntl.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/unistd.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/unistd.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/posix.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/mman.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/mman.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/common.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/../mgconfig.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdint.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/stdint.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdarg.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/errno.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/errno.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/pthread.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sched.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/time.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/semaphore.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/minigui.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/gdi.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stddef.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/endianrw.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/endian.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/window.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/control.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/ctrlhelper.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/static.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/button.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/edit.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/progressbar.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/listbox.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/combobox.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/menubutton.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/scrollview.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/scrollbar.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/textedit.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/listview.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/iconview.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/animation.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/cliprect.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/gal.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/newgal.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/internals.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/zorder.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/ctrlclass.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/dc.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/misc.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/time.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/sys/select.h \
+ /home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/select.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/event.h \
+ /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/license.h \
+ ../sysres/license/c_files/_splash_inner_res.c
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdc-predef.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdio.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdio.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/features.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/glibc-types.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/cdefs.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/alltypes.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/fortify-headers.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/stdlib.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdlib.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/alloca.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/limits.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/string.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/string.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/strings.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/strings.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/assert.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fcntl.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/fcntl.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/unistd.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/unistd.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/posix.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/mman.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/mman.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/common.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/../mgconfig.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdint.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/stdint.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stdarg.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/errno.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/bits/errno.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/limits.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/pthread.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sched.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/time.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/semaphore.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/minigui.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/gdi.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/stddef.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/endianrw.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/endian.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/window.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/control.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/ctrlhelper.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/static.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/button.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/edit.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/progressbar.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/listbox.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/combobox.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/menubutton.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/scrollview.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/scrollbar.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/textedit.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/listview.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/iconview.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/include/ctrl/animation.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/cliprect.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/gal.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/newgal.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/internals.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/zorder.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/ctrlclass.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/dc.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/misc.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/time.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify/sys/select.h:
+
+/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/sys/select.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/event.h:
+
+/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/src/include/license.h:
+
+../sysres/license/c_files/_splash_inner_res.c:
