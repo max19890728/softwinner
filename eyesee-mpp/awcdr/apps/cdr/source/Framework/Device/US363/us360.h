@@ -296,6 +296,20 @@ void getDbtDdrRWStruct(fpga_ddr_rw_struct *ddr_p);
 void setDbtRegRWCmd(fpga_reg_rw_struct *reg_p);
 void getDbtRegRWStruct(fpga_reg_rw_struct *reg_p);
 
+void setModelName(char *ver);
+void writeWifiMaxLink(int maxLink);
+void setSensorLogEnable(int enable);
+void WriteWifiChannel(int channel);
+int GetSaturationValue(int value);
+void Setting_RemovalHDR_Proc(int mode);
+void Setting_HDR7P_Proc(int manual, int ev_mode);
+void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag);
+void getPath();
+void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec);
+void create_thread_5ms();
+void create_thread_1s();
+void set_timeout_start(int sel);
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif

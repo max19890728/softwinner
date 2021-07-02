@@ -673,7 +673,7 @@ configure:10910: $? = 0
 configure:10910: result: yes
 configure:10916: checking for _doprnt
 configure:10916: arm-openwrt-linux-gcc -o conftest -Os -pipe -march=armv7-a -mtune=cortex-a7 -mfpu=neon -g3 -fno-caller-saves -Wno-unused-result -mfloat-abi=hard -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_LOG_LIB_GLOG  -Wformat -Werror=format-security -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro  -I/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/usr/include -I/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/usr/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify -DFORBID_TWOCLICKS_FLING -DPRODUCT_V316_CDR -L/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/usr/lib -L/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/lib -L/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/usr/lib -L/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -znow -zrelro conftest.c  >&5
-/tmp/ccwzaSz0.o: In function `main':
+/tmp/ccqLhZx0.o: In function `main':
 /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/conftest.c:71: undefined reference to `_doprnt'
 collect2: error: ld returned 1 exit status
 configure:10916: $? = 1
@@ -792,7 +792,7 @@ configure:10930: checking for setlocale
 configure:10930: result: yes
 configure:10930: checking for getpt
 configure:10930: arm-openwrt-linux-gcc -o conftest -Os -pipe -march=armv7-a -mtune=cortex-a7 -mfpu=neon -g3 -fno-caller-saves -Wno-unused-result -mfloat-abi=hard -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -DUSE_LOG_LIB_GLOG  -Wformat -Werror=format-security -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro  -I/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/usr/include -I/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/usr/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include -I/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/include/fortify -DFORBID_TWOCLICKS_FLING -DPRODUCT_V316_CDR -L/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/usr/lib -L/home/max/workspace_github2_softwinner/workspace/out/v536-cdr/staging_dir/target/lib -L/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/usr/lib -L/home/max/workspace_github2_softwinner/workspace/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -znow -zrelro conftest.c  >&5
-/tmp/ccT8jteo.o: In function `main':
+/tmp/ccypE5Dq.o: In function `main':
 /home/max/workspace_github2_softwinner/workspace/out/v536-cdr/compile_dir/target/eyesee-minigui/eyesee-minigui-3.2/conftest.c:79: undefined reference to `getpt'
 collect2: error: ld returned 1 exit status
 configure:10930: $? = 1

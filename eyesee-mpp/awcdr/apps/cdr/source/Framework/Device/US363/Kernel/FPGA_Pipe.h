@@ -287,6 +287,11 @@ float get_HDR_Auto_Ev(int idx);
 HDR7P_AEG_Parameter_Struct Get_HDR7P_AEG_Idx(int idx);
 int read_F_Com_In_Capture_D_Cnt(void);
 
+//---------------------------------
+void setting_AEB(int frame_cnt,int ae_scale);
+void SetAntiAliasingEn(int en);
+void SetRemovalAntiAliasingEn(int en);
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif

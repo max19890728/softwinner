@@ -188,7 +188,7 @@ enum {
 enum {
     HDR_INTERVAL_EV_MODE_LOW    = 2,                    //Ev:  0,-1,-2
     HDR_INTERVAL_EV_MODE_MIDDLE = 4,                    //Ev: +1,-1,-3
-    HDR_INTERVAL_EV_MODE_HIGHT  = 8                     //Ev: +2,-1,-4
+    HDR_INTERVAL_EV_MODE_HIGH   = 8                     //Ev: +2,-1,-4
 };
 
 //WDR Mode
@@ -217,7 +217,7 @@ enum {
 enum {
     TIMELAPSE_ENCODE_TYPE_JPEG = 0,
     TIMELAPSE_ENCODE_TYPE_H264 = 1
-}
+};
 
 //Power Saving Mode
 enum {
@@ -228,7 +228,7 @@ enum {
 
 
 
-int initCamera();
+void initCamera();
 void startPreview();
 
 //==================== get/set =====================

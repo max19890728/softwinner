@@ -420,6 +420,10 @@ int Ep_Change_Init();
 void Set_Init_Image_State(int state);
 int Get_Init_Image_State();
 
+//---------------------------------------
+void setExposureTimeWifiCmd(int manual_mode, int ep_idx);
+void setWBTemperature(int temp, int tint);
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif

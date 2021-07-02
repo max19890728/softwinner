@@ -130,6 +130,7 @@ void set_A2K_Stitch_CMD_v(int en);
 int set_A2K_LensCode(int code);
 void set_A2K_Smooth_En(int en);
 void get_A2K_DMA_BottomMode(int *mode, int *size);
+void set_A2K_DMA_BottomTextMode(int mode);
 void get_A2K_DMA_BottomTextMode(int *mode);
 void get_A2K_DMA_CameraPosition(int *cp_mode);
 void get_AEG_EP_Var(int *frm, int *time, int *gain);
@@ -160,6 +161,14 @@ int k_spi_fpga_cmd(int rw, int cmd, int *data, int size);
 void k_ua360_spi_ddr_read(unsigned read_addr, char *read_buf, int read_size, int f_id);
 int k_ua360_spi_ddr_write(unsigned write_addr, char *write_buff, int write_size);
 #endif
+
+//------------------------------------
+void set_A2K_JPEG_Quality_Mode(int mode);
+int set_A2K_DeGhostEn(int en);
+void set_A2K_JPEG_Live_Quality_Mode(int mode);
+int get_A2K_JPEG_Live_Quality_Mode(void);
+int set_A2K_Softwave_Version(char *ver);
+int get_A2K_Softwave_Version(char *ver);
 
 #ifdef __cplusplus
 }   // extern "C"

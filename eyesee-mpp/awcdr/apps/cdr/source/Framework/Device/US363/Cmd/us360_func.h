@@ -728,6 +728,9 @@ void WriteSensorAdjFile(void);
 void ReadSensorAdjFile(void);
 void SetColorSTSW(int en);
 void doSensorLensAdj(int s_id, int mode);
+int ReadLensCode();
+void SetWDRLiveStrength(int value);
+void LineTableInit(void);
 
 #ifdef __cplusplus
 }   // extern "C"

@@ -9,6 +9,7 @@
 extern "C" {
 #endif
 
+void setCpuFreq(int cpu_num, int freq);
 void SetCpu(int cpu_num, int freq);
 int getCPUTemprature();
 int getCpuCoreNum();

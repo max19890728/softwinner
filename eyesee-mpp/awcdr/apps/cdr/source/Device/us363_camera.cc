@@ -6,12 +6,20 @@
 
 #include <mpi_sys.h>
 #include <mpi_venc.h>
+#include <common/extension/vector.h>
 
 #include "Device/spi.h"
 #include "Device/qspi.h"
 #include "Device/US363/us360.h"
+#include "Device/US363/us363_para.h"
 #include "Device/US363/Kernel/k_spi_cmd.h"
+#include "Device/US363/Kernel/FPGA_Pipe.h"
 #include "Device/US363/Driver/Lidar/lidar.h"
+#include "Device/US363/Driver/MCU/mcu.h"
+#include "Device/US363/Cmd/spi_cmd.h"
+#include "Device/US363/Cmd/fpga_driver.h"
+#include "Device/US363/Cmd/Smooth.h"
+#include "Device/US363/Cmd/us360_func.h"
 #include "Device/US363/Net/ux363_network_manager.h"
 #include "Device/US363/Net/ux360_wifiserver.h"
 #include "Device/US363/Data/databin.h"
@@ -20,6 +28,8 @@
 #include "Device/US363/Data/customer.h"
 #include "Device/US363/Data/country.h"
 #include "Device/US363/Data/us363_folder.h"
+#include "Device/US363/Data/us360_config.h"
+#include "Device/US363/Data/us360_parameter_tmp.h"
 #include "Device/US363/System/sys_time.h"
 #include "Device/US363/System/sys_cpu.h"
 #include "Device/US363/System/sys_power.h"
@@ -397,9 +407,9 @@ int powerMode = POWER_MODE_ON, powerOFF = 0;    /** PowerMode, PowerOFF */
 #define AUDIO_REC_EMPTY_BYTES_SIZE   10240
 char audioRecEmptyBytes[AUDIO_REC_EMPTY_BYTES_SIZE];
 
-vector<long>::iterator audioTimeStamp;          /** ls_audioTS */
-vector<int>::iterator audioSize;                /** ls_readBufSize */
-vector<char[]>::iterator audioBuffer;           /** ls_audioBuf */
+std::vector<long>::iterator audioTimeStamp;          /** ls_audioTS */
+std::vector<int>::iterator audioSize;                /** ls_readBufSize */
+std::vector<char[]>::iterator audioBuffer;           /** ls_audioBuf */
 
 int micSource = 0;			                    // 0:內部  1:外部
 int localAudioRate = 44100, localAudioBits = 16, localAudioChannel = 1;     /** audioRate, audioBit, audioChannel */
@@ -495,7 +505,7 @@ void setSaturation(int saturation) { mSaturation = saturation; }
 int getSaturation() { return mSaturation; }
 
 void setSaturationInitFlag(int flag) { saturationInitFlag = flag; }
-int getSaturationInitFlag() { return SaturationInitFlag; }
+int getSaturationInitFlag() { return saturationInitFlag; }
 
 void setTesttoolDelayTime(int idx, unsigned long long time) {
 	if(idx == 1)      testtoolDelayTime1 = time;
@@ -528,8 +538,8 @@ int getSelfieTime() { return mSelfieTime; }
 void setTimeLapseMode(int tl_mode) { mTimeLapseMode = tl_mode; }
 int getTimeLapseMode() { return mTimeLapseMode; }
 
-void setCtrlCameraPositionMode(int ctrl_mode) { mCtrlCameraPositionMode = ctrl_mode; }
-int getCtrlCameraPositionMode() { return mCtrlCameraPositionMode; }
+void setCameraPositionCtrlMode(int ctrl_mode) { mCameraPositionCtrlMode = ctrl_mode; }
+int getCameraPositionCtrlMode() { return mCameraPositionCtrlMode; }
 
 void setCameraPositionMode(int position_mode) { mCameraPositionMode = position_mode; }
 int getCameraPositionMode() { return mCameraPositionMode; }
@@ -576,7 +586,7 @@ int getOledControl() { return mOledControl; }
 void setHdrIntervalEvMode(int hdr_ev_mode) { mHdrIntervalEvMode = hdr_ev_mode; }
 int getHdrIntervalEvMode() { return mHdrIntervalEvMode; }
 
-void setWdrMode(int wdr_mode) { mWdrMode = mode; }
+void setWdrMode(int wdr_mode) { mWdrMode = wdr_mode; }
 int getWdrMode() { return mWdrMode; }
 
 void setBottomMode(int btm_mode) { mBottomMode = btm_mode; }
@@ -712,7 +722,7 @@ void initCustomerFunc()
 	char *ptr = NULL;
 
     mCustomerCode = readCustomerCode();
-	sprintf(wifiAPssid, "%s\0", mSSID);
+	sprintf(mWifiApSsid, "%s\0", mSSID);
 //tmp    ledStateArray[showSsidHead] = 0;
     db_debug("initCustomerFunc() mCustomerCode=%d\n", mCustomerCode);
 
@@ -735,9 +745,9 @@ void initCustomerFunc()
     case CUSTOMER_CODE_PIIQ:
 		sprintf(name, "peek\0");
 		sprintf(bottomFileNameSource, "background_peek\0");
-    	//wifiAPssid = ssid.replace("US_", "peek-HD_");
+    	//mWifiApSsid = ssid.replace("US_", "peek-HD_");
 		ptr = strchr(mSSID, '_');
-		sprintf(wifiAPssid, "peek-HD_%s\0", (ptr+1) );
+		sprintf(mWifiApSsid, "peek-HD_%s\0", (ptr+1) );
 //tmp        ledStateArray[showSsidHead] = 1;
 //tmp        ControllerServer.machineNmae = "peek";
     	setModelName(&name[0]);
@@ -782,11 +792,11 @@ void initCamera()
 		readWifiConfig(&mWifiApSsid[0], &mWifiApPassword[0]);
 	}
 	else {
-		getNewSsidPassword(&wifiApSsid[0], &wifiApPassword[0]);
+		getNewSsidPassword(&mWifiApSsid[0], &mWifiApPassword[0]);
 	}
-	db_debug("US363Camera() ssid=%s pwd=%s", wifiApSsid, wifiApPassword);
+	db_debug("US363Camera() ssid=%s pwd=%s", mWifiApSsid, mWifiApPassword);
 
-	stratWifiAp(&wifiApSsid[0], &wifiApPassword[0], 0);
+	stratWifiAp(&mWifiApSsid[0], &mWifiApPassword[0], mWifiChannel, 0);
 	start_wifi_server(8555);
 	
 //	us360_init();
@@ -819,11 +829,11 @@ void databinInit(int country, int customer)
 	
 	//TagCamPositionMode = 	2;
     switch(Get_DataBin_CamPositionMode() ) {
-    case 0:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_AUTO); break;
-    case 1:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
-    case 2:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_180); break;
-    case 3:  setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_90);  break;
-    default: setCtrlCameraPositionMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
+    case 0:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_AUTO); break;
+    case 1:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
+    case 2:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_180); break;
+    case 3:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_90);  break;
+    default: setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
     }
     set_A2K_DMA_CameraPosition(getCameraPositionMode());
 	
@@ -894,7 +904,7 @@ void databinInit(int country, int customer)
 	
 	//TagExposureFreq = 	27;
     int freq = Get_DataBin_ExposureFreq();
-    SetAEGEPFreq(freq);
+    setAegEpFreq(freq);
 	
 	//TagFanControl = 		28;
 	int ctrl = Get_DataBin_FanControl();
@@ -964,11 +974,11 @@ void databinInit(int country, int customer)
     case HDR_INTERVAL_EV_MODE_MIDDLE:
         setWdrMode(WDR_MODE_MIDDLE); 
         break;
-    case HDR_INTERVAL_EV_MODE_HIGHT:
-        setWdrMode(WDR_MODE_HIGHT); 
+    case HDR_INTERVAL_EV_MODE_HIGH:
+        setWdrMode(WDR_MODE_HIGH); 
         break;
     }
-    SetWDRLiveStrength(getWdrMode(());
+    SetWDRLiveStrength(getWdrMode());
 	
     //TagBitrate = 			54;
 //tmp    SetBitrateMode(Get_DataBin_Bitrate() );
@@ -1039,7 +1049,7 @@ void databinInit(int country, int customer)
 	
     //TagHdrManual
     set_A2K_DeGhostEn(Get_DataBin_HdrDeghosting() );
-    Setting_HDR7P_Proc(Get_DataBin_HdrManual(), hdr_mode);
+    Setting_HDR7P_Proc(Get_DataBin_HdrManual(), Get_DataBin_hdrEvMode());
 	
     //TagAebNumber
     setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
@@ -1101,14 +1111,14 @@ void onCreate()
     TestToolCmdInit();
     memset(&audioRecEmptyBytes[0], 0, sizeof(audioRecEmptyBytes));
     for(i = 0; i < 8; i++) 
-		doResize_mode[i] = -1;
+		doResizeMode[i] = -1;
         
 //tmp    setVersionOLED(mUS363Version.getBytes());
 
     setCpuFreq(4, CPU_FULL_SPEED);
         
-    unsigned long long long defaultSysTime = 1420041600000L;                     // 2015/01/01 00:00:00
-    unsigned long long long nowSysTime;
+    unsigned long long defaultSysTime = 1420041600000L;                     // 2015/01/01 00:00:00
+    unsigned long long nowSysTime;
 	get_current_usec(&nowSysTime);
     if(defaultSysTime > nowSysTime){										// lester+ 180207
 		setSysTime(defaultSysTime);
@@ -1521,7 +1531,7 @@ void onCreate()
 */
 //tmp    runAdbWifiCmd();
 
-    setSendMcuA64Version(&mSSID[0], &mPwd[0], &mUS363Version[0]);
+    setSendMcuA64Version(&mWifiApSsid[0], &mWifiApPassword[0], &mUS363Version[0]);
 
 //tmp    startWebService();
 

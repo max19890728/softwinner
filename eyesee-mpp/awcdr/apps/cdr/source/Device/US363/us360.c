@@ -3440,7 +3440,7 @@ void *thread_1s(void)
 		}
 #endif	//__CLOSE_CODE__	
 
-		if(getCtrlCameraPositionMode() == 1){			//Auto
+		if(getCameraPositionCtrlMode() == 1){			//Auto
 			float sensorData2[3];
 //tmp    	getBma2x2_orientation_data(&sensorData2[0], 1);
 			if(mCameraPositionMode == 0) {			//正置
@@ -5791,7 +5791,7 @@ void set_first_Azimuth(int val) {
 }
 
 int read_sensor_data(void) {
-	if(getCtrlCameraPositionMode() == 0){		//手動
+	if(getCameraPositionCtrlMode() == 0){		//手動
 		return -1;
 	}else{										//Auto
 		return 0;
