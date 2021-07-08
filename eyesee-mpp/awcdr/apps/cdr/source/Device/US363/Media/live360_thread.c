@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 #include "Device/US363/Media/recoder_buffer.h"
 #include "Device/US363/Media/recoder_thread.h"
@@ -53,7 +54,7 @@ void set_live360_state(int en) {
             //changeLedMode(1);
             //checkCpuSpeed();
             if(checkMicInterface() == 0){
-               	SetIsRecording(1);
+               	setAudioRecThreadEn(1);
                	//mic_is_alive = 0;
             }else{
             	//mic_is_alive = 1;
@@ -64,8 +65,8 @@ void set_live360_state(int en) {
 //            systemlog.addLog("info", System.currentTimeMillis(), "machine", "live360", "live360 start");
 		}
 		else {
-			if(get_mic_is_alive() == 0 && GetIsRecording() == 1) {
-				SetIsRecording(0);
+			if(get_mic_is_alive() == 0 && getAudioRecThreadEn() == 1) {
+				setAudioRecThreadEn(0);
 			}
 			mLive360En = 0;
 			mLive360Cmd = 2;
@@ -117,7 +118,7 @@ void *live360_thread(void)
     int M_Mode, S_Mode;
     LinkADTSFixheader fix;
     LinkADTSVariableHeader var;
-    char path[128];
+    char path[128], ssid[0], sd_path[128];
     int live_p1, live_p2, live_p_tmp;
     struct stat sti;
 	static int rec_fps = 60;
@@ -259,7 +260,8 @@ void *live360_thread(void)
                     if(rec_buf.f_frame == 0) {
 						wait_i_frame = 0;
 						frame_s_lst = frame_s;
-
+                        getWifiSsid(&ssid[0]);
+                        getSdPath(&sd_path[0], sizeof(sd_path));
 						maek_save_file_path(13, live360_path, sd_path, mSSID, Live360_Buf.cnt);
 						ptr = &live360_path[0];
 						for(i = 0; i < 128; i++) {

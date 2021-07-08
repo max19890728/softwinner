@@ -268,7 +268,7 @@ int FPGA_Com_In_Sensor_Adjust(int EP_Time, int FPS)
  */
 int Cap_Finish_Idx = -1;        // ¬ö¿ýcapture¬O§_°õ¦æ§¹²¦
 int Cap_Sensor_Idx = -1;
-void SetPipeReStart(void)
+void SetPipeReStart()
 {
 	F_Com_In_Buf.Pipe_Init = 0;
 	memset(&F_Pipe, 0, sizeof(F_Pipe) );

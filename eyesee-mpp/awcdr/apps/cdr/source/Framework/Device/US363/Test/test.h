@@ -118,6 +118,9 @@ void WriteTestResult(int type, int debug);
 int ReadTestResult(void);
 
 int get_TestToolCmd(void);
+int GetTestToolState();
+void SetTestToolStep(int step);
+int GetTestToolStep();
 
 #ifdef __cplusplus
 }   // extern "C"

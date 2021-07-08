@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 //#include "ux360_main.h"
 #include "Device/US363/Net/ux363_network_manager.h"
@@ -76,7 +77,7 @@ int BACKLOG = 10; 				// 有多少個特定的連線佇列（pending connections
 int mConnected = 0;
 
 int mSnapshotEn = -1;				// 控制拍照, -1:normal, 1:enable 
-int mCaptureMode = 0;
+int CaptureMode = 0;
 int mRecordEn = -1;					// 控制攝影, -1:normal, 1:enable, 0:disable
 int mMjpegEn = 0;					// 控制Mjpeg是否要送到手機
 
@@ -97,7 +98,7 @@ int gSocketOst = 0;
     
 int mRTSPEn = 0;
 //char rtspBuffer[0x100000];
-unsigned char *rtspBuffer = NULL;
+unsigned char *wifiRtspBuffer = NULL;
 int rtspBufLength = 0;
 int rtspWidth = 3840;
 int rtspHeight = 1920;
@@ -105,7 +106,7 @@ int rtspHeight = 1920;
 char mAdjustValue[4];
 int mEV=0xffff, mMF=0xffff, mAdjustEn=0;						// rex+ 151023, 設定、調整參數
 int mModeSelectEn=0, mPlayMode, mResoluMode;	// rex+ 151023, 控制mode切換
-int mTimeLapseMode=0;
+int TimeLapseMode=0;
 int MFMode, mMF2=0xffff;
 int mISOEn=0, ISOValue, mFEn=0, FValue, mWBEn=0, WBMode;
 int mTouchScreenEn=0;
@@ -230,27 +231,27 @@ int mColorSTModeEn = 0;
 int mColorSTMode = 1;
     
 int mTranslucentModeEn = 0;
-int mTranslucentMode = 1;
+int TranslucentMode = 1;
     
 int mAutoGlobalPhiAdjEn = 0;
-int mAutoGlobalPhiAdjMode = 0;
+int AutoGlobalPhiAdjMode = 0;
     
 int mAutoGlobalPhiAdjOneTimeEn = 0;
     
 int mHDMITextVisibilityEn = 2;
-int mHDMITextVisibilityMode = 1;
+int HDMITextVisibilityMode = 1;
     
 int mJPEGQualityModeEn = 0;
 int mJPEGQualityMode = 0;
     
 int mSpeakerModeEn = 0;
-int mSpeakerMode = 0;
+int SpeakerMode = 0;
     
 int mLedBrightnessEn = 0;
-int mLedBrightness = -1;
+int LedBrightness = -1;
     
 int mOledControlEn = 0;
-int mOledControl = 0;
+int OledControl = 0;
     
 int mResoSaveEn = 0;
 int mResoSaveMode = 0;
@@ -459,7 +460,7 @@ int mGetRemoveAntiAliasingVal = 0;
 int mGetRemoveAntiAliasingEn = 0;
     
 int mPowerSavingEn = 0;
-int mPowerSavingMode = 0;
+int PowerSavingMode = 0;
     
 int mSetingUIEn = 0;
 int mSetingUIState = 0;	//0:close	1:open
@@ -530,6 +531,18 @@ unsigned char *qInputData = NULL;
 unsigned char *sendImgBuf = NULL;
 
 unsigned char *inputStreamQ = NULL;	//為了SocketDataQ往前搬移, 因為memcpy同一個陣列APP會崩潰
+
+
+int Get_WifiServer_Connected() { return mConnected; }
+
+void Set_WifiServer_KelvinEn(int en) { mKelvinEn = en; }
+void Set_WifiServer_KelvinVal(int val) { mKelvinVal = val; }
+void Set_WifiServer_KelvinTintVal(int val) { mKelvinTintVal = val; }
+
+void Set_WifiServer_GetEstimateEn(int en) { mGetEstimateEn = en; }
+
+void Set_WifiServer_CompassResultEn(int en) { mCompassResultEn = en; }
+void Set_WifiServer_CompassResultVal(int val) { mCompassResultVal = val; }
 
 
 void initGsensorVal(float *val, unsigned long long time, 
@@ -1124,10 +1137,10 @@ db_wifi_cmd("old_sock_command: 'SNAP'\n");
 	    	// 控制拍照開始
 			char b[4];
 			for(i=0; i<4; i++)	{ b[i] = buf[4+i];}
-			mCaptureMode = atoi(b);
+			CaptureMode = atoi(b);
 	    	mSnapshotEn = 1;		// rex+ 151015
-	    	printf("Cmd:'SNAP' mSnapshotEn=%d mCaptureMode=%d\n", mSnapshotEn, mCaptureMode);
-//	    	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mCaptureMode", ""+mCaptureMode);
+	    	printf("Cmd:'SNAP' mSnapshotEn=%d CaptureMode=%d\n", mSnapshotEn, CaptureMode);
+//	    	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "CaptureMode", ""+CaptureMode);
 	    	
 			if(*ost > 0) {
 				memcpy(&tbuf[0], &buf[20], *ost);
@@ -1145,15 +1158,15 @@ db_wifi_cmd("old_sock_command: 'RECE'\n");
     	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+4]; }
 	    if(mAdjustValue[0] == 'R' && mAdjustValue[1] == 'E' && mAdjustValue[2] == 'C' && mAdjustValue[3] == 'M'){	//Time-Lapse MODE check code
 	    	for(i=0; i<4; i++){ mAdjustValue[i] = buf[i+8]; }
-	    	mTimeLapseMode = (byte2Int(&mAdjustValue[0], 4)) / 1000;
+	    	TimeLapseMode = (byte2Int(&mAdjustValue[0], 4)) / 1000;
 	    }
 	    else{
-	    	mTimeLapseMode = 0;
+	    	TimeLapseMode = 0;
 	    }
 	    mRecordEn = 1;
 			    	
-    	printf("Cmd:'RECE' mTimeLapseMode=%d\n", mTimeLapseMode);
-//    	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mTimeLapseMode", ""+mTimeLapseMode);
+    	printf("Cmd:'RECE' TimeLapseMode=%d\n", TimeLapseMode);
+//    	Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "TimeLapseMode", ""+TimeLapseMode);
 	    	
 		if(*ost > 0) {
 			memcpy(&tbuf[0], &buf[20], *ost);
@@ -2683,13 +2696,13 @@ db_wifi_cmd("new_sock_command1: 'TRNS'\n");
     			int mode = byte2Int(&a[0], 4);
 			    			
     			mTranslucentModeEn = 1;
-    			mTranslucentMode = mode;
+    			TranslucentMode = mode;
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
 				*skip = 0;
 							
-				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "Translucent", ""+mTranslucentMode);
+				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "Translucent", ""+TranslucentMode);
 
 				if(*ost > 0) {
 					memcpy(&tbuf[0], &buf[16+dataLen], *ost);
@@ -2706,9 +2719,9 @@ db_wifi_cmd("new_sock_command1: 'AGPM'\n");
     			int mode = byte2Int(&a[0], 4);
 			    			
     			mAutoGlobalPhiAdjEn = 1;
-    			mAutoGlobalPhiAdjMode = mode;
+    			AutoGlobalPhiAdjMode = mode;
 			    			
-//    			Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Auto Stitch Mode.", String.valueOf(mAutoGlobalPhiAdjMode));
+//    			Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Auto Stitch Mode.", String.valueOf(AutoGlobalPhiAdjMode));
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
@@ -2766,12 +2779,12 @@ db_wifi_cmd("new_sock_command1: 'HDTV'\n");
     			int mode = byte2Int(&a[0], 4);
 	    			
     			mHDMITextVisibilityEn = 1;
-    			mHDMITextVisibilityMode = mode;
+    			HDMITextVisibilityMode = mode;
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
 				*skip = 0;
-				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mHDMITextVisibilityMode", ""+mHDMITextVisibilityMode);
+				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "HDMITextVisibilityMode", ""+HDMITextVisibilityMode);
 
 				if(*ost > 0) {
 					memcpy(&tbuf[0], &buf[16+dataLen], *ost);
@@ -2935,13 +2948,13 @@ db_wifi_cmd("new_sock_command1: 'SPKS'\n");
     			int mode = byte2Int(&a[0], 4);
 			    			
     			mSpeakerModeEn = 1;
-    			mSpeakerMode = mode;
+    			SpeakerMode = mode;
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
 				*skip = 0;
-				//Log.d("WifiServer","SpeakerMode:"+mSpeakerMode);
-				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mSpeakerMode", ""+mSpeakerMode);
+				//Log.d("WifiServer","SpeakerMode:"+SpeakerMode);
+				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "SpeakerMode", ""+SpeakerMode);
 				if(*ost > 0) {
 					memcpy(&tbuf[0], &buf[16+dataLen], *ost);
 					memcpy(&buf[0], &tbuf[0], *ost);
@@ -2957,12 +2970,12 @@ db_wifi_cmd("new_sock_command1: 'LEDB'\n");
     			int value = byte2Int(&a[0], 4);
 			    			
     			mLedBrightnessEn = 1;
-    			mLedBrightness = value;
+    			LedBrightness = value;
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
 				*skip = 0;
-				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mLedBrightness", ""+mLedBrightness);
+				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "LedBrightness", ""+LedBrightness);
 
 				if(*ost > 0) {
 					memcpy(&tbuf[0], &buf[16+dataLen], *ost);
@@ -2979,12 +2992,12 @@ db_wifi_cmd("new_sock_command1: 'OLDS'\n");
     			int mode = byte2Int(&a[0], 4);
 			    			
     			mOledControlEn = 1;
-    			mOledControl = mode;
+    			OledControl = mode;
 				
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
 				*skip = 0;
-				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "mOledControl", ""+mOledControl);
+				//Main.systemlog.addLog("WifiServer", System.currentTimeMillis(), "User", "OledControl", ""+OledControl);
 
 				if(*ost > 0) {
 					memcpy(&tbuf[0], &buf[16+dataLen], *ost);
@@ -4008,9 +4021,9 @@ db_wifi_cmd("new_sock_command1: 'PWSM'\n");
 				int mode = byte2Int(&a[0], 4);
 				
 				mPowerSavingEn = 1;
-				mPowerSavingMode = mode;
+				PowerSavingMode = mode;
 				
-				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Power Saving Mode.", String.valueOf(mPowerSavingMode));
+				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Power Saving Mode.", String.valueOf(PowerSavingMode));
 				
 				*m += (16+dataLen+*skip);
 				*ost -= (16+dataLen+*skip);
@@ -4057,7 +4070,7 @@ db_wifi_cmd("new_sock_command1: 'DAST'\n");
 				mDoAutoStitchEn = 1;
 				mDoAutoStitchVal = val;
 				
-				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Do Auto Stitching", String.valueOf(mPowerSavingMode));
+				//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Do Auto Stitching", String.valueOf(PowerSavingMode));
 				
 				*m += (16+dataLen+*skip);
 				*ost -= (16+dataLen+*skip);
@@ -4080,7 +4093,7 @@ db_wifi_cmd("new_sock_command1: 'GSRS'\n");
     			mDoGsensorResetEn = 1;
     			mDoGsensorResetVal = val;
 			    			
-    			//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Do Auto Stitching", String.valueOf(mPowerSavingMode));
+    			//Main.systemlog.addLog("info", System.currentTimeMillis(), hostNameTmp, "Change Do Auto Stitching", String.valueOf(PowerSavingMode));
 			    			
     			*m += (16+dataLen+*skip);
     			*ost -= (16+dataLen+*skip);
@@ -4273,12 +4286,12 @@ db_wifi_cmd("new_sock_command2: 'RECE'\n");
 					if(recm[0] == 'R' && recm[1] == 'E' && recm[2] == 'C' && recm[3] == 'M'){	//Time-Lapse MODE check code
 						char a[4];
 						memcpy(&a[0], &buf[36], 4);
-						mTimeLapseMode = (byte2Int(&a[0], 4)) / 1000;
+						TimeLapseMode = (byte2Int(&a[0], 4)) / 1000;
 					}
 					else{
-						mTimeLapseMode = 0;
+						TimeLapseMode = 0;
 					}
-					printf("Cmd2:'RECE' [Cmd Status] mRecordEn = 1, mTimeLapseMode = %d\n", mTimeLapseMode);
+					printf("Cmd2:'RECE' [Cmd Status] mRecordEn = 1, TimeLapseMode = %d\n", TimeLapseMode);
 					mRecordEn = 1;
 					
 					usleep(1000000);
@@ -4451,12 +4464,12 @@ db_wifi_cmd("new_sock_command3: 'RECE'\n");
 						if(recm[0] == 'R' && recm[1] == 'E' && recm[2] == 'C' && recm[3] == 'M'){	//Time-Lapse MODE check code
 							char a[4];
 							memcpy(&a[0], &buf[36], 4);
-							mTimeLapseMode = (byte2Int(&a[0], 4)) / 1000;
+							TimeLapseMode = (byte2Int(&a[0], 4)) / 1000;
 						}
 						else{
-							mTimeLapseMode = 0;
+							TimeLapseMode = 0;
 						}
-						printf("Cmd3:'RECE' [Cmd Status2] mRecordEn = 1, mTimeLapseMode = %d\n", mTimeLapseMode);
+						printf("Cmd3:'RECE' [Cmd Status2] mRecordEn = 1, TimeLapseMode = %d\n", TimeLapseMode);
 						mRecordEn = 1;
 					}
 				}
@@ -5050,8 +5063,8 @@ db_wifi_cmd("process_output_stream: 'SWAP'\n");
 		if(mw){
 			send_data(&mSocket, &cmd[0], 4);
 			send_data(&mSocket, (char*)&ver, sizeof(ver));
-//			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+			if(getWriteFileError() == 1) val = 3;
+			else						 val = getSdState();
 			send_data(&mSocket, (char*)&val, sizeof(val));
 //			send_data(&mSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -5061,8 +5074,8 @@ db_wifi_cmd("process_output_stream: 'SWAP'\n");
 		if(gw){
 			send_data(&gSocket, &cmd[0], 4);
 			send_data(&gSocket, (char*)&ver, sizeof(ver));
-//			if(Main.write_file_error == 1) val = 3;
-//			else						   val = Main.sd_state;
+			if(getWriteFileError() == 1) val = 3;
+			else						 val = getSdState();
 			send_data(&gSocket, (char*)&val, sizeof(val));
 //			send_data(&gSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -5359,18 +5372,18 @@ db_wifi_cmd("process_output_stream: mRTSPEn == 1\n");
 			if(rtspBufLength < 50)
 				h_len = rtspBufLength;
 			char h264_header[h_len];
-			memcpy(&h264_header[0], &rtspBuffer[1000], h_len);
+			memcpy(&h264_header[0], &wifiRtspBuffer[1000], h_len);
 			int h264_len[2];
 			getSPSPPSLen(&h264_header[0], h_len, &h264_len[0]);
 			if(h264_len[1] > 0){
 				if(SrsEncoder.h264_length == 0){
-					int tmp_flags = rtspBuffer[1000+h264_len[1]+4] & 0x1f;
+					int tmp_flags = wifiRtspBuffer[1000+h264_len[1]+4] & 0x1f;
 					SrsEncoder.h264_flags = tmp_flags == 5?1:0;
 					SrsEncoder.h264_header_len = h264_len;
 					SrsEncoder.h264_header = new byte[h264_len[1]];
-					System.arraycopy(rtspBuffer, 1000, SrsEncoder.h264_header, 0, h264_len[1]);
+					System.arraycopy(wifiRtspBuffer, 1000, SrsEncoder.h264_header, 0, h264_len[1]);
 					SrsEncoder.h264_data = new byte[rtspBufLength-(1000+h264_len[1])];
-					System.arraycopy(rtspBuffer, 1000+h264_len[1], SrsEncoder.h264_data, 0, rtspBufLength-(1000+h264_len[1]));
+					System.arraycopy(wifiRtspBuffer, 1000+h264_len[1], SrsEncoder.h264_data, 0, rtspBufLength-(1000+h264_len[1]));
 					SrsEncoder.h264_length = rtspBufLength-(1000+h264_len[1]);
 					
 					if(Main.mPublisher != null)
@@ -5382,13 +5395,13 @@ db_wifi_cmd("process_output_stream: mRTSPEn == 1\n");
 			if(mw){
 				send_data(&mSocket, (char*)&ver, sizeof(ver));
 				send_data(&mSocket, (char*)&rtspBufLength, sizeof(rtspBufLength));
-				send_data(&mSocket, &rtspBuffer[0], rtspBufLength);
+				send_data(&mSocket, &wifiRtspBuffer[0], rtspBufLength);
 			}
 //			doType = 2;
 			if(gw){
 				send_data(&gSocket, (char*)&ver, sizeof(ver));
 				send_data(&gSocket, (char*)&rtspBufLength, sizeof(rtspBufLength));
-				send_data(&gSocket, &rtspBuffer[0], rtspBufLength);
+				send_data(&gSocket, &wifiRtspBuffer[0], rtspBufLength);
 			}
 		}
 	}
@@ -5828,8 +5841,8 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 //		get_current_usec(&Main.systemTime);
 		if(mw){
 			send_data(&mSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			if(Main.write_file_error == 1) val = 3;
-//			else						   val = getSdState();
+			if(getWriteFileError() == 1) val = 3;
+			else						 val = getSdState();
 			send_data(&mSocket, (char*)&val, sizeof(val));
 //			send_data(&mSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&mSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -5850,8 +5863,8 @@ db_wifi_cmd("process_output_stream: 'DTST'\n");
 		}
 		if(gw){
 			send_data(&gSocket, (char*)&cmdHeader2, sizeof(cmdHeader2));
-//			if(Main.write_file_error == 1) val = 3;
-//			else						   val = getSdState();
+			if(getWriteFileError() == 1) val = 3;
+			else						 val = getSdState();
 			send_data(&gSocket, (char*)&val, sizeof(val));
 //			send_data(&gSocket, (char*)&Main.sd_freesize, sizeof(Main.sd_freesize));
 //			send_data(&gSocket, (char*)&Main.sd_allsize, sizeof(Main.sd_allsize));
@@ -6369,18 +6382,18 @@ void rtsp_thread(void) {
 				if(rtspBufLength < 50)
 					h_len = rtspBufLength;
 				char h264_header[h_len];
-				memcpy(&h264_header[0], &rtspBuffer[1000], h_len);
+				memcpy(&h264_header[0], &wifiRtspBuffer[1000], h_len);
 				int h264_len[2];
 				getSPSPPSLen(&h264_header[0], sizeof(h264_header), &h264_len[0]);
 				if(h264_len[1] > 0){
 					if(SrsEncoder.h264_length == 0){
-						int tmp_flags = rtspBuffer[1000+h264_len[1]+4] & 0x1f;
+						int tmp_flags = wifiRtspBuffer[1000+h264_len[1]+4] & 0x1f;
 						SrsEncoder.h264_flags = tmp_flags == 5?1:0;
 						SrsEncoder.h264_header_len = h264_len;
 						SrsEncoder.h264_header = new byte[h264_len[1]];
-						memcpy(&SrsEncoder.h264_header[0], &rtspBuffer[1000], h264_len[1]);
+						memcpy(&SrsEncoder.h264_header[0], &wifiRtspBuffer[1000], h264_len[1]);
 						SrsEncoder.h264_data = new byte[rtspBufLength-(1000+h264_len[1])];
-						memcpy(&SrsEncoder.h264_data[0], &rtspBuffer[1000+h264_len[1]], rtspBufLength-(1000+h264_len[1]));
+						memcpy(&SrsEncoder.h264_data[0], &wifiRtspBuffer[1000+h264_len[1]], rtspBufLength-(1000+h264_len[1]));
 						SrsEncoder.h264_length = rtspBufLength-(1000+h264_len[1]);
 						
 						if(Main.mPublisher != null){
@@ -6644,20 +6657,20 @@ void free_gInputData() {
 	gInputData = NULL;
 }
 
-int malloc_rtspBuffer() {
-	//char rtspBuffer[0x100000];
-	rtspBuffer = (unsigned char *)malloc(sizeof(unsigned char) * 0x100000);
-	if(rtspBuffer == NULL) goto error;
+int malloc_wifiRtspBuffer() {
+	//char wifiRtspBuffer[0x100000];
+	wifiRtspBuffer = (unsigned char *)malloc(sizeof(unsigned char) * 0x100000);
+	if(wifiRtspBuffer == NULL) goto error;
 	return 0;
 error:
-	db_error("malloc_rtspBuffer() malloc error!");
+	db_error("malloc_wifiRtspBuffer() malloc error!");
 	return -1;
 }
 
-void free_rtspBuffer() {
-	if(rtspBuffer != NULL)
-		free(rtspBuffer);
-	rtspBuffer = NULL;
+void free_wifiRtspBuffer() {
+	if(wifiRtspBuffer != NULL)
+		free(wifiRtspBuffer);
+	wifiRtspBuffer = NULL;
 }
 
 int malloc_mTHMListData() {
@@ -6800,7 +6813,7 @@ void free_wifiserver_buf() {
 	free_mInputData();
 	free_gSocketDataQ();
 	free_gInputData();
-	free_rtspBuffer();
+	free_wifiRtspBuffer();
 	free_mTHMListData();
 	free_mL63StatusData();
 	free_mPCDStatusData();
@@ -6828,7 +6841,7 @@ int malloc_wifiserver_buf() {
 	if(malloc_mInputData() < 0)		  goto error;
 	if(malloc_gSocketDataQ() < 0)	  goto error;
 	if(malloc_gInputData() < 0)		  goto error;
-	if(malloc_rtspBuffer() < 0)		  goto error;
+	if(malloc_wifiRtspBuffer() < 0)		  goto error;
 	if(malloc_mTHMListData() < 0)	  goto error;
 	if(malloc_mL63StatusData() < 0)	  goto error;
 	if(malloc_mPCDStatusData() < 0)	  goto error;

@@ -10,7 +10,7 @@
 #include "common/app_log.h"
 #include "common/common_inc.h"
 
-int rtc_set_time(const struct tm *tm_time);
+//int rtc_set_time(const struct tm *tm_time);
 
 int set_date_time(struct tm *ptm) {
   time_t timep;

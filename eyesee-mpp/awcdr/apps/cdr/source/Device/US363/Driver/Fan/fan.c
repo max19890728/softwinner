@@ -18,6 +18,7 @@
 #include <sys/ioctl.h>
 #include <time.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 #include "Device/US363/Cmd/fpga_driver.h"
 #include "Device/US363/Test/test.h"
@@ -146,7 +147,7 @@ int calculateFanLevel(int fan_ctrl, int nowSpeed, int cpuTemprature) {
 void FanCtrlFunc(int fan_ctrl) {
 	static int fan_pre_data = 0;
 	static int fan_avg_cnt = 0;
-    static int fan_speed_lst = -1
+    static int fan_speed_lst = -1;
 
 //tmp   	if(GetLedByTimeFlag() == 1) {
 //tmp   		return;
@@ -165,7 +166,7 @@ void FanCtrlFunc(int fan_ctrl) {
         setFanSpeed(0);
     }
     else if(MainCmd == 7 && SubCmd == 7){
-//tmp      	do_Test_Mode_Func_jni(MainCmd, SubCmd);
+      	do_Test_Mode_Func(MainCmd, SubCmd);
     }
     else{
     	int level = calculateFanLevel(fan_ctrl, getFanSpeed(), CpuNowTemp);

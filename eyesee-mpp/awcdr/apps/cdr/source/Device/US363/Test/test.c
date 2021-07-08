@@ -90,11 +90,11 @@ void TestToolCmdInit(void) {
 void SetTestToolStep(int step) {
 	TestToolCmd.Step = step;
 }
-int GetTestToolStep(void) {
+int GetTestToolStep() {
 	return TestToolCmd.Step;
 }
 
-int GetTestToolState(void) {
+int GetTestToolState() {
 	return TestToolCmd.State;
 }
 

@@ -184,14 +184,14 @@ extern unsigned long long capture_t, capture_t_lst;
 extern char THMPath[128];
 extern char DirPath[128];
 
-extern char mSSID[16];
+//extern char mSSID[16];
 
 extern char panorama[0x69E];
 extern char panorama_head_str[0x69E];
 
 extern char TimeString[80];
 
-extern char sd_path[64];
+//extern char sd_path[64];
 extern unsigned jpeg_err_cnt, jpeg_ok_cnt;
 extern int debug_cnt, debug_en;
 extern int rec_file_cnt, cap_file_cnt;
@@ -257,7 +257,7 @@ void wrtieLidar2File();
 void MakeH264DataHeaderProc(void);
 void SendH264EncodeTable(void);
 void setFanRotateSpeed(int speed);
-void setFPGACtrlPower(int ctrl_pow);
+void fpgaCtrlPowerService(int ctrl_pow);
 int LoadParameterTmp(void);
 int prepareCamera(int videoid, int videobase);
 void SetWriteUS360DataBinFlag(int flag);
@@ -267,9 +267,7 @@ int getImgReadyFlag();
 int Capture_Is_Finish();
 int getCaptureFileCnt();
 void Set_Init_Image_Time(unsigned long long time);
-void do_Test_Mode_Func_jni(int m_cmd, int s_cmd);
 int stopREC(int debug);
-void SetPlaySoundFlag(int flag);
 void SetMCUData(int cpuNowTemp);
 void free_us360_buf();
 int malloc_us360_buf();
@@ -280,15 +278,12 @@ int get_mic_is_alive();
 void set_rec_proc_en(int en);
 void set_sd_card_state(int state);
 int get_sd_card_state();
-void set_write_file_error(int err);
 void setRecEn(int recState, int time_lapse, unsigned long long freesize, int timelapse_enc);
 
 //-----------------------------------------------------
 void us360_init();
 
 void calSdFreeSize(unsigned long long *size);
-int ResolutionModeToKPixel(int res_mode);
-void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_mdoe);
 
 void setDbtDdrRWCmd(fpga_dbt_rw_cmd_struct *ddr_cmd);
 void copyDataToDbtDdrRWBuf(char *buf, int size, int offset);
@@ -298,7 +293,7 @@ void getDbtRegRWStruct(fpga_reg_rw_struct *reg_p);
 
 void setModelName(char *ver);
 void writeWifiMaxLink(int maxLink);
-void setSensorLogEnable(int enable);
+void setBmxSensorLogEnable(int enable);
 void WriteWifiChannel(int channel);
 int GetSaturationValue(int value);
 void Setting_RemovalHDR_Proc(int mode);
@@ -306,9 +301,16 @@ void Setting_HDR7P_Proc(int manual, int ev_mode);
 void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag);
 void getPath();
 void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec);
-void create_thread_5ms();
-void create_thread_1s();
 void set_timeout_start(int sel);
+int checksd();
+int CheckSDcardState(char *path);
+int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize);
+int checkMicInterface();
+int getHdmiConnected();
+int GetUVCfd();
+void Load_Parameter_Tmp_Proc();
+int CheckSaveJpegCnt();
+void pollWatchDog();
 
 #ifdef __cplusplus
 }   // extern "C"

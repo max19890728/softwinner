@@ -732,6 +732,10 @@ int ReadLensCode();
 void SetWDRLiveStrength(int value);
 void LineTableInit(void);
 
+//---------------------------------------
+int WriteLensRateTable();
+void ReadAdjSensorLensFile();
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif

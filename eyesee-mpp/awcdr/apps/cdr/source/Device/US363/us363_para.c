@@ -21,6 +21,7 @@
 #include <time.h>
 #include <pthread.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/Cmd/us360_func.h"
 #include "Device/US363/Cmd/jpeg_header.h"
 //#include "fpga_driver.h"
@@ -242,8 +243,7 @@ void setStitchingOut(int c_mode, int mode, int res_mode, int fps)
 /*
  * 設定FPGA壓縮位址
  */
-void setJPEGaddr(int mode, int addr, int sensor)
-{
+void setJPEGaddr(int mode, int addr, int sensor) {
     DebugJPEGMode = mode;
     if(DebugJPEGMode == 1) {
         DebugJPEGaddr = addr;
@@ -518,7 +518,7 @@ void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode)
     VinInterrupt(c_mode);                               // step2. change exp or gain, 解拍照時Exp/Gain即時調整誤動作
     
     set_A2K_Debug_Mode(DebugJPEGMode, DebugJPEGaddr, ISP2_Sensor);
-    set_A2K_Sensor_CMD(sync_mode, EP_Time, fps, hdrLevel);
+    set_A2K_Sensor_CMD(sync_mode, EP_Time, fps, getHdrIntervalEvMode());
 
     if(sync_mode == 3) {		//change mode
         if(c_mode == CAMERA_MODE_SPORT_WDR || c_mode == CAMERA_MODE_REC_WDR || c_mode == CAMERA_MODE_TIMELAPSE_WDR)

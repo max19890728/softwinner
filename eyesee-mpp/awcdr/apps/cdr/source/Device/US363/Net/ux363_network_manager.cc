@@ -38,7 +38,7 @@ char wifiApSsidOsc[32] = "US_0000.OSC\0", wifiApPasswordOsc[16] = "88888888\0";
 char wifiStaSsid[32] = "StaSsid\0", wifiStaPassword[16] = "00000000\0";
 int wifiApChannel = 6;
 
-int stratWifiAp(char *ssid, char *password, int channel, int type)
+int startWifiAp(char *ssid, char *password, int channel, int type)
 {
 	NetManager::NetLinkType netlink_type;
 	
@@ -54,7 +54,7 @@ int stratWifiAp(char *ssid, char *password, int channel, int type)
 	return 1;
 }
 
-void closeWifiAp()
+void stopWifiAp()
 {
 	NetManager::NetLinkType netlink_type;
 	NetManager::GetInstance()->GetNetLinkType(netlink_type);

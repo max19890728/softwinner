@@ -14,12 +14,8 @@ int GetFanAlwaysOn();
 void SetTask1mLockFlag(int flag);
 int GetTask1mLockFlag();
 int CheckTask1mLockTime(unsigned long long now_t);
-void SetFanCtrl(int ctrl);
-int GetFanCtrl();
-void SetFanSpeed(int speed);
-int GetFanSpeed();
-void SetFanLstLv(int speed);
-int GetFanLstLv();
+void setFanSpeed(int speed);
+int getFanSpeed();
 void FanCtrlFunc(int fan_ctrl);
 void setFanRotateSpeed(int speed);
 

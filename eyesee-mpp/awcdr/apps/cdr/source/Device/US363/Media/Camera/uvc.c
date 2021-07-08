@@ -2,7 +2,7 @@
  * Copyright (c), 2021, Ultracker Tech. All rights reserved.
  ******************************************************************************/
  
- #include "Device/US363/Media/Camera/uvc.h"
+#include "Device/US363/Media/Camera/uvc.h"
  
 #include <string.h>
 #include <stdio.h>

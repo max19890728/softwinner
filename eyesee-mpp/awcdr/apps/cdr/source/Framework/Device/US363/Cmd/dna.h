@@ -9,7 +9,6 @@
 extern "C" {
 #endif
 	 
-int GetDNACheckOk();
 int dnaCheck();
 void makeDNAfile();
 

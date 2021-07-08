@@ -5,6 +5,8 @@
 #ifndef __FPGA_PIPE_H__
 #define __FPGA_PIPE_H__
 
+#include <math.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -291,6 +293,7 @@ int read_F_Com_In_Capture_D_Cnt(void);
 void setting_AEB(int frame_cnt,int ae_scale);
 void SetAntiAliasingEn(int en);
 void SetRemovalAntiAliasingEn(int en);
+void SetPipeReStart();
 
 #ifdef __cplusplus
 }   // extern "C"

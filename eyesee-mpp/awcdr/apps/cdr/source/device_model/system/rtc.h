@@ -24,11 +24,13 @@ int set_date_time(struct tm *ptm);
 time_t get_date_time(struct tm **local_time);
 void reset_date_time(void);
 int rtc_get_time(struct tm *tm_time);
+int rtc_set_time(const struct tm *tm_time);
 
 #ifdef __cplusplus
 }
 #endif
 
+#ifdef __cplusplus
 namespace EyeseeLinux {
 
 typedef struct RTCTimeTest {
@@ -53,3 +55,4 @@ typedef struct RTCTimeTest {
 } RTCTimeTest;
 
 }  // namespace EyeseeLinux
+#endif

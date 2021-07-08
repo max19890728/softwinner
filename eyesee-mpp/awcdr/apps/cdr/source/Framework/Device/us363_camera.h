@@ -215,8 +215,9 @@ enum {
 
 //Fpga Video Encode Tyep
 enum {
-    TIMELAPSE_ENCODE_TYPE_JPEG = 0,
-    TIMELAPSE_ENCODE_TYPE_H264 = 1
+    FPGA_VIDEO_ENCODE_TYPE_JPEG      = 0,
+    FPGA_VIDEO_ENCODE_TYPE_FPGA_H264 = 1,
+    FPGA_VIDEO_ENCODE_TYPE_CPU_H264  = 2
 };
 
 //Power Saving Mode
@@ -229,12 +230,53 @@ enum {
 
 
 void initCamera();
+void destroyCamera();
 void startPreview();
+void create_thread_1s();
+void create_thread_5ms();
+void create_thread_20ms();
+void do_Test_Mode_Func(int m_cmd, int s_cmd);
+int GetDiskInfo();
 
 //==================== get/set =====================
-void getSdPath(char *path);
 void getUS363Version(char *version);
-	
+void getSdPath(char *path, int size);
+void setWriteFileError(int err);
+int getWriteFileError();
+int getSdState();
+void getWifiSsid(char *ssid);
+void getWifiApSsid(char *ssid);
+void getWifiPassword(char *password);
+void setFpgaCtrlPower(int ctrl);
+int getFpgaCtrlPower();
+int getFpgaStandbyEn();
+int getPlayMode();
+void setCameraMode(int camrea_mode);
+int getCameraMode();
+int getCameraPositionCtrlMode();
+int getCameraPositionMode();
+int getHdrIntervalEvMode();
+int getFPS();
+int getDrivingRecordMode();
+void getResolutionWidthHeight(int *width, int *height);
+void setSdState(int state);
+void setDirPath(char *path);
+void setThmPath(char *path);
+int getCaptureIntervalTime();
+void setCaptureIntervalTime(int time);
+void setFpgaStandbyEn(int en);
+void setWhiteBalanceMode(int wb_mode);
+int getWhiteBalanceMode();
+void setLedBrightness(int led_brightness);
+void setOledControl(int oled_ctrl);
+void setWifiModeCmd(int mode);
+void setPowerSavingSendDataStateTime(unsigned long long time);
+int getFreeCount();	
+void setAudioRecThreadEn(int en);
+int getAudioRecThreadEn();
+void setDcState(int state);
+int getDcState();
+    
 	
 #ifdef __cplusplus
 }   // extern "C"

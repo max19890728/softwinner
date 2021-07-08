@@ -18,6 +18,8 @@
 #include <dirent.h>
 #include <time.h>
 
+#include "Device/us363_camera.h"
+#include "Device/US363/Driver/Fan/fan.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG
@@ -144,7 +146,7 @@ void SetMCUData(int cpuNowTemp) {
 	int x;
    	int fanHigh = 0;
     int fanLow = 0;
-    int speed = GetFanSpeed();
+    int speed = getFanSpeed();
     int base_intensity;
     static int delayCheck = 0;
     static int adcValue = 1000;
@@ -194,11 +196,11 @@ void SetMCUData(int cpuNowTemp) {
    	}
 
     power = data[9];
-    dcState = data[11];
+    setDcState(data[11]);
     int batteryState = 3;
     if(power == 0){
       	batteryState = 1;
-    } else if(dcState == 1){
+    } else if(getDcState() == 1){
        	batteryState = 2;
     }
     setBatteryOLED(batteryState, power, cpuNowTemp, 4000);

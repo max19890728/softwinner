@@ -101,8 +101,7 @@ int GetFocusToolNum(void)
 
 //int Focus_Error[5][4];
 
-void FocusScanTableTranInit(void)
-{
+void FocusScanTableTranInit() {
 	int m, n;
 	int cnt1, cnt2;
 	int Scan_Size = FOCUS_SCAN_SIZE;
@@ -129,16 +128,14 @@ void FocusScanTableTranInit(void)
 }
 
 unsigned long long focus_init_t;
-int check_focus_time(unsigned long long time)
-{
+int check_focus_time(unsigned long long time) {
 	if( (time - focus_init_t) > 3000000)
 		return 1;
 	else
 		return 0;
 }
 
-void FocusResultInit(void)
-{
+void FocusResultInit() {
 	int i, j;
 
 	for(i = 0; i < 5; i++) {
@@ -747,8 +744,7 @@ void WriteTestToolFocusAdjFile(int tool_num)
 }
 
 //本機讀取 Test Tool, 調整 Focus 參數
-void ReadTestToolFocusAdjFile(int s_id)
-{
+void ReadTestToolFocusAdjFile(int s_id) {
 	int j;
 	FILE *fp;
 	char path[128];

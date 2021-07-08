@@ -13,13 +13,14 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-#include "common/app_log.h"
+#include "Device/us363_camera.h"
 #include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/us360_define.h"
 #include "Device/US363/Cmd/spi_cmd.h"
 #include "Device/US363/Cmd/us360_func.h"
 #include "Device/US363/Cmd/fpga_driver.h"
 #include "Device/US363/Kernel/k_spi_cmd.h"
+#include "common/app_log.h"
 
 #undef LOG_TAG
 #define LOG_TAG "US363::Defect"
@@ -609,7 +610,7 @@ int do_Defect_Func() {
     	setOledControl(OLED_CONTROL_OFF);
 
     	//change mode
-//tmp    	setCameraMode(CAMERA_MODE_M_MODE);
+    	setCameraMode(CAMERA_MODE_M_MODE);
 //tmp    	setResolutionMode(RESOLUTION_MODE_12K);
     	setAEGBExp1Sec(Defect_Ep);
     	setAEGBExpGain(0);
@@ -668,7 +669,7 @@ int do_Defect_Func() {
         setOledControl(Get_DataBin_OledControl());
 
    		//change mode
-//tmp    	setCameraMode(Defect_CMode_lst);
+    	setCameraMode(Defect_CMode_lst);
 //tmp    	setResolutionMode(Defect_Res_lst);
     	setAEGBExp1Sec(Defect_Ep_lst);
     	setAEGBExpGain(Defect_Gani_lst);

@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us363_para.h"
 #include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/spi_cmd.h"
@@ -2986,13 +2987,13 @@ void Do_Next_Color_T(void)
   Send_Color_Temperature_Table();
 }
 
-int GetColorTemperature(void) {
+int GetColorTemperature() {
 	int step = color_temp_ctrl.Step;
 	Color_Temperature_Parameter_Struct	*Para;
 	Para = &color_temp_ctrl.Parameter[0];
 	return (Para->T_Gain[Para->P0].T / 100);
 }
-int GetTint(void) {
+int GetTint() {
 	return Tint_Idx;	//Tint_Rate;
 }
 
@@ -3277,8 +3278,7 @@ void FPGAdriverInit(void)
 	ISP_command_ready = 0;
 }
 
-void do2DNR(int en)
-{
+void do2DNR(int en) {
 	Block2_2DNR_ready = 0;
 	do_Focus_2DNR = en;
 }

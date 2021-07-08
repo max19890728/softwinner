@@ -12,13 +12,14 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-#include "common/app_log.h"
+#include "Device/us363_camera.h"
 #include "Device/gpio.h"
 #include "Device/spi.h"
 #include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/spi_cmd.h"
 #include "Device/US363/Cmd/fpga_driver.h"
 #include "Device/US363/Kernel/k_spi_cmd.h"
+#include "common/app_log.h"
 
 #undef LOG_TAG
 #define LOG_TAG "US363::FPGADownload"

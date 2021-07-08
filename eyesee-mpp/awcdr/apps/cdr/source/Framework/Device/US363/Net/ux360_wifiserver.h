@@ -41,6 +41,15 @@ int getDbtInputRegDataFinish();
 void setDbtOutputRegDataEn(int en);
 int getDbtOutputRegDataEn();
 
+//---------------------------------------
+int Get_WifiServer_Connected();
+void Set_WifiServer_KelvinEn(int en);
+void Set_WifiServer_KelvinVal(int val);
+void Set_WifiServer_KelvinTintVal(int val);
+void Set_WifiServer_GetEstimateEn(int en);
+void Set_WifiServer_CompassResultEn(int en);
+void Set_WifiServer_CompassResultVal(int val);
+
 #ifdef __cplusplus
 }   // extern "C"
 #endif

@@ -123,8 +123,8 @@ extern int Black_Th;
 extern int Focus_Tool_Num;
 
 void SetFocusToolNum(int num);
-void FocusScanTableTranInit(void);
-void FocusResultInit(void);
+void FocusScanTableTranInit();
+void FocusResultInit();
 void Search_Focus_Dot(int s_id, char *img);
 void doFocus(struct Focus_Parameter_Struct *fs, float th_rate);
 //void Focus_Block(struct Focus_Parameter_Struct *fs);
@@ -136,6 +136,7 @@ int ReadFocusResult(int s_id, int type);
 void WriteAdjFocusPosi(int tool_num);
 void ReadAdjFocusPosi(int s_id, int tool_num);
 int check_focus_time(unsigned long long time);
+void ReadTestToolFocusAdjFile(int s_id);
 
 #ifdef __cplusplus
 }   // extern "C"

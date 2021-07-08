@@ -28,10 +28,9 @@ void setStitchingOut(int c_mode, int mode, int res_mode, int fps);
 int writeCmdTable(int sub_state, int res_mode, int fps, int flag, int isInit, int usb_en);
 int get_ISP2_Sensor(void);
 void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode);
-void setCameraPositionMode(int ctrl_mode, int mode);
-void SetCameraMode(int mode);
 void reset_JPEG_Quality(int quality);
 int get_MainFPS(void);
+void setJPEGaddr(int mode, int addr, int sensor);
 
 #ifdef __cplusplus
 }   // extern "C"

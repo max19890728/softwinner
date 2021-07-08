@@ -16,6 +16,7 @@
 #include <time.h>
 #include <math.h>
  
+#include "Device/us363_camera.h"
 #include "Device/US363/us363_para.h"
 #include "Device/US363/Cmd/Smooth.h"
 #include "Device/US363/Cmd/variable.h"
@@ -634,6 +635,7 @@ void Get_thita_rate3(int M_Mode,int S_Id, short I_phi, unsigned short I_thita , 
 	short c_phi;
 	unsigned short S_rate_c_Sub;
 	int Size_H, Size_V;
+    int cp_mode = getCameraPositionMode();
 
 // 	Z = 64
 	if (Block_Mode != 2) Global_degree = RULE_UNIT[LensCode];
@@ -679,8 +681,8 @@ void Get_thita_rate3(int M_Mode,int S_Id, short I_phi, unsigned short I_thita , 
 	Size_H = A_L_I3_Header[M_Mode].H_Blocks;
 	Size_V = A_L_I3_Header[M_Mode].V_Blocks;
 
-	if( (y < A_L_I3_Header[M_Mode].Phi_P[2] && CameraPositionMode == 0) ||
-		(y >= (Size_V - A_L_I3_Header[M_Mode].Phi_P[2]) && CameraPositionMode == 1) || y == -1) {		//上部
+	if( (y < A_L_I3_Header[M_Mode].Phi_P[2] && cp_mode == 0) ||
+		(y >= (Size_V - A_L_I3_Header[M_Mode].Phi_P[2]) && cp_mode == 1) || y == -1) {		//上部
 		S_t_p0A = A_L_S3[M_Mode][S_Id].S_rate_Idx[( (thita0 >> 4) & 0xfff)];
 		if(S_t_p0A > (A_L_S3[M_Mode][S_Id].Sum-1) ) S_t_p0A = (A_L_S3[M_Mode][S_Id].Sum-1);
 		S_rate_Sub = A_L_S3[M_Mode][S_Id].S_rate_Sub[( (thita0 >> 4) & 0xfff)] >> 2;
@@ -731,8 +733,8 @@ void Get_thita_rate3(int M_Mode,int S_Id, short I_phi, unsigned short I_thita , 
 		 */
 
 		//依據x判斷參考哪2個點
-		Degree_Offset = Get_Degree_Offset(M_Mode, CameraPositionMode);
-		if(CameraPositionMode == 0) {
+		Degree_Offset = Get_Degree_Offset(M_Mode, cp_mode);
+		if(cp_mode == 0) {
 			if(x >= (A_L_I3_Header[M_Mode].Thita_P[3]-Degree_Offset) )	    p1 = 1;
 			else if(x >= (A_L_I3_Header[M_Mode].Thita_P[2]-Degree_Offset) ) p1 = 0;
 			else if(x >= (A_L_I3_Header[M_Mode].Thita_P[1]-Degree_Offset) ) p1 = 3;
@@ -772,7 +774,7 @@ void Get_thita_rate3(int M_Mode,int S_Id, short I_phi, unsigned short I_thita , 
 		phi0_2 = (A_L_S3[M_Mode][s_id0].S_t_p[S_t_p0A].phi * I_S_rate_Sub + S_rate_Sub * A_L_S3[M_Mode][s_id1].S_t_p[S_t_p0B].phi ) >> 14;
 
 		//計算參考C比例
-		if(CameraPositionMode == 0) {
+		if(cp_mode == 0) {
 			c_phi = Map_Posi_Tmp[Size_V][0].I_phi;
 			S_rate_c_Sub   = (c_phi - I_phi) * 0x4000 / (c_phi - Map_Posi_Tmp[ A_L_I3_Header[M_Mode].Phi_P[2] ][0].I_phi);
 		}
@@ -2653,8 +2655,7 @@ void getLensRateTable(int *val)
 }
 
 #ifdef ANDROID_CODE
-int WriteLensRateTable(void)
-{
+int WriteLensRateTable() {
     int size;
     FILE *file = NULL;
     int fp2fd = 0;
@@ -2855,6 +2856,7 @@ void Do_Map_Posi_Depression(int M_Mode, int CP_Mode)
 	int Degree_Offset=0;
 	int Transparent[5] = {1,0,0,0,0};
 	int s1, s2;
+    int cp_mode = getCameraPositionMode();
 
 	T_Size_X = A_L_I3_Header[M_Mode].H_Blocks;
 	T_Size_Y = A_L_I3_Header[M_Mode].V_Blocks;
@@ -2867,9 +2869,9 @@ void Do_Map_Posi_Depression(int M_Mode, int CP_Mode)
 	Thita_P2 = A_L_I3_Header[M_Mode].Thita_P[2];
 	Thita_P3 = A_L_I3_Header[M_Mode].Thita_P[3];
 
-	Degree_Offset = Get_Degree_Offset(M_Mode, CameraPositionMode);		//12K 4K Block為奇數, 所以需做偏移
+	Degree_Offset = Get_Degree_Offset(M_Mode, cp_mode);		//12K 4K Block為奇數, 所以需做偏移
 
-	if(CameraPositionMode == 1) {		//倒擺
+	if(cp_mode == 1) {		//倒擺
 
 		if(M_Mode < 4) {		//錄影3K縫合效能不夠
 			//做Sensor2 / Sensor4 縫合線凹陷
@@ -2968,6 +2970,7 @@ void Write_Map_Proc(int M_Mode)
 	int i, j, k;
 	int i2, j2;
 	int  T_Size_X, T_Size_Y, Binn;
+    int cp_mode = getCameraPositionMode();
 
 	T_Size_X = A_L_I3_Header[M_Mode].H_Blocks;
 	T_Size_Y = A_L_I3_Header[M_Mode].V_Blocks;
@@ -2975,7 +2978,7 @@ void Write_Map_Proc(int M_Mode)
 
 	for (i =  0; i <= T_Size_Y; i++) {
 		for (j = 0 ; j <=T_Size_X; j++) {
-			if(CameraPositionMode == 1) { i2 = T_Size_Y - i; j2 = T_Size_X - j; }
+			if(cp_mode == 1) { i2 = T_Size_Y - i; j2 = T_Size_X - j; }
 			else                        { i2 = i;            j2 = j;            }
 
 			thita1 = (((j2) * 0x8000 / (T_Size_X / 2) )  + 0x8000) & 0xFFFF;
@@ -2990,9 +2993,9 @@ void Write_Map_Proc(int M_Mode)
 		}
 	}
 
-	Do_Map_Posi_Oblique(M_Mode, CameraPositionMode);			//斜角
+	Do_Map_Posi_Oblique(M_Mode, cp_mode);			//斜角
 	if(M_Mode < 4)		//錄影3K縫合效能不夠
-		Do_Map_Posi_Depression(M_Mode, CameraPositionMode);		//凹陷
+		Do_Map_Posi_Depression(M_Mode, cp_mode);		//凹陷
 
 	Block_Idx[0] = 0; Block_Idx[1] = 0;
 	Block_Size[0] = 0; Block_Size[1] = 0;
@@ -3105,6 +3108,7 @@ void Write_Pillar_Proc(int M_Mode, int type, struct Out_Pillar_Mode_Struct *pill
 	int i, j;
 	int i2, j2;
 	int i1, j1;
+    int cp_mode = getCameraPositionMode();
 	struct Out_Pillar_Mode_Struct Mode_Pillar_Command_C;
 
 	memset(&Map_Posi_Tmp[0][0], 0, sizeof(Map_Posi_Tmp));
@@ -3120,7 +3124,7 @@ void Write_Pillar_Proc(int M_Mode, int type, struct Out_Pillar_Mode_Struct *pill
 			if(type == 1) { i1 = i; j1 = Size_X - j; }
 			else 		  { i1 = i; j1 = j; }
 
-			if(CameraPositionMode == 1) {
+			if(cp_mode == 1) {
 				i2 = Size_Y - i1;
 				j2 = Size_X - j1;
 			}
@@ -3174,6 +3178,7 @@ void Write_3D_Model_Proc(int M_Mode, int isInit, struct Out_Plant_Mode_Struct *p
 	int t_offset=0;
 	unsigned short thita2;
 	short phi2;
+    int cp_mode = getCameraPositionMode();
 
 	if(Angle_3DModel_Init == 1) {
 		Angle_3DModel_Init = 0;
@@ -3233,7 +3238,7 @@ void Write_3D_Model_Proc(int M_Mode, int isInit, struct Out_Plant_Mode_Struct *p
 	memset(&Map_Posi_Tmp[0][0], 0, sizeof(Map_Posi_Tmp));
 	for (i = 0; i <= Size_Y; i++) {
 		for (j = 0 ; j <= Size_X; j++) {
-			if(CameraPositionMode == 1) {
+			if(cp_mode == 1) {
 				i2 = Size_Y - i;
 				j2 = Size_X - j;
 			}
@@ -4500,8 +4505,7 @@ void ReadSensorAdjFile(void)
 	LoadConfig(1);
 }
 
-void ReadAdjSensorLensFile(void)
-{
+void ReadAdjSensorLensFile() {
 	int i, size;
 	int Top, Btm, Top_Idx, Btm_Idx;
 	FILE *fp=NULL;

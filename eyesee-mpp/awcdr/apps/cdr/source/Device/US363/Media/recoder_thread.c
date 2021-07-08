@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 #include "Device/US363/Media/recoder_buffer.h"
 #include "Device/US363/Media/Mp4/mp4.h"
@@ -151,9 +152,12 @@ int save_avi_file(unsigned char *video_buf, unsigned char *audio_buf, int len, i
         int en, int lose, unsigned long long *freesize, int resWidth, int resHeight, int fps, int enc_mode)
 {
     int i = 0, j = 0, ret = 0;
+    char ssid[32], sd_path[128];
 
     if(en == 0){
-        maek_save_file_path(1, save_path, sd_path, mSSID, cap_file_cnt);
+        getWifiSsid(&ssid[0]);
+        getSdPath(&sd_path[0], sizeof(sd_path));
+        maek_save_file_path(1, save_path, sd_path, ssid, cap_file_cnt);
 
 /*        rec2thm.en[rec2thm.P1] = 1;         // 製作avi錄影縮圖
         rec2thm.mode[rec2thm.P1] = 1;       // CAP=0, REC=1, Lapse=2, HDR=3, RAW=4
@@ -198,13 +202,14 @@ int save_mp4_file(unsigned char *video_buf, unsigned char *audio_buf, int len, i
     int i = 0, j = 0, ret = 0;
     static int v_cnt = 0;
     char *ptr;
-    char path[128];
+    char path[128], ssid[32], sd_path[128];
     int enc_type=0;
 
     if(en == 0){
         v_cnt = 0;
-
-        maek_save_file_path(6, save_path, sd_path, mSSID, cap_file_cnt);
+        getWifiSsid(&ssid[0]);
+        getSdPath(&sd_path[0], sizeof(sd_path));
+        maek_save_file_path(6, save_path, sd_path, ssid, cap_file_cnt);
 
         ptr = &save_path[0];
         for(i = 0; i < 128; i++) {
@@ -296,7 +301,7 @@ void *rec_thread(void)
     int M_Mode, S_Mode;
 //tmp    LinkADTSFixheader fix;
 //tmp    LinkADTSVariableHeader var;
-    char path[128];
+    char path[128], ssid[32], sd_path[128];
     int rec_times = 1;
 	static int rec_fps = 60;
 	int tl_mode;
@@ -447,14 +452,16 @@ db_error("max+ rec_thread() rec start\n");
 							}
 						}
 
-						get_Resolution_WidthHeight(&resWidth, &resHeight);
+						getResolutionWidthHeight(&resWidth, &resHeight);
 						if(rec_buf.f_frame == 0) {
 							if(tl_mode == 0 || (tl_mode != 0 && (get_fpga_encode_type() == 1 || get_fpga_encode_type() == 2) ) ) {
 								wait_i_frame = 0;
 								frame_s_lst = frame_s;
 #ifdef __CLOSE_CODE__	//tmp								
 								if(muxer_type == MUXER_TYPE_TS) {
-									maek_save_file_path(6, save_path, sd_path, mSSID, cap_file_cnt);
+                                    getWifiSsid(&ssid[0]);
+                                    getSdPath(&sd_path[0], sizeof(sd_path));
+									maek_save_file_path(6, save_path, sd_path, ssid, cap_file_cnt);
 									ptr = &save_path[0];
 									for(i = 0; i < 128; i++) {
 										if(*ptr == '.' && *(ptr+1) == 't' && *(ptr+2) == 's')
@@ -490,8 +497,9 @@ db_error("max+ rec_thread() rec start\n");
 							else {
 								db_debug("rec_thread: Time Lapse !\n");
 								time_lapse_cnt = 0;
-
-								maek_save_file_path(11, save_path, sd_path, mSSID, cap_file_cnt);
+                                getWifiSsid(&ssid[0]);
+                                getSdPath(&sd_path[0], sizeof(sd_path));
+								maek_save_file_path(11, save_path, sd_path, ssid, cap_file_cnt);
 
 								ptr = &save_path[0];
 								for(i = 0; i < 128; i++) {
@@ -513,7 +521,8 @@ db_error("max+ rec_thread() rec start\n");
 										db_error("rec_thread: create %s folder fail\n", tl_dir_path);
 								}
 								memset(&tl_path[0], 0, 128);
-								check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &mSSID[0], cap_file_cnt, time_lapse_cnt);
+                                getWifiSsid(&ssid[0]);
+								check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_file_cnt, time_lapse_cnt);
 								fp = fopen(tl_path, "wb");
 								len = Add_Panorama_Header(resWidth, resHeight, &buf[4], fp);
 								if(fp != NULL) {
@@ -639,7 +648,7 @@ db_error("max+ rec_thread() rec start\n");
 							}
 						}
 
-						get_Resolution_WidthHeight(&resWidth, &resHeight);
+						getResolutionWidthHeight(&resWidth, &resHeight);
 						if(tl_mode == 0 || (tl_mode != 0 && (get_fpga_encode_type() == 1 || get_fpga_encode_type() == 2) ) ) {
 							if(wait_i_frame == 1 && ip_frame == 1)
 								wait_i_frame = 0;
@@ -664,7 +673,8 @@ db_error("max+ rec_thread() rec start\n");
 						}
 						else {
 							memset(&tl_path[0], 0, 128);
-							check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &mSSID[0], cap_file_cnt, time_lapse_cnt);
+                            getWifiSsid(&ssid[0]);
+							check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_file_cnt, time_lapse_cnt);
 							fp = fopen(tl_path, "wb");
 							len = Add_Panorama_Header(resWidth, resHeight, &buf[4], fp);
 							if(fp != NULL) {
@@ -767,8 +777,8 @@ db_error("max+ rec_thread() rec start\n");
 						}
 						else if(save_flag == -4) {					//Write File Error
 							rec_state = -1;
-							set_sd_card_state(3);
-							set_write_file_error(1);
+							setSdState(3);
+							setWriteFileError(1);
 						}
 						break;
 					case -1:    // stop
@@ -816,7 +826,7 @@ db_error("max+ rec_thread() rec stop\n");
 							}
 						}
 
-						get_Resolution_WidthHeight(&resWidth, &resHeight);
+						getResolutionWidthHeight(&resWidth, &resHeight);
 						if( (tl_mode == 0 || (tl_mode != 0 && (get_fpga_encode_type() == 1 || get_fpga_encode_type() == 2) ) ) && state_lst == 1) {
 #ifdef __CLOSE_CODE__	//tmp							
 							if(muxer_type == MUXER_TYPE_TS) {
@@ -886,7 +896,9 @@ db_error("max+ rec_thread() rec stop\n");
 			} // if(rec_state != -2)
 #ifdef __CLOSE_CODE__	//tmp				
 			else if(get_convert_state() != -2) {
-				sprintf(path, "%s/DCIM/%s/V2986_1057.mp4\0", sd_path, mSSID);		//暫時使用固定檔名, 未來由連接使用者選擇檔名
+                getWifiSsid(&ssid[0]);
+                getSdPath(&sd_path[0], sizeof(sd_path));
+				sprintf(path, "%s/DCIM/%s/V2986_1057.mp4\0", sd_path, ssid);		//暫時使用固定檔名, 未來由連接使用者選擇檔名
 				convert_mp4_to_ts(&path[0]);
 			}
 #endif	//__CLOSE_CODE__			
