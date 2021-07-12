@@ -239,7 +239,7 @@ int writeUS360DataBinStep = 0;                  /** saveBinStep */
 int lidarState = 0;
 int lidarCode = 0;
 char lidarVersion[8];
-long lidarDelay = -1;
+unsigned long long lidarDelay = -1;
 
 #define LIDAR_BUFFER_MAX    0x400000            /* 4MB */
 int lidarCanBeFind = 1;                         // 0禁止使用 1:正常
@@ -249,7 +249,7 @@ int lidarBufMod = 1;	                        /** LidarBufMod */   // 0:512x256, 
 int lidarBufEnd = 2000000;			            /** LidarBufEnd */   // 設定讀取的總數量
 int lidarBufPtr = 0;				            /** LidarBufPtr */   // 目前已讀取的數量
 int lidarScanCnt = 0;                           /** lidarScanCnt */
-int lidarBuffer[LIDAR_BUFFER_MAX];		        /** LidarBuffer */   // 最大 2M 筆資料 (1K x 2K) x 2 (sin & cos)
+int *lidarSinCosBuffer;		                        /** LidarBuffer[LIDAR_BUFFER_MAX] */   // 最大 2M 筆資料 (1K x 2K) x 2 (sin & cos)
 unsigned long long lidarTime1;                       /** lidarT1 */
 int lidarError = 0;                             /** lidarErr */
 
@@ -348,7 +348,7 @@ int doCheckStitchingCmdDdrFlag = 0;             /** check_st_cmd_ddr_flag */
 int test3DHorizontalFlag = 0;                   /** testHonz */ 
 
 #define RTSP_BUFFER_MAX     0x100000            /* 1MB */
-char rtspBuffer[RTSP_BUFFER_MAX];               /** rtsp_buff */
+char *rtspBuffer;                               /** rtsp_buff[RTSP_BUFFER_MAX] */  //取得 H264 Data 後, 複製到 Wifi Server 的 rtspBuffer
 int rtspFps = 0, rtspSendLength = 0;            /** rtsp_fps, rtsp_send */
 
 unsigned long long checkTimeoutPowerTime1 = 0;       /** toutPowerT1*/
@@ -440,7 +440,7 @@ enum {
 int live360En = 0;                              /** mLive360En */
 int live360Cmd = 0;                             /** mLive360Cmd */
 int live360State = LIVE360_STATE_STOP;          /** Live360_State */    // 0:start -1:stop
-long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
+unsigned long long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
 
 int thread_20ms_en = 1;             
 int thread_1s_en = 1;
@@ -459,9 +459,7 @@ int task5s_lock_flag = 0;
 unsigned long long task5s_lock_schedule = 5000000;		//us, 5s
 unsigned long long task5s_lock_time;
 
-
 //==================== get/set =====================
-
 void getWifiSsid(char *ssid) { memcpy(ssid, &mWifiSsid[0], sizeof(mWifiSsid)); }
 
 void getWifiApSsid(char *ssid) { memcpy(ssid, &mWifiApSsid[0], sizeof(mWifiApSsid)); }
@@ -740,11 +738,45 @@ void subSdFreeSize(int size) { sdFreeSize -= size; }
 
 
 //==================== fucntion ====================
+int malloc_rtsp_buf() {
+	//char rtspBuffer[RTSP_BUFFER_MAX];
+	rtspBuffer = (char *)malloc(sizeof(char) * RTSP_BUFFER_MAX);
+	if(rtspBuffer == NULL) goto error;
+	return 0;
+error:
+	db_error("malloc_rtsp_buf() malloc error!");
+	return -1;
+}
+
+void free_rtsp_buf() {
+	if(rtspBuffer != NULL)
+		free(rtspBuffer);
+	rtspBuffer = NULL;
+}
+
+int malloc_lidar_sin_cos_buf() {
+	//int lidarSinCosBuffer[LIDAR_BUFFER_MAX];
+	lidarSinCosBuffer = (int *)malloc(sizeof(int) * LIDAR_BUFFER_MAX);
+	if(lidarSinCosBuffer == NULL) goto error;
+	return 0;
+error:
+	db_error("malloc_lidar_buf() malloc error!");
+	return -1;
+}
+
+void free_lidar_sin_cos_buf() {
+	if(lidarSinCosBuffer != NULL)
+		free(lidarSinCosBuffer);
+	lidarSinCosBuffer = NULL;
+}
+
+
+
 void initCountryFunc() 
 {  
 	mCountryCode = readCountryCode();
 //tmp	waitLanguage(mCountryCode);
-    db_debug("initLensFunc() mCountryCode=%d\n", mCountryCode);
+    db_debug("initLensFunc() mCountryCode=%d\n", mCountryCode);  
 }
 	
 void initCustomerFunc() 
@@ -788,36 +820,39 @@ void initCustomerFunc()
     	setModelName(&name[0]);
     	writeWifiMaxLink(10);
     	break;
-    }
+    }   
 }
 
 void destroyCamera()
-{
+{  
 	free_us360_buf();
 	free_wifiserver_buf();
 	free_lidar_buf();
+    free_rtsp_buf();
+    free_lidar_sin_cos_buf();
 	SPI_Close();
-	QSPI_Close();
+	QSPI_Close(); 
 }
 
 int initSysConfig() 
-{
+{  
 	MPP_SYS_CONF_S sys_config{};
 	memset(&sys_config, 0, sizeof(sys_config));
 	sys_config.nAlignWidth = 32;
 	AW_MPI_SYS_SetConf(&sys_config);
-	return AW_MPI_SYS_Init_S1();
+	return AW_MPI_SYS_Init_S1();  
 }
 
 void initCamera()
-{
-db_debug("US363Camera() 00");    
-	if(malloc_us360_buf() < 0) 	    goto end;
-	if(malloc_wifiserver_buf() < 0) goto end;
-//  if(malloc_lidar_buf() < 0)	    goto end;			// 記憶體需求過大, 導致程式無法執行
-db_debug("US363Camera() 01");
+{      
+	if(malloc_us360_buf() < 0) 	       goto end;
+	if(malloc_wifiserver_buf() < 0)    goto end;
+//  if(malloc_lidar_buf() < 0)	       goto end;			// 記憶體需求過大, 導致程式無法執行
+    if(malloc_rtsp_buf() < 0)          goto end;
+    if(malloc_lidar_sin_cos_buf() < 0) goto end;
+
 	initSysConfig();
-db_debug("US363Camera() 02");
+
 	if(EyeseeLinux::StorageManager::GetInstance()->IsMounted() ) {
 		makeUS360Folder();
 		makeTestFolder();
@@ -827,14 +862,12 @@ db_debug("US363Camera() 02");
 		getNewSsidPassword(&mWifiSsid[0], &mWifiPassword[0]);
 	}
 	db_debug("US363Camera() ssid=%s pwd=%s", mWifiSsid, mWifiPassword);
-db_debug("US363Camera() 03");
+
     memcpy(&mWifiApSsid[0], &mWifiSsid[0], sizeof(mWifiSsid));
-	startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);
-db_debug("US363Camera() 04");    
+	startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);   
 	start_wifi_server(8555);
-db_debug("US363Camera() 05");	
-	us360_init();
-db_debug("US363Camera() 06");    
+	
+	us360_init();   
 	return;
 	
 end:
@@ -843,7 +876,7 @@ end:
 }
 
 void databinInit(int country, int customer) 
-{
+{   
 	ReadUS360DataBin(country, customer);
 	
 	//TagVersion = 			0;
@@ -1051,6 +1084,7 @@ void databinInit(int country, int customer)
 	setSaturation(GetSaturationValue(sv));
 	
 	//TagFreeCount
+    int de;
 	calSdFreeSize(&sdFreeSize);
 //tmp    getRECTimes(sdFreeSize);
     mFreeCount = Get_DataBin_FreeCount();
@@ -1060,7 +1094,7 @@ void databinInit(int country, int customer)
     	writeUS360DataBinFlag = 1;
     }else{
 //tmp    	int de = mFreeCount - GetSpacePhotoNum();
-		int de = mFreeCount;
+		de = mFreeCount;
     	if(de > 100 || de < -100){
 //tmp    		freeCount = GetSpacePhotoNum();
     	}else if(de > 10){
@@ -1124,10 +1158,10 @@ void databinInit(int country, int customer)
 //tmp    SetLiveBitrateMode(Get_DataBin_LiveBitrate() );
 
     //TagLiveBitrate = 			95;
-    setPowerSavingMode(Get_DataBin_PowerSaving());
+    setPowerSavingMode(Get_DataBin_PowerSaving());    
 }
 
-void rwWifiData(int rw,int wifiMode) {
+void rwWifiData(int rw,int wifiMode) {  
 //tmp
 /*	if(rw == 0){
 		wifiSSID = sharedPreferences.getString("wifiSSID", "");
@@ -1149,10 +1183,10 @@ void rwWifiData(int rw,int wifiMode) {
 		sharedPreferences.edit().putString("wifiDns1", wifiDns1).apply();
 		sharedPreferences.edit().putString("wifiDns2", wifiDns2).apply();
 		Log.d("WifiServer", "wifi data :" + wifiMode + "/" + wifiSSID + "/" + wifiPassword);
-	}*/
+	}*/   
 }
 
-void AletaS2Init() {
+void AletaS2Init() {  
    	//Sensor
     RXDelaySet(10, 0, 0x1);
     RXDelaySet(14, 0, 0x2);
@@ -1170,26 +1204,26 @@ void AletaS2Init() {
     SetDefectState(0);
    	setLedBrightness(Get_DataBin_LedBrightness());
    	setOledControl(Get_DataBin_OledControl());
-    get_current_usec(&powerSavingInitTime1);
+    get_current_usec(&powerSavingInitTime1);  
 }
 
-int FPGA_Download() {
+int FPGA_Download() {  
 	if(DownloadProc() < 0)
 		return -1;
 	dnaCheckOk = dnaCheck();
-    return 0;
+    return 0; 
 }
 
-int FPGA_Init() {
+int FPGA_Init() {  
     int ret=0;
     ret = FPGA_Download();
     fpgaCheckSum = GetFpgaCheckSum();    //SetTextFpgaCheckSum_jni();
     AletaS2Init();
     fpgaCmdIdx = -1; fpgaCmdP1 = -1;
-    return ret;
+    return ret;   
 }
 
-void Check_Bottom_File(int mode, int tx_mode, int isInit) {
+void Check_Bottom_File(int mode, int tx_mode, int isInit) {   
 //tmp
 /*  	int i, cnt;
    	int width=0, height=0, err = 1;
@@ -1247,7 +1281,7 @@ void Check_Bottom_File(int mode, int tx_mode, int isInit) {
        	SetBottomTextMode(BottomTextMode);
        	
        	writeUS360DataBin_flag = 1;        	
-    }*/
+    }*/  
 }
 
 /*
@@ -1256,7 +1290,7 @@ void Check_Bottom_File(int mode, int tx_mode, int isInit) {
  *
  * */
 void set_timeout_start(int sel)
-{
+{   
     switch(sel){
     case 0: get_current_usec(&checkTimeoutPowerTime1);
 //tmp      		if(getMcuVersion() > 12 && getWifiDisableTime() > 0){
@@ -1270,11 +1304,11 @@ void set_timeout_start(int sel)
     case 5: get_current_usec(&checkTimeoutSaveTime1);   break;    // 存檔
     case 6: get_current_usec(&checkTimeoutTakeTime1);   break;    // 拍照
     //case 7: get_current_usec(&toutPowerKey); break;    // power key
-    }
+    } 
 }
 
 void get_timeout_start(int sel, unsigned long long *time)
-{
+{   
     switch(sel){
     case 0: *time = checkTimeoutPowerTime1; break;    // POWER
     //case 1: *time = toutWifiT1;   break;    // WIFI
@@ -1284,14 +1318,14 @@ void get_timeout_start(int sel, unsigned long long *time)
     case 5: *time = checkTimeoutSaveTime1;   break;    // 存檔
     case 6: *time = checkTimeoutTakeTime1;   break;    // 拍照
     //case 7: *time = toutPowerKey; break;    // power key
-    }
+    }  
 }
 
 /*
  * return -- 0:pass, 1:need doing
  * */
 int check_timeout_start(int sel, unsigned long long msec)
-{
+{  
     unsigned long long t1=0, t2=0;
     get_current_usec(&t2);
     switch(sel){
@@ -1332,10 +1366,10 @@ int check_timeout_start(int sel, unsigned long long msec)
             return 1;
         }
     }
-    return 0;
+    return 0; 
 }
 
-int check_power() {
+int check_power() {   
 	if(dcState == 1)
 		return 1;
 	else {
@@ -1343,46 +1377,46 @@ int check_power() {
 			return 1;
 		else
 			return 0;
-	}
+	}  
 }
 
-void Set_Cap_Rec_Start_Time(unsigned long long time) {
-		powerSavingCapRecStartTime = time;
-		powerSavingInit = 1;		//預防開機先拍照
+void Set_Cap_Rec_Start_Time(unsigned long long time) {  
+	powerSavingCapRecStartTime = time;
+	powerSavingInit = 1;		//預防開機先拍照      
 }
 
-void Set_Cap_Rec_Finish_Time(unsigned long long time, unsigned long long overtime) {
+void Set_Cap_Rec_Finish_Time(unsigned long long time, unsigned long long overtime) {   
 	powerSavingCapRecFinishTime = time;
 	powerSavingOvertime = overtime;
-	powerSavingInit = 1;		//預防開機先拍照
+	powerSavingInit = 1;		//預防開機先拍照   
 }
 
-void Set_Power_Saving_Wifi_Cmd(unsigned long long time, unsigned long long overtime, int debug) {
+void Set_Power_Saving_Wifi_Cmd(unsigned long long time, unsigned long long overtime, int debug) { 
 	if(mPowerSavingMode == 1) {
 		if(fpgaStandbyEn == 1)
 			SetFPGASleepEn(0);
 		Set_Cap_Rec_Finish_Time(time, overtime);
 	}
-    db_debug("Set_Power_Saving_Wifi_Cmd() PWS: debug=%d\n", debug);
+    db_debug("Set_Power_Saving_Wifi_Cmd() PWS: debug=%d\n", debug);     
 }
 
-void audio_record_thread_release() {
+void audio_record_thread_release() {  
 //tmp    
 /*   	if(audioRecThd != null){
       	audioRecThd.interrupt();
        	audioRecThd = null;
-    }*/
+    }*/     
 }
     
-void audio_record_thread_start() {
+void audio_record_thread_start() {   
 //tmp    
 /*  	audio_record_thread_release();
     audioRecThd = new AudioRecordThread();
     audioRecThd.setName("audioRecordThread");
-   	audioRecThd.start();*/
+   	audioRecThd.start();*/      
 }
 
-void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state) {
+void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state) {     
     int fps_tmp = 0;
     unsigned long long free = 0L, nowTime;
     char sd_path[128];
@@ -1450,11 +1484,11 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
 //tmp        paintOLEDRecording(0);                        // rex+ 151221
         get_current_usec(&nowTime);
         Set_Cap_Rec_Finish_Time(nowTime, POWER_SAVING_CMD_OVERTIME_5S);
-    }
+    }   
 }
 
 int ResolutionModeToKPixel(int res_mode)
-{
+{    
     int kpixel = 1000;
     switch(res_mode){
     case 1:  kpixel = 12000; break;		//12K
@@ -1466,11 +1500,11 @@ int ResolutionModeToKPixel(int res_mode)
     case 14: kpixel =  2000; break;		//2K
     default: kpixel = 99000; break;
     }
-    return kpixel;
+    return kpixel;   
 }
 
 void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_mdoe)
-{
+{   
     unsigned long long now_time;
     
     if(get_rec_state() != -2) {
@@ -1570,10 +1604,10 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
 
     setResolutionWidthHeight(mResolutionMode);
     get_current_usec(&now_time);
-    setChooseModeTime(now_time);
+    setChooseModeTime(now_time);  
 }
 
-void ReStart_Init_Func(int ctrl_pow) {
+void ReStart_Init_Func(int ctrl_pow) {   
 	Load_Parameter_Tmp_Proc();
     FPGAdriverInit();
     Check_Bottom_File(mBottomMode, mBottomTextMode, 1);
@@ -1583,10 +1617,10 @@ void ReStart_Init_Func(int ctrl_pow) {
 	
 	int id   = Get_Camera_Id();
 	int base = Get_Camera_Base();
-    prepareCamera(id, base);              // openUVC, create uvc_thread & rec_thread
+    prepareCamera(id, base);              // openUVC, create uvc_thread & rec_thread   
 }
 
-void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag) {
+void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag) {    
     int ret;
     db_debug("FPGA_Ctrl_Power_Func: ctrl=%d flag=%d\n", ctrl_pow, flag);
     if(ctrl_pow == 0) {        //open
@@ -1605,10 +1639,10 @@ void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag) {
     else {                    //close
         fpgaCtrlPowerService(ctrl_pow);
         fpgaCtrlPower = ctrl_pow;
-    }
+    }   
 }
 
-void changeWifiMode(int mode) {
+void changeWifiMode(int mode) {     
 //tmp    
 /*   	if(clientS != null){
 		if(!clientS.isClosed()){
@@ -1733,7 +1767,7 @@ void changeWifiMode(int mode) {
            		}
            	}
        	}).start();	
-   	}*/
+   	}*/  
 }
 
 /*
@@ -1742,7 +1776,7 @@ void changeWifiMode(int mode) {
  *         0 = 拍照,    1 = 三連拍, 2 = 五連拍, 3 = 十連拍, 4 = 開始錄影, 5 = 停止錄影,
  *         6 = 逼聲,    7 = 開機,    8 = 關機,    9 = 兩秒自拍, 10 = 十秒自拍, 11 = 提醒
  */
-void playSound(int id){
+void playSound(int id){   
 	playSoundId = id;
    	/*new Thread(new Runnable(){
 		public void run(){
@@ -1777,11 +1811,11 @@ void playSound(int id){
 	        
 	        } catch (Exception e) { Log.e("Main","playSound error! id=" + playSoundId); }
        	}
-    }).start();*/
+    }).start();*/ 
 }
 
 void onCreate() 
-{
+{   
 	int i, j, ret = 0, len = 0;
 	    
 //tmp    systemlog = new SystemLog();
@@ -2234,11 +2268,11 @@ void onCreate()
 //tmp        udpBroThe.setName("UDPBroadcastThread");
 //tmp        udpBroThe.start();
 
-    playSound(7);	// 最後才播放音效, 避免聲音斷斷續續
+    playSound(7);	// 最後才播放音效, 避免聲音斷斷續續   
 }
 
 void startPreview()
-{
+{    
 #if 0 //max+
 	EyeseeLinux::Camera* camera =
       EyeseeLinux::CameraFactory::GetInstance()->CreateCamera(
@@ -2251,7 +2285,7 @@ void startPreview()
 /*
  * 依照手機是否持續發送同步CMD, 來判斷是否斷線
  */
-int Check_Wifi_Connect_isAlive(void) {
+int Check_Wifi_Connect_isAlive(void) {   
 	unsigned long long nowTime;
 	get_current_usec(&nowTime);
   	if(powerSavingSendDataStateTime == 0)
@@ -2262,11 +2296,11 @@ int Check_Wifi_Connect_isAlive(void) {
 		powerSavingSendDataStateTime = 0;
 		return 0;
 	}
-	return 1;
+	return 1;  
 }
 
 int checkCanTakePicture()
-{
+{   
     unsigned long long now_time, choose_time;
     getChooseModeTime(&choose_time);
     get_current_usec(&now_time);
@@ -2279,10 +2313,10 @@ int checkCanTakePicture()
     }
     else {
         return 1;
-    }
+    }   
 }
 
-void LidarSetup(int mode) {
+void LidarSetup(int mode) {   
    	//lidarBufEnd = 0x200000;				// 2M筆資料
    	//lidarBufPtr = 0;
    	switch(mode){
@@ -2306,14 +2340,14 @@ void LidarSetup(int mode) {
 //tmp	if(ftdiSPI != null) ftdiSPI.setLidarMode(mode, lidarBufEnd);
 }
 
-void setLidarStart() {
+void setLidarStart() {    
     LidarSetup(lidarBufMod);
     db_debug("setLidarStart: LidarSetup: Mod=%d  End=%d", lidarBufMod, lidarBufEnd);
-    lidarPtrEnable = 1;
+    lidarPtrEnable = 1; 
 }
 
 int doTakePicture(int enable)
-{
+{   
   	int ret = 1, num;
    	unsigned long long free = 0L, nowTime = 0L;
     char sd_path[128];
@@ -2377,11 +2411,11 @@ int doTakePicture(int enable)
 //        systemlog.addLog("info", System.currentTimeMillis(), "machine", "do Picture.", String.valueOf(enable));
     }
 
-    return ret;
+    return ret;  
 }
 
 void startREC(void)
-{
+{   
     /*if(dnaCheckOk != 1 && GetTestToolState() == -1) {
     	db_error("startREC() dna check err!\n");
     	paintOLEDCheckError(1);
@@ -2404,7 +2438,7 @@ void startREC(void)
 }
 
 int stopREC(int debug)
-{
+{     
 	unsigned long long nowTime;
 
     if(getRecordEn() == 1){                                    // 結束rec動作
@@ -2425,10 +2459,10 @@ int stopREC(int debug)
         return 1;
     }
     else
-    	return 0;
+    	return 0; 
 }
 
-void Ctrl_Rec_Cap(int c_mode, int cap_cnt, int rec_en) {
+void Ctrl_Rec_Cap(int c_mode, int cap_cnt, int rec_en) {    
    	int ret = 1;
    	switch(c_mode) {
    	case 0: // Cap
@@ -2469,10 +2503,10 @@ void Ctrl_Rec_Cap(int c_mode, int cap_cnt, int rec_en) {
         else            stopREC(15);
         break;
     }
-    //saveImageTimer = 100;// rex+ 181016,
+    //saveImageTimer = 100;// rex+ 181016, 
 }
 
-void timerLidar() {
+void timerLidar() {   
 //tmp
 /*   	//if(ftdi4222 != null) ftdi4222.onStart();		// show information
    	String hex0, hex1, hex2, hex3, hex4;
@@ -2491,7 +2525,7 @@ void timerLidar() {
    		}else if(LidarBufPtr < LidarBufEnd){
    			//lidarCode = 1;
    			if(ftdiSPI != null) ftdiSPI.onStart();
-   			if(ftdiSPI != null) LidarBufPtr = ftdiSPI.doMasterRead(LidarBuffer);
+   			if(ftdiSPI != null) LidarBufPtr = ftdiSPI.doMasterRead(lidarSinCosBuffer);
    			
    			if(LidarBufEnd != 0){
    				int per = (LidarBufEnd - LidarBufPtr) * 100 / LidarBufEnd;
@@ -2511,29 +2545,29 @@ void timerLidar() {
    			LidarPtrEnable = 0;			// 讀取資料結束
    			Log.e("timerLidar", "BufPtr="+LidarBufPtr+" BufEnd="+LidarBufEnd);
 			for(int i=0; i<32; i+=4){
-				hex0 = Integer.toHexString(LidarBuffer[i+0]);
-				hex1 = Integer.toHexString(LidarBuffer[i+1]);
-				hex2 = Integer.toHexString(LidarBuffer[i+2]);
-				hex3 = Integer.toHexString(LidarBuffer[i+3]);
+				hex0 = Integer.toHexString(lidarSinCosBuffer[i+0]);
+				hex1 = Integer.toHexString(lidarSinCosBuffer[i+1]);
+				hex2 = Integer.toHexString(lidarSinCosBuffer[i+2]);
+				hex3 = Integer.toHexString(lidarSinCosBuffer[i+3]);
 				hex4 = Integer.toHexString(i);
 				Log.e("timerLidar", "rBuffer[0x"+i+"]={"+hex0+","+hex1+","+hex2+","+hex3+"}");
 			}
 			
 			for(int i=LidarBufEnd-32; i<LidarBufEnd; i+=4){
-				hex0 = Integer.toHexString(LidarBuffer[i+0]);
-				hex1 = Integer.toHexString(LidarBuffer[i+1]);
-				hex2 = Integer.toHexString(LidarBuffer[i+2]);
-				hex3 = Integer.toHexString(LidarBuffer[i+3]);
+				hex0 = Integer.toHexString(lidarSinCosBuffer[i+0]);
+				hex1 = Integer.toHexString(lidarSinCosBuffer[i+1]);
+				hex2 = Integer.toHexString(lidarSinCosBuffer[i+2]);
+				hex3 = Integer.toHexString(lidarSinCosBuffer[i+3]);
 				hex4 = Integer.toHexString(i);
 				Log.e("timerLidar", "rBuffer[0x"+hex4+"]={"+hex0+","+hex1+","+hex2+","+hex3+"}");
 			}
 			//lidarCode = 2;
-			//inputSinCosData(LidarBuffer, LidarBufEnd * 32);
+			//inputSinCosData(lidarSinCosBuffer, LidarBufEnd * 32);
 			int LD363_4in1 = 0;
 			if(LidarBufMod == 1){
 				LD363_4in1 = 1;
 			}
-			wave8in(LidarBuffer, LidarBufEnd * 32,ftdiSPI.setup_LD363_ZT,ftdiSPI.setup_LD363_X,ftdiSPI.setup_LD363_Y,LD363_4in1);
+			wave8in(lidarSinCosBuffer, LidarBufEnd * 32,ftdiSPI.setup_LD363_ZT,ftdiSPI.setup_LD363_X,ftdiSPI.setup_LD363_Y,LD363_4in1);
 			ftdiSPI.onDestroy();
 			lidarDelay = 0;
 			lidarCode = 200;
@@ -2549,7 +2583,7 @@ void timerLidar() {
        		    	LidarSetup(LidarBufMod);
        		    	ftdiSPI.onStart();
        		    	ftdiSPI.getLidarVersion();
-       				LidarBufPtr = ftdiSPI.doMasterRead(LidarBuffer);
+       				LidarBufPtr = ftdiSPI.doMasterRead(lidarSinCosBuffer);
        			}else{
        				ftdiSPI.onDestroy();
        			}
@@ -2565,7 +2599,7 @@ void timerLidar() {
        		}
    			lidarDelay = 0;
    		}
-   	}*/
+   	}*/   
 }
 
 /*
@@ -2573,7 +2607,7 @@ void timerLidar() {
  * return:
  *         0 = no, 1 = yes
  */
-int updateRecovery(char *zipName) {
+int updateRecovery(char *zipName) {   
 	char fileStr[128] = "/cache/recovery.log\0";
 	char readStr[128];
 	struct stat sti;
@@ -2602,7 +2636,7 @@ int updateRecovery(char *zipName) {
     		//}
     		fclose(fp);
     	}
-    }
+    }  
 }
 
 /*
@@ -2610,7 +2644,7 @@ int updateRecovery(char *zipName) {
  * return:
  *         壓縮檔名稱 , null = no
  */
-int checkDoRecovery(char *path, char *zipName) {
+int checkDoRecovery(char *path, char *zipName) {     
 	DIR* pDir = NULL;
 	struct dirent* pEntry = NULL;
 	time_t t;
@@ -2638,10 +2672,10 @@ int checkDoRecovery(char *path, char *zipName) {
 		}
 	}
 	closedir(pDir);
-	return ret;
+	return ret;   
 }
 
-int do_reboot_recovery() {
+int do_reboot_recovery() {    
 //tmp    
 /*    String cmd = "reboot recovery";
     try {
@@ -2650,7 +2684,7 @@ int do_reboot_recovery() {
         //int     exitValue = process.waitFor();
     } catch (Exception e) { 
         return -1; 
-    }*/
+    }*/   
 }
 
 /*
@@ -2659,7 +2693,7 @@ int do_reboot_recovery() {
  * return:
  *         0 = success , -1 = fail
  */
-int runRecoveryCmd(char *zipName) {
+int runRecoveryCmd(char *zipName) {     
 	char fileStr[64]  = "/cache/recovery.log\0";
 	char fileStr2[64] = "/cache/recovery/command\0";
 	char str_tmp[64];
@@ -2688,10 +2722,10 @@ int runRecoveryCmd(char *zipName) {
 	if(do_reboot_recovery() == -1)
     	return -1;
 
-	return 0;
+	return 0; 
 }
 
-void getSDAllSize(unsigned long long *size) {
+void getSDAllSize(unsigned long long *size) {   
     char sd_path[128];
     struct statfs diskInfo;
     unsigned long long totalBlocks;
@@ -2701,10 +2735,10 @@ void getSDAllSize(unsigned long long *size) {
     statfs(sd_path, &diskInfo);
     totalBlocks = diskInfo.f_bsize;
     totalSize = diskInfo.f_blocks * totalBlocks;
-	*size = totalSize;
+	*size = totalSize;    
 }
 
-void do_power_standby() {
+void do_power_standby() {     
 	db_debug("do_power_standby %d\n", powerMode);
     if(powerMode == 3){
         powerMode = 1;                    // power mem
@@ -2732,10 +2766,10 @@ void do_power_standby() {
         	set_live360_state(-1);
 
 //        systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is standby.", "---");
-    }
+    }   
 }
 
-void createSkipWatchDogFile(){
+void createSkipWatchDogFile(){     
 	char dirStr[64]  = "/mnt/sdcard/US360\0";
 	char fileStr[64] = "/mnt/sdcard/US360/skipWatchDog.bin\0";
 	struct stat sti;
@@ -2751,19 +2785,19 @@ void createSkipWatchDogFile(){
 		fp = fopen(fileStr, "wb");
 		fwrite(&value, sizeof(value), 1, fp);
 		fclose(fp);
-	}
+	}  
 }
 
-void deleteSkipWatchDogFile(void) {
+void deleteSkipWatchDogFile(void) {    
 	char fileStr[64] = "/mnt/sdcard/US360/skipWatchDog.bin\0";
 	struct stat sti;
     if(stat(fileStr, &sti) == 0) {
         remove(fileStr);
-    }
+    }   
 }
 
 void choose_mode(int c_mode, int mode, int res_mode, int fps)
-{
+{    
 	int i;
 	int mode_tmp, res_tmp;
     int kpixel = ResolutionModeToKPixel(res_mode);
@@ -2787,16 +2821,16 @@ void choose_mode(int c_mode, int mode, int res_mode, int fps)
     if(c_mode == CAMERA_MODE_M_MODE && GetDefectState() == 1)
     	set_A2K_ISP2_Defect_En(1);
     else
-    	set_A2K_ISP2_Defect_En(0);
+    	set_A2K_ISP2_Defect_En(0);   
 }
 
-void Send_ST_Cmd_Proc(void) {
+void Send_ST_Cmd_Proc(void) {   
 	SendSTCmd();
-	doCheckStitchingCmdDdrFlag = 0;
+	doCheckStitchingCmdDdrFlag = 0;   
 }
 
 int do_Auto_Stitch_Proc(int debug)
-{
+{    
    	int ret = -1;
 
    	db_debug("do_Auto_Stitch() flag=%d\n", doAutoStitchingFlag);
@@ -2817,7 +2851,7 @@ int do_Auto_Stitch_Proc(int debug)
    	}
    	else ret = -1;
 
-   	return ret;
+   	return ret;    
 }
 
 /*
@@ -2834,17 +2868,17 @@ int do_Auto_Stitch_Proc(int debug)
  * -99:	顯示F2 DDR位址
  */
 void Set_ISP2_Addr(int mdoe, int addr, int sensor)
-{
+{     
 //    DebugJPEGMode = mdoe;
 //    ISP2_Sensor = sensor;
     setJPEGaddr(mdoe, addr, sensor);
     if(sensor == -1)
     	S2AddSTTableProcTest();
 	else if(sensor == -3)
-       	STTableTestS2AllSensor();
+       	STTableTestS2AllSensor();   
 }
 
-void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode, int debug) {
+void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode, int debug) {   
 #ifdef __CLOSE_CODE__	//tmp	
    	switch(c_mode) {    // 相機模式, 0:Cap 1:Rec 2:TimeLapse 3:HDR(3P) 4:RAW(5P) 5:WDR 6:Night 7:NightWDR
    	case 0:                             // capture
@@ -2871,10 +2905,10 @@ void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode, int d
     case 14: setOLEDMainType(15); break;  // 3D Model
    	}
     showTimeLapse(LapseModeToSec(Get_DataBin_TimeLapseMode() ), CaptureModeToSec(Get_DataBin_CaptureMode() ), Get_DataBin_CaptureCnt() );
-#endif	//__CLOSE_CODE__	
+#endif	//__CLOSE_CODE__
 }
 
-void Change_Cap_12K_Mode() {
+void Change_Cap_12K_Mode() {    
     if(mCameraMode != 0 || mResolutionMode != RESOLUTION_MODE_12K || mPlayModeTmp !=0) {	//Change Mode: Cap 12K Mode
         mCameraMode = 0;
         mResolutionMode = 1;
@@ -2882,10 +2916,10 @@ void Change_Cap_12K_Mode() {
         mPlayModeTmp = 0;
         ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, getHdmiState(), mCameraMode);
         choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
-    }
+    }    
 }
 
-void Change_Raw_12K_Mode() {
+void Change_Raw_12K_Mode() {    
     if(mCameraMode != 4 || mResolutionMode != RESOLUTION_MODE_12K || mPlayModeTmp !=0) {	//Change Mode: Raw 12K Mode
         mCameraMode = 4;
         mResolutionMode = 1;
@@ -2893,26 +2927,26 @@ void Change_Raw_12K_Mode() {
         mPlayModeTmp = 0;
         ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, getHdmiState(), mCameraMode);
         choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
-    }
+    }   
 }
 
-void check_wifi_connected() {
+void check_wifi_connected() {     
     // WIFI連線，不進入standby
     if(Get_WifiServer_Connected() == 1) {
       	set_timeout_start(0);
        	set_timeout_start(1);
-    }
+    }  
 }
 
-void set_webserver_getdata_timeout() {
+void set_webserver_getdata_timeout() {   
 //tmp
 /*    if(ControllerServer.isWebServiceGetData == 1){
       	ControllerServer.isWebServiceGetData = 0;
       	set_timeout_start(0);						//接收Web資料時重新計時
-    }*/
+    }*/   
 }
 
-int checkTypesOfCaptureMode() {
+int checkTypesOfCaptureMode() {    
     int c_mode = mCameraMode;
     if(c_mode == CAMERA_MODE_CAP || c_mode == CAMERA_MODE_AEB || c_mode == CAMERA_MODE_RAW || 
        c_mode == CAMERA_MODE_HDR || c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR ||
@@ -2921,10 +2955,10 @@ int checkTypesOfCaptureMode() {
         return 1;
 	}
     else
-        return 0;
+        return 0;   
 }
 
-void set_eth_connect_timeout() {
+void set_eth_connect_timeout() {     
     if(isStandby == 0) {
       	if(ethernetConnectCount >= ETHERNET_CONNECT_MAX) {
 //tmp	        if(mEth != null) {
@@ -2938,10 +2972,10 @@ void set_eth_connect_timeout() {
             ethernetConnectCount = 1;
        	else 					          
             ethernetConnectCount++;      	
-    }
+    }   
 }
 
-void checkWifiAPLive(){
+void checkWifiAPLive(){    
 //tmp    
 /*    static int wifiApRestartCount = 0;
     if(wifiApEn == 1 && !wifi.isWifiApEnabled()) {
@@ -2953,10 +2987,10 @@ void checkWifiAPLive(){
     } 
     else {
         wifiApRestartCount = 0;
-    }*/
+    }*/   
 }
 
-void check_rtmp_state() {
+void check_rtmp_state() {     
     unsigned long long nowTime, vDiffTime, aDiffTime;
     if(rtmpSwitch == 0) {
         get_current_usec(&nowTime);
@@ -2971,7 +3005,7 @@ void check_rtmp_state() {
            		rtmpConnectCount = 1;
            	}
         }
-    }
+    }   
 }
 
 //tmp 
@@ -2986,7 +3020,7 @@ void check_rtmp_state() {
     return ssid;
 }*/
     
-void check_wifi_state() {
+void check_wifi_state() {    
 //tmp    
 /*    int state = wifiModeState;
     if(state == 1 || state == 2 || state == 3){
@@ -3006,16 +3040,16 @@ void check_wifi_state() {
     			paintOLEDWifiSetting(1,nowSSID.getBytes().length,nowSSID.getBytes(),"WiFi Changed".getBytes().length,"WiFi Changed".getBytes());
        		}
         }
-    }*/
+    }*/  
 }
 
-void set_wifi_ctemp_tint(int k, int t) {
+void set_wifi_ctemp_tint(int k, int t) {   
     Set_WifiServer_KelvinVal(k);
     Set_WifiServer_KelvinTintVal(t);
-    Set_WifiServer_KelvinEn(1);
+    Set_WifiServer_KelvinEn(1);   
 }
 
-void set_filetool_sensor() {
+void set_filetool_sensor() {   
 //tmp    
 /*    if(getBma2x2ZeroingState() == 2){
       	setBma2x2ZeroingState(3);
@@ -3031,10 +3065,10 @@ void set_filetool_sensor() {
        	Log.d("main", "sensor gsensorInitX:" + fTool.getDataValue("gsensorInitX"));
        	Log.d("main", "sensor gsensorInitY:" + fTool.getDataValue("gsensorInitY"));
        	Log.d("main", "sensor gsensorInitZ:" + fTool.getDataValue("gsensorInitZ"));
-    }*/
+    }*/   
 }
 
-void Delete_ST_JPEG()  {
+void Delete_ST_JPEG()  {    
 //tmp    
 /*   	int i;
    	char path[128];
@@ -3047,10 +3081,10 @@ void Delete_ST_JPEG()  {
        	}catch(Exception ex) { 
        		Log.d("Main", ex.getMessage()); 
        	}
-   	}*/
+   	}*/  
 }
 
-void do_Test_Mode_Func(int m_cmd, int s_cmd) {
+void do_Test_Mode_Func(int m_cmd, int s_cmd) {  
    	int Step, speed;
    	if(m_cmd != 7) return;
    	
@@ -3103,15 +3137,15 @@ void do_Test_Mode_Func(int m_cmd, int s_cmd) {
            	SetTestToolStep(2);
    		}
    		break;
-   	}
+   	} 
 }
 
-void set_wifi_compass_value(int val) {
+void set_wifi_compass_value(int val) {   
 	Set_WifiServer_CompassResultEn(1);
-	Set_WifiServer_CompassResultVal(val);
+	Set_WifiServer_CompassResultVal(val);  
 }
 
-void set_filetool_compass(int *data) {
+void set_filetool_compass(int *data) {    
 //tmp    
 /*	FileTool fTool = new FileTool();
 	String fileStr = "/mnt/sdcard/US360/CompassBin.txt";
@@ -3130,10 +3164,10 @@ void set_filetool_compass(int *data) {
 	fTool.getDataValue("compassMinX") + "/" +
 	fTool.getDataValue("compassMinY") + "/" +
 	fTool.getDataValue("compassMinZ"));
-	set_wifi_compass_value(1);*/
+	set_wifi_compass_value(1);*/   
 }
 
-int GetDiskInfo() {
+int GetDiskInfo() {     
 //tmp    
 /*    int i;
     String id;
@@ -3165,11 +3199,11 @@ int GetDiskInfo() {
 		e.printStackTrace();
 	}
 */        
-    return 0;
+    return 0; 
 }
 
 void *thread_1s(void *junk)
-{
+{  
 	int state = 0;
 	int do_recovery = 0;
     int wifi_disable_time;
@@ -3532,22 +3566,22 @@ void *thread_1s(void *junk)
             get_current_usec(&runTime);
             runTime -= curTime;
         }
-	}	//while(1)
+	}	//while(1)        
 }
 
-void create_thread_1s() {
+void create_thread_1s() {   
     pthread_mutex_init(&mut_1s_buf, NULL);
     if(pthread_create(&thread_1s_id, NULL, thread_1s, NULL) != 0) {
         db_error("Create thread_1s fail !\n");
-    }	
+    }	   
 }
 
-void System_Exit() {
+void System_Exit() {   
 //tmp    System.exit(0);
 }
 
 void *thread_5ms(void *junk)
-{
+{    
 	int ret, state;
     int skip_watchdog;
     int focus_sensor2;
@@ -3977,18 +4011,18 @@ void *thread_5ms(void *junk)
             get_current_usec(&runTime);
             runTime -= curTime;
         }
-	}	//while(1)
+	}	//while(1)       
 }
 
-void create_thread_5ms() {
+void create_thread_5ms() {   
     pthread_mutex_init(&mut_5ms_buf, NULL);
     if(pthread_create(&thread_5ms_id, NULL, thread_5ms, NULL) != 0) {
         db_error("Create thread_5ms fail !\n");
-    }	
+    }	 
 }
 
 void *thread_20ms(void *junk)
-{
+{    
     static unsigned long long curTime, lstTime=0, runTime, nowTime;
     static int selfTimeMode = 0;
     int selfie_time;
@@ -4067,10 +4101,10 @@ void *thread_20ms(void *junk)
             get_current_usec(&runTime);
             runTime -= curTime;
         }
-    }    //while(1)
+    }    //while(1)     
 }
 
-void create_thread_20ms() {
+void create_thread_20ms() {  
     pthread_mutex_init(&mut_20ms_buf, NULL);
     if(pthread_create(&thread_20ms_id, NULL, thread_20ms, NULL) != 0) {
         db_error("Create thread_20ms fail !\n");

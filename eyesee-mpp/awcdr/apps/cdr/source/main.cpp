@@ -29,8 +29,7 @@
 sem_t g_app_exit;
 int g_exit_action = EXIT_APP;
 
-int Main(int args, const char *argv[]) {
-printf("Main() 00\n");    
+int Main(int args, const char *argv[]) {   
   std::thread([] { Device::FrameBuffer::instance().Clean(); }).join();
   // std::thread([] { AW_MPI_VENC_SetVEFreq(MM_INVALID_CHN, 520); }).detach();
   std::thread([args, argv] { InitGUI(args, argv); }).join();
@@ -40,25 +39,20 @@ printf("Main() 00\n");
     Device::Audio::instance().Play(Device::Audio::Sound::start_up);
   }).detach();
 #endif
-printf("Main() 01\n");   
   do {
     auto window = UI::Window::init();
     UIViewController root_viewcontroller;
     if (System::Updater::instance().CheckFirmwareFileExist()) {
       root_viewcontroller = UpdatingViewController::init();
     } else {
-      EyeseeLinux::StorageManager::GetInstance()->MountToPC();
-printf("Main() 02\n");         
-      initCamera();
-printf("Main() 03\n");   
+      EyeseeLinux::StorageManager::GetInstance()->MountToPC();        
+      initCamera();  
       root_viewcontroller = PreviewViewController::init();
     }
     window->root_viewcontroller(root_viewcontroller);
-printf("Main() 04\n");       
-    window->MakeKeyAndVisible();
-printf("Main() 05\n");       
+    window->MakeKeyAndVisible();       
   } while (false);
-printf("Main() 06\n");   
+  
   destroyCamera();
   return 0;
 }

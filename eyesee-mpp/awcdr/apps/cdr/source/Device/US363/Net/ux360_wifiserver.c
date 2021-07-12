@@ -533,6 +533,7 @@ unsigned char *sendImgBuf = NULL;
 unsigned char *inputStreamQ = NULL;	//為了SocketDataQ往前搬移, 因為memcpy同一個陣列APP會崩潰
 
 
+//==================== get/set =====================
 int Get_WifiServer_Connected() { return mConnected; }
 
 void Set_WifiServer_KelvinEn(int en) { mKelvinEn = en; }
@@ -545,6 +546,8 @@ void Set_WifiServer_CompassResultEn(int en) { mCompassResultEn = en; }
 void Set_WifiServer_CompassResultVal(int val) { mCompassResultVal = val; }
 
 
+
+//==================== fucntion ====================
 void initGsensorVal(float *val, unsigned long long time, 
 				struct gsensorVal_struct *gsensor) {
     gsensor->pan       = val[0];
@@ -5359,8 +5362,9 @@ db_wifi_cmd("process_output_stream: mMjpegEn == 1\n");
 	if(mRTSPEn == 1){
 db_wifi_cmd("process_output_stream: mRTSPEn == 1\n");		
 		get_current_usec(&originalRtspTimer);
-//		if(wifiSerCB != null)	wifiSerCB.copyRTSP(); 
+//tmp		if(wifiSerCB != null)	wifiSerCB.copyRTSP(); 
 		if(rtspBufLength > 0){
+//tmp            
 /*			if(rtspWidth != SrsEncoder.vOutWidth || rtspHeight != SrsEncoder.vOutHeight){
 				Main.outWidth = SrsEncoder.vOutWidth = rtspWidth;
 				Main.outHeight = SrsEncoder.vOutHeight = rtspHeight;
@@ -6367,7 +6371,7 @@ void rtsp_thread(void) {
             //printf("rtsp_thread() runTime=%lld\n", runTime);
             lstTime = curTime;
         }
-		
+//tmp		
 /*		if(Main.rtmp_switch == 0 && (curTime-originalRtspTimer) >= 1000000){
 			if(wifiSerCB != null) wifiSerCB.copyRTSP();
 			if(rtspBufLength > 0){
