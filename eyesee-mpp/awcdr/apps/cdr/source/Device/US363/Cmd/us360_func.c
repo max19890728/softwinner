@@ -4697,7 +4697,7 @@ int Send_MP_B_Table(int f_id, int idx)
 
 int send_Sitching_Tran_Cmd(int f_id)
 {
-	int i, k, tmpaddr, idx=Sitching_Idx;
+	int i, k, tmpaddr, idx/*=Sitching_Idx*/;
 	int size, total_size;
 	unsigned char *st_p;
 	int start_idx;

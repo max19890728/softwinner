@@ -45,7 +45,7 @@ void setPowerMode(int mode) {
         case 2: sprintf(cbuf, "bootfast\0"); break;
         case 3: sprintf(cbuf, "on\0");
                 Set_Init_Image_State(0);
-//tmp                Set_Init_Image_Time(0);
+                Set_Init_Image_Time(0);
                 Ep_Change_Init();
                 break;
         default: close(file);

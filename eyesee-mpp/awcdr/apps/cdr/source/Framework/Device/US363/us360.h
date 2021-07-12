@@ -44,14 +44,14 @@ extern "C" {
 #define MUXER_TYPE_TS		1
 #define MUXER_TYPE_AVI		2
 
-#define CUSTOMER_CODE_ULTRACKER 	0
-#define CUSTOMER_CODE_LETS      	10137
-#define CUSTOMER_CODE_ALIBABA   	2067001
-#define CUSTOMER_CODE_PIIQ   		20141
+//#define CUSTOMER_CODE_ULTRACKER 	0
+//#define CUSTOMER_CODE_LETS      	10137
+//#define CUSTOMER_CODE_ALIBABA   	2067001
+//#define CUSTOMER_CODE_PIIQ   		20141
 
-#define  BOTTOM_FILE_NAME_DEFAULT	"background_bottom"
-#define  BOTTOM_FILE_NAME_USER		"background_bottom_user"
-#define  BOTTOM_FILE_NAME_ORG		"background_bottom_org"
+//#define  BOTTOM_FILE_NAME_DEFAULT	"background_bottom"
+//#define  BOTTOM_FILE_NAME_USER		"background_bottom_user"
+//#define  BOTTOM_FILE_NAME_ORG		"background_bottom_org"
 
 typedef struct image_size_struct_H
 {
@@ -69,13 +69,6 @@ typedef struct dec_buf_struct_H
 	char                **buf;
 	image_size_struct   size[3];                // rex+ 161107
 } dec_buf_struct;
-extern dec_buf_struct dec_buf;
-
-
-
-extern int hdmi_get_hpd_status();
-extern int checkWifiInterface();
-extern int getMicInterface();
 
 // ====================================================================================
 
@@ -102,7 +95,6 @@ struct Cmd_Queue {
   int P2;	//執行到哪一個CMD IDX
   int queue[CMD_QUEUE_MAX];
 };
-extern struct Cmd_Queue Cap_Cmd_Queue;
 
 #define DORESIZE_BUF_MAX 8
 typedef struct doResize_struct_h 
@@ -123,7 +115,6 @@ typedef struct doResize_buf_struct_h
 	int P2;
 	doResize_struc cmd[DORESIZE_BUF_MAX];
 }doResize_buf_struc;
-extern doResize_buf_struc doResize_buf;
 
 #define REC_2_THM_BUF_MAX	8
 typedef struct rec2thm_struct_h {
@@ -135,150 +126,35 @@ typedef struct rec2thm_struct_h {
 }rec2thm_struct;
 extern rec2thm_struct rec2thm;
 
-typedef	int (read_jpeg_t)(unsigned char *buf, int size, int stream);
-typedef	int (read_h264_t)(unsigned char *buf, int size, int ip_f);
-struct callback_func_entry {
-	read_jpeg_t *read_jpeg;
-	read_h264_t *read_h264;
-};
-extern struct callback_func_entry callback_func;
-
-typedef struct US360_Debug_Struct_h {
-	int CheckSum;					//0x20180221
-	unsigned long long Time;
-	int Tag;						//0:non 1:err
-	int MainCode;
-	int SubCode;
-	int Data;
-
-	int rev[8];
-}US360_Debug_Struct;
-
 // ====================================================================================
-
-//extern int enable_debug_flag;
-
-extern pthread_t thread_uvc_id;
-extern pthread_t thread_rec_id;
-extern pthread_t thread_pcm_id;
-
-extern int camerabase;
-
-//extern int DISP_FPS;
-//extern int IMG_WIDTH;
-//extern int IMG_HEIGHT;
-extern int IMG_Pixelformat;
-
-extern unsigned int buffer_length, real_length;
-
-extern unsigned char *byte_rgb;
-
-//extern int checkW;
-extern int img_ok_flag;
-extern int img_ready_flag;
-//extern int cap_en;
-//extern int CaptureCnt;
-//extern unsigned long long CaptureSpaceTime;
-extern unsigned long long capture_t, capture_t_lst;
-
-extern char THMPath[128];
-extern char DirPath[128];
-
-//extern char mSSID[16];
-
-extern char panorama[0x69E];
-extern char panorama_head_str[0x69E];
-
-extern char TimeString[80];
-
-//extern char sd_path[64];
-extern unsigned jpeg_err_cnt, jpeg_ok_cnt;
-extern int debug_cnt, debug_en;
-extern int rec_file_cnt, cap_file_cnt;
-
-extern int save_parameter_flag;
-
-extern int stream_flag;
-//extern char *panoramabuf;
-
-extern unsigned char **decode_buf;
-extern unsigned decode_len[2];
-extern unsigned decode_stream[2];
-extern pthread_mutex_t mut_dec_buf;
-extern pthread_mutex_t mut_rec_buf;
-extern pthread_mutex_t mut_pcm_buf;
-extern int decode_idx0, decode_idx1;
-
-extern int img_debug_flag;
-
-extern unsigned long long save_parameter_tmp_t, save_parameter_lst_t;
-extern int uvc_thread_en, pcm_thread_en;
-
-extern unsigned long long sd_freesize;
-extern unsigned char *rec_img_buf;
-
-extern int DrivingRecord_Mode;
-
-// ====================================================================================
-void Cmd_Buf_Init(void);
-void doResize_buf_init(void);
-int xioctl(int fd, int request, void *arg);
-int readframeonce(void);
-void processimage (const void *p, unsigned int length, unsigned int r_length);
-void set_panorama_head(int width, int height, int Top);
+void doResize_buf_init(void);       //***
 void maek_save_file_path(int mod_sel, char *save_file_path, char *sd_path_in, char *ssid_str_in, int file_cnt);
-int readframe(void);
-void save_jpeg_func(unsigned char *img, int size, int s_flag, int c_mode, int err, int r_size);
-void save_jpeg_tmp_func(char *img, int size);
-int stopcapturing(void);
-int uninitdevice(void);
-int closedevice(void);
-void mjpeg(unsigned char *src, unsigned int length, unsigned int r_length);
+int readframe(void);    //***
+void save_jpeg_func(unsigned char *img, int size, int s_flag, int c_mode, int err, int r_size);     //***
+void save_jpeg_tmp_func(char *img, int size);   //***
+void mjpeg(unsigned char *src, unsigned int length, unsigned int r_length);     //***
 int Time_Lapse_Init(int time_lapse, int res);
 void pcm_buf_init(int freq, int mode, int a_src, int islive);
-void rec_start_init(int res, int time_lapse, int freq, int fpag_enc);
-void *uvc_thread(void);
-void *pcm_thread(void);
-void *rec_thread(void);
 int read_pcm_buf(pcm_buf_struct *buf, unsigned char *a_buf, int size);
-//int RecoderFillBlack(unsigned char *vbuf, int len, unsigned char *vbuf_tmp, int cnt);
-//char *get_storage_path(void);
-//void set_read_proc(char *jpeg_proc, char *h264_proc);
-//void enable_debug_message(void);
 unsigned long long get_sd_free_size(char *path);
 unsigned long GetFileLength(char *fileName);
-int check_rec_time(int state, int ip_f, int type, int tl_mode);
-int check_rec_time2(int idx);
-void save_sensor_data(void);
-int read_sensor_data(void);
-void Get_FPGA_H264_SPS_PPS(int *sps_len, char *sps, int *pps_len, char *pps);
+void save_sensor_data(void);    //***
 void Set_Skip_Frame_Cnt(int cnt);
-void wrtieLidar2File();
-void MakeH264DataHeaderProc(void);
-void SendH264EncodeTable(void);
-void setFanRotateSpeed(int speed);
 void fpgaCtrlPowerService(int ctrl_pow);
-int LoadParameterTmp(void);
 int prepareCamera(int videoid, int videobase);
-void SetWriteUS360DataBinFlag(int flag);
 void set_fpga_encode_type(int type);
 int get_fpga_encode_type();
 int getImgReadyFlag();
 int Capture_Is_Finish();
-int getCaptureFileCnt();
 void Set_Init_Image_Time(unsigned long long time);
 int stopREC(int debug);
-void SetMCUData(int cpuNowTemp);
 void free_us360_buf();
 int malloc_us360_buf();
 int errnoexit(const char *s);
 void get_timelapse_ms(unsigned long long *time);
-int getTimeLapseMode(void);
 int get_mic_is_alive();
 void set_rec_proc_en(int en);
-void set_sd_card_state(int state);
-int get_sd_card_state();
-void setRecEn(int recState, int time_lapse, unsigned long long freesize, int timelapse_enc);
+void setRecEn(int recState, int time_lapse, int timelapse_enc);
 
 //-----------------------------------------------------
 void us360_init();
@@ -304,13 +180,18 @@ void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec);
 void set_timeout_start(int sel);
 int checksd();
 int CheckSDcardState(char *path);
-int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize);
+int setCapEn(int capEn, int capCnt, int capStime);
 int checkMicInterface();
 int getHdmiConnected();
 int GetUVCfd();
 void Load_Parameter_Tmp_Proc();
 int CheckSaveJpegCnt();
 void pollWatchDog();
+int checkWifiInterface();
+int getImgPixelformat();
+void setCapFileCnt(int cnt);
+int getCapFileCnt();
+void setSaveParameterFlag(int flag);
 
 #ifdef __cplusplus
 }   // extern "C"

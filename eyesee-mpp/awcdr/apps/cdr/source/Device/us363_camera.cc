@@ -26,6 +26,7 @@
 #include "Device/US363/Cmd/main_cmd.h"
 #include "Device/US363/Cmd/defect.h"
 #include "Device/US363/Cmd/dna.h"
+#include "Device/US363/Cmd/h264_header.h"
 #include "Device/US363/Net/ux363_network_manager.h"
 #include "Device/US363/Net/ux360_wifiserver.h"
 #include "Device/US363/Data/databin.h"
@@ -732,6 +733,10 @@ int getAudioRecThreadEn() { return audioRecThreadEn; }
 void setDcState(int state) { dcState = state; }
 int getDcState() { return dcState; }
 
+void setSdFreeSize(unsigned long long size) { sdFreeSize = size; }
+unsigned long long getSdFreeSize() { return sdFreeSize; }
+void subSdFreeSize(int size) { sdFreeSize -= size; }
+
 
 
 //==================== fucntion ====================
@@ -1418,7 +1423,7 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
         		//audioChannel = getMicChannel();
         		//audioBit     = getMicBit();
             }
-            setRecEn(0, time_lapse, free, mTimelapseEncodeType);
+            setRecEn(0, time_lapse, mTimelapseEncodeType);
 //tmp            paintOLEDRecording(1);                    // rex+ 151221
             get_current_usec(&nowTime);
             Set_Cap_Rec_Start_Time(nowTime);
@@ -1430,7 +1435,7 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
         }
     }
     else{
-    	setRecEn(-1, time_lapse, free, mTimelapseEncodeType);
+    	setRecEn(-1, time_lapse, mTimelapseEncodeType);
 //        systemlog.addLog("info", System.currentTimeMillis(), "machine", "stop REC.", "---");
         if(time_lapse == 0 || audioRecThreadEn == 1){
             audioRecThreadEn = 0;
@@ -1897,7 +1902,7 @@ void onCreate()
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction() == Intent.ACTION_MEDIA_MOUNTED){ 
                     Log.d("Main", "ACTION_MEDIA_MOUNTED");
-                    set_sd_card_state(1);		//Main.sd_state = 1;
+                    sdState = 1;
                     sdPath = intent.getData().getPath();
                 	byte[] path = new byte[64]; 
                 	//getSDPath(path);
@@ -1909,7 +1914,7 @@ void onCreate()
                 }
                 else if(intent.getAction() == Intent.ACTION_MEDIA_UNMOUNTED){ 
                     Log.d("Main", "ACTION_MEDIA_UNMOUNTED");
-                    set_sd_card_state(0);		//Main.sd_state = 0;
+                    sdState = 0;
                     sdPath = "/mnt/extsd";
                     setSDPathStr(sdPath.getBytes(), sdPath.getBytes().length);
                 }
@@ -2352,7 +2357,7 @@ int doTakePicture(int enable)
 //tmp    	systemlog.addLog("info", System.currentTimeMillis(), "machine", "doTakePicture", "---");
 
         if(checkCanTakePicture())
-        	ret = setCapEn(enable, getCaptureCnt(), getCaptureIntervalTime(), free);
+        	ret = setCapEn(enable, getCaptureCnt(), getCaptureIntervalTime());
         else
         	ret = -1;
 
@@ -3242,7 +3247,7 @@ void *thread_1s(void *junk)
 			}
 		}
 
-		calSdFreeSize(&sd_freesize);
+		calSdFreeSize(&sdFreeSize);
 		getSDAllSize(&sdAllSize);
 //tmp   if(GetSpacePhotoNum() <= 3 && sd_state == 1){
 //tmp   	isNeedNewFreeCount = 1;
@@ -3250,7 +3255,7 @@ void *thread_1s(void *junk)
 		if(isNeedNewFreeCount == 1 && getImgReadyFlag() == 1){
 			isNeedNewFreeCount = 0;
 			if(sd_state == 1){
-//tmp    		getRECTimes(sd_freesize);
+//tmp    		getRECTimes(sdFreeSize);
 			}else{
 //tmp    		getRECTimes(0L);
 			}

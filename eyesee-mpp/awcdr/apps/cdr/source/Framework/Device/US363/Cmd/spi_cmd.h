@@ -17,7 +17,7 @@ extern "C" {
 
 #define DDR_CHECKSUM_TIMEOUT	5
 
-extern int FPGA_Sleep_En;
+//extern int FPGA_Sleep_En;
 
 extern unsigned ST_Cmd_Cal_CheckSum[2];
 extern unsigned ST_Sen_Cmd_Cal_CheckSum[2];

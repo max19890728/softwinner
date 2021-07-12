@@ -276,6 +276,10 @@ void setAudioRecThreadEn(int en);
 int getAudioRecThreadEn();
 void setDcState(int state);
 int getDcState();
+void setSdFreeSize(unsigned long long size);
+unsigned long long getSdFreeSize();
+void subSdFreeSize(int size);
+int getTimeLapseMode();
     
 	
 #ifdef __cplusplus

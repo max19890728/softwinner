@@ -700,7 +700,7 @@ void Do_Auto_Smooth_Z(int M_Mode, int C_Mode)
     }
     Make_Smooth_I_Buf(M_Mode);
     if(Smooth_Com.Smooth_Debug_Flag == 1){
-//tmp        if((cap_file_cnt & 0x1) == 1)          // 測試差異, 1=new avg, 0=normal
+//tmp        if((getCapFileCnt() & 0x1) == 1)          // 測試差異, 1=new avg, 0=normal
             Make_Smooth_I_AVG(M_Mode);
     }
     Make_Smooth_I_Buf_67(I3_Sum, M_Mode, C_Mode, 0);                // 計算縫合距離, 0:原始數值

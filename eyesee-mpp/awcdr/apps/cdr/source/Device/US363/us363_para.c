@@ -43,7 +43,7 @@ static pthread_mutex_t pthread_f2_io_mutex;
 //-------------Around camera US360 miller 20150530-----------
 // ==========================================================
 
-int Sitching_Idx = 0;
+//int Sitching_Idx = 0;
 
 //debug
 void getSensor2(int sensor, int *value)

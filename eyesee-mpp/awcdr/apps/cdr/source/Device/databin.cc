@@ -9,6 +9,7 @@
 #include <common/extension/filesystem.h>
 #include <common/extension/vector.h>
 
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 
 Json Device::DataBin::default_value_ = {

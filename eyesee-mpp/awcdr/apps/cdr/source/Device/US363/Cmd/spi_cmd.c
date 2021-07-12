@@ -12,6 +12,7 @@
 #include <pthread.h>
 
 #include "Device/spi.h"
+#include "Device/us363_camera.h"
 #include "Device/US363/us360.h"
 #include "Device/US363/us363_para.h"
 #include "Device/US363/Cmd/us363_spi.h"
@@ -21,6 +22,7 @@
 #include "Device/US363/Cmd/Smooth.h"
 #include "Device/US363/Cmd/us360_func.h"
 #include "Device/US363/Kernel/FPGA_Pipe.h"
+#include "Device/US363/Media/recoder_thread.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG
@@ -487,10 +489,10 @@ void SetFPGASleepEn(int en) {
 		FPGA_Pipe_Init(1);
 		Set_FPGA_Pipe_Idx(0);
 		AS2_CMD_Start2();
-//tmp		if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
-//tmp			Set_Skip_Frame_Cnt(3);
-//tmp		else
-//tmp			Set_Skip_Frame_Cnt(6);
+		if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
+			Set_Skip_Frame_Cnt(3);
+		else
+			Set_Skip_Frame_Cnt(6);
 	}
 }
 
@@ -731,8 +733,7 @@ int CheckFXCnt(void) {
 	static int err_cnt=0;
 	int chBinn = Get_FPGA_Com_In_Sensor_Change_Binn();
 
-//tmp	if(getImgReadyFlag() == 1 && get_rec_state() == -2 && Capture_Is_Finish() == 1 && chBinn == 0) {
-	if(chBinn == 0) {
+	if(getImgReadyFlag() == 1 && get_rec_state() == -2 && Capture_Is_Finish() == 1 && chBinn == 0) {
 		cnt = Read_FX_Cnt();		// 1 = 10ns
 		if(cnt > fps_t_max) {
 			db_error("CheckFXCnt() FX: cnt err! cnt=%d fps_t=%d max=%d\n", cnt, fps_t, fps_t_max);

@@ -230,10 +230,10 @@ int DownloadProc() {
 	
     // init other function
     set_Init_Gamma_Table_En();         // rex+ 180913
-//tmp    if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
-//tmp      	Set_Skip_Frame_Cnt(3);
-//tmp    else
-//tmp       	Set_Skip_Frame_Cnt(6);
+    if(c_mode == CAMERA_MODE_NIGHT || c_mode == CAMERA_MODE_NIGHT_HDR || c_mode == CAMERA_MODE_M_MODE)		//Night / NightHDR / M-Mode
+      	Set_Skip_Frame_Cnt(3);
+    else
+       	Set_Skip_Frame_Cnt(6);
 		
     return ret;
 }

@@ -147,7 +147,7 @@ int initdevice() {
     fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width       = 6144;     //1920; //6144; //IMG_WIDTH;
     fmt.fmt.pix.height      = 1792;     //1080; //1792; //IMG_HEIGHT;
-    fmt.fmt.pix.pixelformat = IMG_Pixelformat;
+    fmt.fmt.pix.pixelformat = getImgPixelformat();
     fmt.fmt.pix.field       = V4L2_FIELD_NONE; //V4L2_FIELD_INTERLACED;
 
     if (-1 == xioctl (uvc_fd, VIDIOC_S_FMT, &fmt))

@@ -23,6 +23,7 @@
 #include "Device/US363/Cmd/fpga_driver.h"
 #include "Device/US363/Test/test.h"
 #include "Device/US363/System/sys_time.h"
+#include "Device/US363/Driver/MCU/mcu.h"
 #include "common/app_log.h"
 
 #undef LOG_TAG

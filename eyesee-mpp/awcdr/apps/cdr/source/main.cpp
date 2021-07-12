@@ -30,7 +30,7 @@ sem_t g_app_exit;
 int g_exit_action = EXIT_APP;
 
 int Main(int args, const char *argv[]) {
-db_debug("Main() 00");    
+printf("Main() 00\n");    
   std::thread([] { Device::FrameBuffer::instance().Clean(); }).join();
   // std::thread([] { AW_MPI_VENC_SetVEFreq(MM_INVALID_CHN, 520); }).detach();
   std::thread([args, argv] { InitGUI(args, argv); }).join();
@@ -40,7 +40,7 @@ db_debug("Main() 00");
     Device::Audio::instance().Play(Device::Audio::Sound::start_up);
   }).detach();
 #endif
-db_debug("Main() 01");   
+printf("Main() 01\n");   
   do {
     auto window = UI::Window::init();
     UIViewController root_viewcontroller;
@@ -48,17 +48,17 @@ db_debug("Main() 01");
       root_viewcontroller = UpdatingViewController::init();
     } else {
       EyeseeLinux::StorageManager::GetInstance()->MountToPC();
-db_debug("Main() 02");         
+printf("Main() 02\n");         
       initCamera();
-db_debug("Main() 03");   
+printf("Main() 03\n");   
       root_viewcontroller = PreviewViewController::init();
     }
     window->root_viewcontroller(root_viewcontroller);
-db_debug("Main() 04");       
+printf("Main() 04\n");       
     window->MakeKeyAndVisible();
-db_debug("Main() 05");       
+printf("Main() 05\n");       
   } while (false);
-db_debug("Main() 06");   
+printf("Main() 06\n");   
   destroyCamera();
   return 0;
 }

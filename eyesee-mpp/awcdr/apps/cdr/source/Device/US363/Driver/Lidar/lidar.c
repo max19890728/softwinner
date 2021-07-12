@@ -2154,7 +2154,7 @@ void sincosTransferDist(int pSize) {
 }
 
 void wrtieLidar2File() {
-	//readLidarData(sd_path,mSSID,cap_file_cnt,512,256);
+	//readLidarData(sd_path,mSSID,getCapFileCnt(),512,256);
 	int lidarW = 512;
 	int lidarH = 256;
 	/*

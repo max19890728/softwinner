@@ -50,7 +50,7 @@ void free_rec_img_buf();
 void set_rec_delay_timer(unsigned long long time);
 void set_timelapse_flag(int flag);
 void timelapse_time_init();
-int check_rec_time2(int idx);
+//int check_rec_time2(int idx);
 void copy_to_rec_buf(unsigned char *img, int len, int ip_frame, char *sps_buf, int sps_len, char *pps_buf, int pps_len, int fenc_type, int fs);
 
 

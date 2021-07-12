@@ -157,18 +157,7 @@ int save_avi_file(unsigned char *video_buf, unsigned char *audio_buf, int len, i
     if(en == 0){
         getWifiSsid(&ssid[0]);
         getSdPath(&sd_path[0], sizeof(sd_path));
-        maek_save_file_path(1, save_path, sd_path, ssid, cap_file_cnt);
-
-/*        rec2thm.en[rec2thm.P1] = 1;         // 製作avi錄影縮圖
-        rec2thm.mode[rec2thm.P1] = 1;       // CAP=0, REC=1, Lapse=2, HDR=3, RAW=4
-        memcpy(&rec2thm.path[rec2thm.P1][0], &save_path[0], 128);
-        rec2thm.P1++;
-        if(rec2thm.P1 >= REC_2_THM_BUF_MAX) rec2thm.P1 = 0;*/
-
-//        cap_file_cnt++;                                // max+s 160223, saveAVI
-//        if(cap_file_cnt > 9999) cap_file_cnt = 0;
-//        save_parameter_flag = 1;
-//        set_A2K_Cap_Cnt(cap_file_cnt);
+        maek_save_file_path(1, save_path, sd_path, ssid, getCapFileCnt());
     }
 
     if(lose == 1){
@@ -209,7 +198,7 @@ int save_mp4_file(unsigned char *video_buf, unsigned char *audio_buf, int len, i
         v_cnt = 0;
         getWifiSsid(&ssid[0]);
         getSdPath(&sd_path[0], sizeof(sd_path));
-        maek_save_file_path(6, save_path, sd_path, ssid, cap_file_cnt);
+        maek_save_file_path(6, save_path, sd_path, ssid, getCapFileCnt());
 
         ptr = &save_path[0];
         for(i = 0; i < 128; i++) {
@@ -297,6 +286,7 @@ void *rec_thread(void)
     int err_cnt=0, err_len=0;
     int resWidth, resHeight;
     int len, ret;
+    int cap_cnt = getCapFileCnt();
     static int cap_file_cnt_tmp=0;
     int M_Mode, S_Mode;
 //tmp    LinkADTSFixheader fix;
@@ -305,8 +295,9 @@ void *rec_thread(void)
     int rec_times = 1;
 	static int rec_fps = 60;
 	int tl_mode;
+    unsigned long long freesize;
 	
-    //Cmd_Buf_Init();
+    
     while(rec_thread_en)
     {
 		tl_mode = getTimeLapseMode();
@@ -407,6 +398,7 @@ db_debug("rec_thread: cmd change (cmd=%d)\n", cmd_d);
 				if(rec_state == -1 || rec_state == -3) close_run = 1;
 				if(isAudio == 1 || ( (tl_mode != 0 || pcm_buf.fps < 50 || audio_rate == -1) && isVideo == 1) || close_run == 1)
 				{
+                    freesize = getSdFreeSize();
 					switch(rec_state){
 					case 0:        // start
 db_error("max+ rec_thread() rec start\n");					
@@ -461,7 +453,7 @@ db_error("max+ rec_thread() rec start\n");
 								if(muxer_type == MUXER_TYPE_TS) {
                                     getWifiSsid(&ssid[0]);
                                     getSdPath(&sd_path[0], sizeof(sd_path));
-									maek_save_file_path(6, save_path, sd_path, ssid, cap_file_cnt);
+									maek_save_file_path(6, save_path, sd_path, ssid, cap_cnt);
 									ptr = &save_path[0];
 									for(i = 0; i < 128; i++) {
 										if(*ptr == '.' && *(ptr+1) == 't' && *(ptr+2) == 's')
@@ -482,14 +474,14 @@ db_error("max+ rec_thread() rec start\n");
 									timestamp = -1;
 									save_flag = muxer_ts_proc(rec_state, buf, size, abuf, pcm_size, &mSPS_buf[0], mSPS_len, &mPPS_buf[0],
 													mPPS_len, ip_frame, rec_fps, tl_mode, pcm_buf.delayTime/1000, &save_path[0],
-													&sd_freesize, &timestamp, 0, NULL, &fix, &var);
+													&freesize, &timestamp, 0, NULL, &fix, &var);
 								}
 								else 
 #endif	//__CLOSE_CODE__									
 								{
-									save_flag = save_mp4_file(buf, abuf, size, pcm_size, rec_state, 0, &sd_freesize, resWidth, resHeight,
+									save_flag = save_mp4_file(buf, abuf, size, pcm_size, rec_state, 0, &freesize, resWidth, resHeight,
 													rec_fps, rec_buf.enc_mode, ip_frame, mode, &mSPS_buf[0], mSPS_len, &mPPS_buf[0], mPPS_len,
-													tl_mode, pcm_buf.delayTime/1000, get_mic_is_alive());
+													tl_mode, pcm_buf.delayTime/1000, get_mic_is_alive());           
 								}
 								saveSize += size;
 								saveFPS++;
@@ -499,7 +491,7 @@ db_error("max+ rec_thread() rec start\n");
 								time_lapse_cnt = 0;
                                 getWifiSsid(&ssid[0]);
                                 getSdPath(&sd_path[0], sizeof(sd_path));
-								maek_save_file_path(11, save_path, sd_path, ssid, cap_file_cnt);
+								maek_save_file_path(11, save_path, sd_path, ssid, cap_cnt);
 
 								ptr = &save_path[0];
 								for(i = 0; i < 128; i++) {
@@ -522,7 +514,7 @@ db_error("max+ rec_thread() rec start\n");
 								}
 								memset(&tl_path[0], 0, 128);
                                 getWifiSsid(&ssid[0]);
-								check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_file_cnt, time_lapse_cnt);
+								check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_cnt, time_lapse_cnt);
 								fp = fopen(tl_path, "wb");
 								len = Add_Panorama_Header(resWidth, resHeight, &buf[4], fp);
 								if(fp != NULL) {
@@ -550,10 +542,10 @@ db_error("max+ rec_thread() rec start\n");
 
 									if(ret == 0)
 										save_flag = -4;
-									else if(sd_freesize < (size-4) || time_lapse_cnt >= 9999)
+									else if(freesize < (size-4) || time_lapse_cnt >= 9999)
 										save_flag = -2;
 									else {
-										sd_freesize -= (size-4);
+										freesize -= (size-4);
 										save_flag = 0;
 									}
 
@@ -564,11 +556,7 @@ db_error("max+ rec_thread() rec start\n");
 									close(fp2fd);
 								}
 
-								cap_file_cnt_tmp = cap_file_cnt;
-	/*                            cap_file_cnt++;                                // max+s 160223, saveTimeLapse
-								if(cap_file_cnt > 9999) cap_file_cnt = 0;
-								save_parameter_flag = 1;
-								set_A2K_Cap_Cnt(cap_file_cnt);*/
+								cap_file_cnt_tmp = cap_cnt;
 							}
 						}
 
@@ -658,12 +646,12 @@ db_error("max+ rec_thread() rec start\n");
 									timestamp = -1;
 									save_flag = muxer_ts_proc(rec_state, buf, size, abuf, pcm_size, &mSPS_buf[0], mSPS_len, &mPPS_buf[0],
 													mPPS_len, ip_frame, rec_fps, tl_mode, pcm_buf.delayTime/1000, &save_path[0],
-													&sd_freesize, &timestamp, 0, NULL, &fix, &var);
+													&freesize, &timestamp, 0, NULL, &fix, &var);               
 								}
 								else 
 #endif	//__CLOSE_CODE__									
 								{
-									save_flag = save_mp4_file(buf, abuf, size, pcm_size, rec_state, rec_buf.jump, &sd_freesize, resWidth, resHeight,
+									save_flag = save_mp4_file(buf, abuf, size, pcm_size, rec_state, rec_buf.jump, &freesize, resWidth, resHeight,
 													rec_fps, rec_buf.enc_mode, ip_frame, mode, &mSPS_buf[0], mSPS_len, &mPPS_buf[0], mPPS_len,
 													tl_mode, pcm_buf.delayTime/1000, get_mic_is_alive());												
 								}
@@ -674,7 +662,7 @@ db_error("max+ rec_thread() rec start\n");
 						else {
 							memset(&tl_path[0], 0, 128);
                             getWifiSsid(&ssid[0]);
-							check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_file_cnt, time_lapse_cnt);
+							check_tl_path_repeat(&tl_path[0], &tl_dir_path[0], &ssid[0], cap_cnt, time_lapse_cnt);
 							fp = fopen(tl_path, "wb");
 							len = Add_Panorama_Header(resWidth, resHeight, &buf[4], fp);
 							if(fp != NULL) {
@@ -702,10 +690,10 @@ db_error("max+ rec_thread() rec start\n");
 
 								if(ret == 0)
 									save_flag = -4;
-								else if(sd_freesize < (size-4) || time_lapse_cnt >= 9999)
+								else if(freesize < (size-4) || time_lapse_cnt >= 9999)
 									save_flag = -2;
 								else {
-									sd_freesize -= (size-4);
+									freesize -= (size-4);
 									save_flag = 0;
 								}
 
@@ -739,12 +727,12 @@ db_error("max+ rec_thread() rec start\n");
 											timestamp = -1;
 											save_flag = muxer_ts_proc(rec_state, NULL, size, abuf, pcm_size, &mSPS_buf[0], mSPS_len, &mPPS_buf[0],
 															mPPS_len, ip_frame, rec_fps, tl_mode, pcm_buf.delayTime/1000, &save_path[0],
-															&sd_freesize, &timestamp, 1, NULL, &fix, &var);
+															&freesize, &timestamp, 1, NULL, &fix, &var);
 										}
 										else 
 #endif	//__CLOSE_CODE__										
 										{
-											save_flag = save_mp4_file(NULL, abuf, size, pcm_size, rec_state, rec_buf.jump, &sd_freesize, resWidth, resHeight,
+											save_flag = save_mp4_file(NULL, abuf, size, pcm_size, rec_state, rec_buf.jump, &freesize, resWidth, resHeight,
 															rec_fps, rec_buf.enc_mode, ip_frame, mode, &mSPS_buf[0], mSPS_len, &mPPS_buf[0], mPPS_len,
 															tl_mode, pcm_buf.delayTime/1000, get_mic_is_alive());														
 										}
@@ -833,12 +821,12 @@ db_error("max+ rec_thread() rec stop\n");
 								timestamp = -1;
 								save_flag = muxer_ts_proc(rec_state, buf, size, abuf, pcm_size, &mSPS_buf[0], mSPS_len, &mPPS_buf[0],
 												mPPS_len, ip_frame, rec_fps, tl_mode, pcm_buf.delayTime/1000, &save_path[0],
-												&sd_freesize, &timestamp, 0, NULL, &fix, &var);
+												&freesize, &timestamp, 0, NULL, &fix, &var);
 							}
 							else 
 #endif	//__CLOSE_CODE__							
 							{
-								save_flag = save_mp4_file(buf, abuf, size, pcm_size, -1, 0, &sd_freesize, resWidth, resHeight,
+								save_flag = save_mp4_file(buf, abuf, size, pcm_size, -1, 0, &freesize, resWidth, resHeight,
 												rec_fps, rec_buf.enc_mode, ip_frame, mode, &mSPS_buf[0], mSPS_len, &mPPS_buf[0], mPPS_len,
 												tl_mode, pcm_buf.delayTime/1000, get_mic_is_alive());											
 							}
@@ -864,13 +852,13 @@ db_error("max+ rec_thread() rec stop\n");
 							set_fpga_encode_type(0);
 						}
 						else {
-							if(getDrivingRecordMode() == 1 && sd_freesize < SD_CARD_MIN_SIZE) {
+							if(getDrivingRecordMode() == 1 && freesize < SD_CARD_MIN_SIZE) {
 								doDrivingModeDeleteFile();
 							}
 
 							//取得 SD 卡剩餘空間
-							calSdFreeSize(&sd_freesize);		//get_sd_free_size(sd_path);
-							if(sd_freesize < SD_CARD_MIN_SIZE) {
+							calSdFreeSize(&freesize);		//get_sd_free_size(sd_path);
+							if(freesize < SD_CARD_MIN_SIZE) {
 								rec_state = -2;
 								set_fpga_encode_type(0);
 							}
@@ -881,16 +869,19 @@ db_error("max+ rec_thread() rec stop\n");
 							}
 						}
 
-						cap_file_cnt++;                                // max+s 160223, saveTimeLapse
-						if(cap_file_cnt > 9999) cap_file_cnt = 0;
-						save_parameter_flag = 1;
-						set_A2K_Cap_Cnt(cap_file_cnt);
+						cap_cnt++;                                // max+s 160223, saveTimeLapse
+						if(cap_cnt > 9999) cap_cnt = 0;
+						setSaveParameterFlag(1);
+						set_A2K_Cap_Cnt(cap_cnt);
+                        setCapFileCnt(cap_cnt);
 
 						state_lst = rec_state;
 						break;
 					case -2:    // n/a
 						break;
 					}
+                    
+                    setSdFreeSize(freesize);
 				}
 
 			} // if(rec_state != -2)

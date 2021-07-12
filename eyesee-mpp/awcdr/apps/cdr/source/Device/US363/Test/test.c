@@ -49,7 +49,7 @@ void ReadTestToolCmd(void) {
 	sprintf(path, "/mnt/sdcard/US360/Test/TestToolCmd.bin\0");
 	fp = fopen(path, "rb");
 	if(fp != NULL) {
-//tmp		size = GetFileLength(path);
+		size = GetFileLength(path);
 		if(size == 0) db_error("TestToolCmd.bin not found !\n");
 		if(size <= sizeof(TestToolCmd) )
 			fread(&TestToolCmd, 1, size, fp);
@@ -110,7 +110,7 @@ void ReadTestBlockTable()
 
 	fp = fopen(path, "rb");
 	if(fp != NULL) {
-//tmp		size = GetFileLength(path);
+		size = GetFileLength(path);
 		if(size == 0) db_error("TestBlockTable.bin not found !\n");
 		if(size <= sizeof(struct Test_Block_Table_Struct)*Test_Block_Table_MAX)
 			fread(&Test_Block_Table[0], 1, size, fp);

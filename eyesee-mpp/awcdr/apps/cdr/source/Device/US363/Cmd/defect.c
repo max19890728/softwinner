@@ -14,6 +14,7 @@
 #include <sys/ioctl.h>
 
 #include "Device/us363_camera.h"
+#include "Device/US363/us360.h"
 #include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/us360_define.h"
 #include "Device/US363/Cmd/spi_cmd.h"
@@ -633,7 +634,7 @@ int do_Defect_Func() {
    		break;
    	case 4:		// Check Get Img (5P)
 //tmp   		get_current_usec(&Defect_T2);
-//tmp   		ret = Capture_Is_Finish();
+   		ret = Capture_Is_Finish();
 		if( (Defect_T2 - Defect_T1) > 90000000) {		// 60秒未取到5張圖timeout
 			Defect_Step = 6;
 			Defect_State  = -1;

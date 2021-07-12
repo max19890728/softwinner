@@ -191,8 +191,6 @@ unsigned decode_len[2] = {0};
 unsigned decode_stream[2] = {0};
 int decode_idx0 = 0, decode_idx1 = 0;    //decode_idx0:UVC 收資料     decode_idx1:解壓顯示
 
-int img_debug_flag = 0;
-
 pcm_buf_struct pcm_buf;
 
 #define RTMP_AUDIO_BUFF_MAX             960000	/* 48000*16*1/8 */
@@ -219,7 +217,7 @@ int power = 0;
 
 int powerRang = 10;
 //int isNeedNewFreeCount = 0;
-unsigned long long sd_freesize = 0L;
+//unsigned long long sd_freesize = 0L;
 
 int WifiConnected = 0;
 unsigned long long choose_mode_time;		//切換模式後1秒才可拍照
@@ -254,7 +252,7 @@ C_Mode_ROM_S C_Mode_ROM[15] =
 };
 
 unsigned long long Save_Jpeg_StartTime=0, Save_Jpeg_OutTime=0;
-struct callback_func_entry callback_func;
+//struct callback_func_entry callback_func;
 
 #define LIVE264_MAX_BUFF    6
 //tmp char live264_buff[0x400000];
@@ -305,6 +303,13 @@ int CpuLowSpeed      = 480000;  	// 2核 x 480Mhz
 //fpga dbt
 fpga_ddr_rw_struct ddrReadWriteCmd;
 fpga_reg_rw_struct regReadWriteCmd;
+
+
+
+int getImgPixelformat() { return IMG_Pixelformat; }
+void setCapFileCnt(int cnt) { cap_file_cnt = cnt; }
+int getCapFileCnt() { return cap_file_cnt; }
+void setSaveParameterFlag(int flag) { save_parameter_flag = flag; }
 
 int malloc_live264_buf() {
 	//char live264_buff[0x400000];
@@ -462,7 +467,7 @@ int GetMuxerType(void) {
 	return muxer_type;
 }
 
-int hdmi_get_hpd_status(void){    // rex+ 161018, remove ./cedarx    // weber+s 161104
+int hdmi_get_hpd_status(){    // rex+ 161018, remove ./cedarx    // weber+s 161104
     int ret = 0;
     unsigned long arg2[4] = {0,0,0,0};
 #ifdef __CLOSE_CODE__	//tmp
@@ -1287,8 +1292,8 @@ void *uvc_thread(void)
                     //    save_jpeg_tmp_func(brgb, buffer_length);
                 }
 
-                if(callback_func.read_jpeg != NULL)
-                    callback_func.read_jpeg(brgb, buffer_length, stream_flag);
+                //if(callback_func.read_jpeg != NULL)
+                //    callback_func.read_jpeg(brgb, buffer_length, stream_flag);
 
                 if(get_copy_jpeg_to_rec_en(c_mode, res, stream_flag, fpga_enc_type) == 1) {
                     copy_to_rec_buf(brgb, buffer_length, 1, NULL, 0, NULL, 0, fpga_enc_type, 0);
@@ -1357,12 +1362,12 @@ void *st_thread(void)
     }
 }
 
-void Cmd_Buf_Init(void)
+/*void Cmd_Buf_Init(void)
 {
     memset(&Cap_Cmd_Queue, 0, sizeof(struct Cmd_Queue) );
     rec_cmd_queue_init();
     live360_cmd_queue_init();
-}
+}*/
 
 void doResize_buf_init(void)
 {
@@ -1776,25 +1781,25 @@ void save_jpeg_func(unsigned char *img, int size, int s_flag, int c_mode, int er
             if(len >= 0) {
             	if(err_cnt == 0) {
             		ret = fwrite(&tmp[len], (jpeg_size - len), 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             	}
             	else {
             		ret = fwrite(&tmp[len], (jpeg_size - len - err_len), 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             		ret = fwrite(&tmp[jpeg_size - err_len + err_cnt], (err_len - err_cnt), 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             	}
             }
             else {
             	if(err_cnt == 0) {
             		ret = fwrite(&img[0], jpeg_size, 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             	}
             	else {
             		ret = fwrite(&img[0], (jpeg_size - err_len), 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             		ret = fwrite(&img[jpeg_size - err_len + err_cnt], (err_len - err_cnt), 1, fp);
-            		sd_freesize -= ret;
+            		subSdFreeSize(ret);
             	}
             }
 
@@ -1863,7 +1868,7 @@ void save_jpeg_func(unsigned char *img, int size, int s_flag, int c_mode, int er
                     //db_debug("save_jpeg_func: debug! cnt=%d mode=%d now=%d end=%d\n", 
                     //        cap_file_cnt, c_mode, Save_Jpeg_Now_Cnt, Save_Jpeg_End_Cnt);
 
-                    if(getDrivingRecordMode() == 1 && sd_freesize < SD_CARD_MIN_SIZE) {
+                    if(getDrivingRecordMode() == 1 && getSdFreeSize() < SD_CARD_MIN_SIZE) {
                         doDrivingModeDeleteFile();
                     }
                 }
@@ -2770,13 +2775,12 @@ int CheckSaveJpegCnt()
  *    capStime: 連拍間隔時間(目前固定160ms)
  *    freesize: 儲存空間剩餘容量
  */
-int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
+int setCapEn(int capEn, int capCnt, int capStime)
 {
     static unsigned long long curTime;
     int i, ret=-1, cmd_p1, cmd_p2, step=0;
     int c_mode = getCameraMode();
     setCaptureIntervalTime(160);    //capStime;
-    sd_freesize = freesize;
     char sd_path[128];
     char ssid[32];
 
@@ -2795,7 +2799,7 @@ int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
             ret = -2;
         else
         	ret = FPGA_Com_In_Add_Capture(1);               // FPGA_Pipe.c, setting
-        db_debug("setCapEn.1: en=%d cnt=%d ret=%d freesize=%lldmb\n", capEn, capCnt, ret, freesize/1000000);
+        db_debug("setCapEn.1: en=%d cnt=%d ret=%d\n", capEn, capCnt, ret);
       
         if(ret == 1){
             if(c_mode == CAMERA_MODE_AEB || c_mode == CAMERA_MODE_HDR || c_mode == CAMERA_MODE_NIGHT_HDR || BSmooth_Function != 0)   // 3:HDR 5:WDR 6:Night 7:Night+WDR, 使用大圖YUV縫合
@@ -2852,7 +2856,7 @@ int setCapEn(int capEn, int capCnt, int capStime, unsigned long long freesize)
         Save_Jpeg_StartTime = curTime;
         //Save_Jpeg_OutTime = 6000000*Save_Jpeg_End_Cnt;            // 設定單張6s timeout
         Save_Jpeg_OutTime = 30000000;            // 設定單張30s timeout
-        db_debug("setCapEn.2: en=%d cnt=%d ret=%d freesize=%lldmb\n", capEn, capCnt, ret, freesize/1000000);
+        db_debug("setCapEn.2: en=%d cnt=%d ret=%d\n", capEn, capCnt, ret);
         ret = 1;
     }
     if(ret == 1){
@@ -2981,7 +2985,7 @@ void setBmxSensorLogEnable(int enable){
  *    freesize: 儲存空間剩餘容量
  *    driving_mode: 行車紀錄模式(循環錄影) 0:close 1:open
  */
-void setRecEn(int recState, int time_lapse, unsigned long long freesize, int timelapse_enc)
+void setRecEn(int recState, int time_lapse, int timelapse_enc)
 {
     int cmd_p1, cmd_p2, exp_max;
     int mode, res;
@@ -2994,8 +2998,7 @@ void setRecEn(int recState, int time_lapse, unsigned long long freesize, int tim
     set_rec_cmd_queue_p1(++cmd_p1);
 
     Set_Smooth_Speed_Mode(getTimeLapseMode());
-    sd_freesize = freesize;
-    db_debug("setRecEn: state=%d lapse=%d freesize=%d\n", recState, time_lapse, freesize);
+    db_debug("setRecEn: state=%d lapse=%d\n", recState, time_lapse);
 
     if(recState == 0) {
         if(c_mode == CAMERA_MODE_TIMELAPSE || c_mode == CAMERA_MODE_TIMELAPSE_WDR) {			//TimeLapse
@@ -3231,13 +3234,13 @@ void SDCardEject(void)
     }
 }
 
-void set_callback_func(char *jpeg_func, char *h264_func)
+/*void set_callback_func(char *jpeg_func, char *h264_func)
 {
     if(callback_func.read_jpeg == NULL)
         callback_func.read_jpeg = jpeg_func;
     if(callback_func.read_h264 == NULL)
         callback_func.read_h264 = h264_func;
-}
+}*/
 
 /*void enable_debug_message(int en)
 {
@@ -3551,8 +3554,8 @@ void copy_H264_buf(char* buf, int size, int key_f, int width, int height,
 		copy_to_rec_buf(&buf[size_tmp], (size-size_tmp), key_f, sps, sps_len, pps, pps_len, fpga_enc_type, 0);
     }
 
-    if(callback_func.read_h264 != NULL)
-        callback_func.read_h264(buf, size, key_f);
+    //if(callback_func.read_h264 != NULL)
+    //    callback_func.read_h264(buf, size, key_f);
 }
 
 /*
