@@ -1278,7 +1278,7 @@ void ReadUS360DataBin(int country, int customer) {
   }
 }
 
-void DeleteUS360DataBin(void) { delete_data_bin(); }
+void DeleteUS360DataBin() { delete_data_bin(); }
 
 int CheckExpFreqDefault(int country) {
   int freq = 60;

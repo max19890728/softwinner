@@ -18,6 +18,10 @@ enum make_folder_result {
 
 int makeFolder(char *folderPath);
 int checkFileExist(char *filePath);
+int checkIsFolder(char *path);
+long getFolderSize(char *dirname);
+void deleteFolder(char *dir_path);
+void deleteFile(char *path);
 
 #ifdef __cplusplus
 }   // extern "C"

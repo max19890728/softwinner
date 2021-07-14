@@ -9,6 +9,12 @@
 extern "C" {
 #endif
 
+enum {
+    LIVE360_STATE_STOP  = -1,
+    LIVE360_STATE_START = 0
+};
+
+
 void live360_cmd_queue_init();
 void set_live360_t1();
 void get_live360_t1(unsigned long long *time);

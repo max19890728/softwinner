@@ -3830,18 +3830,18 @@ int GetSDState(void)
     return 0;
 }
 
-void settingHDR7P(int manual, int frame_cnt, int ae_scale, int strength)
-{
-	setting_HDR7P(manual, frame_cnt,ae_scale,strength);
-}
-void settingRemovalHDR(int manual, int ae_scale, int strength)
-{
-	setting_Removal_HDR(manual, ae_scale, strength);
-}
-void settingAEB(int frame_cnt, int ae_scale)
-{
-	setting_AEB(frame_cnt,ae_scale);
-}
+//void settingHDR7P(int manual, int frame_cnt, int ae_scale, int strength)
+//{
+//	setting_HDR7P(manual, frame_cnt,ae_scale,strength);
+//}
+//void settingRemovalHDR(int manual, int ae_scale, int strength)
+//{
+//	setting_Removal_HDR(manual, ae_scale, strength);
+//}
+//void settingAEB(int frame_cnt, int ae_scale)
+//{
+//	setting_AEB(frame_cnt,ae_scale);
+//}
 int getCaptureEstimatedTime()
 {
 	return getCaptureAddTime();
@@ -3873,63 +3873,12 @@ int readCaptureDCnt(void) {
 	return read_F_Com_In_Capture_D_Cnt();
 }
 
-int readCapturePrepareTime(void){
+int readCapturePrepareTime(){
 	return getCapturePrepareTime();
 }
 
 int GetSaturationValue(int value) {
 	return ( (value + 7) * 1000 / 7);
-}
-
-int GetHDRDefaultParameter(int mode, int idx) {
-	return HDR_Default_Parameter[mode][idx];
-}
-
-void Setting_HDR7P_Proc(int manual, int ev_mode)
-{
-	int number = 5, increment = 10, strength = 60;
-    if(manual == 2) {				//Auto
-      	number    = Get_DataBin_HdrNumber();
-       	increment = Get_DataBin_HdrIncrement();
-       	strength  = Get_DataBin_HdrAutoStrength();
-    }
-    else if(manual == 1) {			//手動開
-       	number    = Get_DataBin_HdrNumber();		//wifiSerThe.mHdrEvModeNumber;
-       	increment = Get_DataBin_HdrIncrement();	//wifiSerThe.mHdrEvModeIncrement;
-       	strength  = Get_DataBin_HdrStrength();	//wifiSerThe.mHdrEvModeStrength;
-    }
-    else if(manual == 0) {		//手動關
-       	if(ev_mode == 2) {
-       		number    = HDR_Default_Parameter[0][0];
-       		increment = HDR_Default_Parameter[0][1];
-       		strength  = HDR_Default_Parameter[0][2];
-       	}
-       	else if(ev_mode == 4) {
-       		number    = HDR_Default_Parameter[1][0];
-       		increment = HDR_Default_Parameter[1][1];
-       		strength  = HDR_Default_Parameter[1][2];
-       	}
-       	else if(ev_mode == 8) {
-       		number    = HDR_Default_Parameter[2][0];
-       		increment = HDR_Default_Parameter[2][1];
-       		strength  = HDR_Default_Parameter[2][2];
-       	}
-    }
-    setting_HDR7P(manual, number, increment * 2, strength);
-}
-
-void Setting_RemovalHDR_Proc(int mode)
-{
-   	int increment = 10, strength = 60;
-   	if(mode == 1) {			//Auto
-   		increment = Get_DataBin_RemoveHdrIncrement();
-   		strength  = Get_DataBin_RemoveHdrAutoStrength();
-   	}
-   	else {
-   		increment = Get_DataBin_RemoveHdrIncrement();
-   		strength  = Get_DataBin_RemoveHdrStrength();
-   	}
-   	setting_Removal_HDR(mode, increment * 2, strength);
 }
 
 

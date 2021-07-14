@@ -24,11 +24,11 @@ int live360_thread_en = 1;
 pthread_t thread_live360_id;
 pthread_mutex_t mut_live360_buf;
 
-int mLive360En = 0;
-int mLive360Cmd = 0;
-int Live360_State = -1;		// 0:start -1:finish
+int live360En = 0;                                  /** mLive360En */
+int live360Cmd = 0;                                 /** mLive360Cmd */
+int live360State = LIVE360_STATE_STOP;              /** Live360_State */    // 0:start -1:stop
 char live360_path[128];
-unsigned long long Live360_t1 = 0;
+unsigned long long live360SendHttpCmdTime1 = 0;     /** Live360_t1 */
 struct Cmd_Queue Live360_Cmd_Queue = {0};
 
 void live360_cmd_queue_init() {
@@ -36,11 +36,11 @@ void live360_cmd_queue_init() {
 }
 
 void set_live360_t1() {
-	get_current_usec(&Live360_t1);
+	get_current_usec(&live360SendHttpCmdTime1);
 }
 
 void get_live360_t1(unsigned long long *time) {
-	*time = Live360_t1;
+	*time = live360SendHttpCmdTime1;
 }
 
 void set_live360_thread_en(int en) {
@@ -48,7 +48,7 @@ void set_live360_thread_en(int en) {
 }
 
 void set_live360_state(int en) {
-	if(Live360_State != en) {
+	if(live360State != en) {
 		if(en == 0) {
 			if(get_rec_state() != -2) return;
             //changeLedMode(1);
@@ -60,33 +60,33 @@ void set_live360_state(int en) {
             	//mic_is_alive = 1;
                	//new AudioRecordLineInThread().start();
             }
-            mLive360En = 1;
-            mLive360Cmd = 2;
+            live360En = 1;
+            live360Cmd = 2;
 //            systemlog.addLog("info", System.currentTimeMillis(), "machine", "live360", "live360 start");
 		}
 		else {
 			if(get_mic_is_alive() == 0 && getAudioRecThreadEn() == 1) {
 				setAudioRecThreadEn(0);
 			}
-			mLive360En = 0;
-			mLive360Cmd = 2;
+			live360En = 0;
+			live360Cmd = 2;
 //			systemlog.addLog("info", System.currentTimeMillis(), "machine", "live360", "live360 finish");
 		}
-		Live360_State = en;
-//tmp		Set_Live360_State_Cmd(Live360_State);
+		live360State = en;
+//tmp		Set_Live360_State_Cmd(live360State);
 	}
 }
 
 int get_live360_state() {
-	return Live360_State;
+	return live360State;
 }
 
 void set_live360_cmd(int cmd) {
-	mLive360Cmd = cmd;
+	live360Cmd = cmd;
 }
 
 int get_live360_cmd() {
-	return mLive360Cmd;
+	return live360Cmd;
 }
 
 void *live360_thread(void)

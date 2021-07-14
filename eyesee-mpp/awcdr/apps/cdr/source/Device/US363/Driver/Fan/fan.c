@@ -199,8 +199,8 @@ void FanCtrlFunc(int fan_ctrl) {
     }
 
     if(CpuNowTemp >= CPU_TEMPERATURE_MAX){
-//      	systemlog.addLog("error", System.currentTimeMillis(), "machine", "OverHeat!", String.valueOf(CpuNowTemp));
-//tmp        stopREC(7);
+//tmp      	systemlog.addLog("error", System.currentTimeMillis(), "machine", "OverHeat!", String.valueOf(CpuNowTemp));
+        stopREC();
 //tmp        SetPlaySoundFlag(8);
         usleep(1000000);
 //tmp        paintCpuStatus(CpuNowTemp, getFanSpeed());

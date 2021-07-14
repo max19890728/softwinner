@@ -3065,7 +3065,7 @@ void setWBTemperature(int temp, int tint)
 	Awb_Quick_Times = 3;
 }
 
-void getWBRgbData(int *value){
+void getWBRgbData(int *value) {
 	*(value + 0) = Adjust_R_Gain;
 	*(value + 1) = Adjust_G_Gain;
 	*(value + 2) = Adjust_B_Gain;

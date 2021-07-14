@@ -45,6 +45,8 @@
 #include "Device/US363/Media/live360_thread.h"
 #include "Device/US363/Media/recoder_thread.h"
 #include "Device/US363/Media/Camera/uvc.h"
+#include "Device/US363/Util/ux360_list.h"
+#include "Device/US363/Util/file_util.h"
 
 #include "device_model/display.h"
 #include "device_model/media/camera/camera.h"
@@ -115,6 +117,7 @@ int mTimeLapseMode = TIMELAPSE_MODE_NONE;        /** Time_Lapse_Mode */
 #define CAMERA_POSITION_OVER_COUNT      4
 int mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_AUTO;   /** CtrlCameraPositionMode */    
 int mCameraPositionMode     = CAMERA_POSITION_0;                /** CameraPositionMode */  
+int mCameraPositionModeLst  = CAMERA_POSITION_0;                /** CameraPositionModelst */
 int mCameraPositionModeChange = 0;               /** CameraPositionModeChange */
 int mCameraPositionCnt = 0;                      //連續幾次才變化, 解震盪現象 /** CameraPositionCnt */
 
@@ -433,14 +436,14 @@ int wifiAudioRate = 44100, wifiAudioBits = 16, wifiAudioChannel = 1;        /** 
 int audioTestCount = 0;                         //產線測試喇叭用, 播放一段聲音並錄下
 int audioTestRecordEn = 0;                      /** audioTestRecording */
 
-enum {
-    LIVE360_STATE_STOP  = -1,
-    LIVE360_STATE_START = 0
-};
-int live360En = 0;                              /** mLive360En */
-int live360Cmd = 0;                             /** mLive360Cmd */
-int live360State = LIVE360_STATE_STOP;          /** Live360_State */    // 0:start -1:stop
-unsigned long long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
+//enum {
+//    LIVE360_STATE_STOP  = -1,
+//    LIVE360_STATE_START = 0
+//};
+//int live360En = 0;                              /** mLive360En */
+//int live360Cmd = 0;                             /** mLive360Cmd */
+//int live360State = LIVE360_STATE_STOP;          /** Live360_State */    // 0:start -1:stop
+//unsigned long long live360SendHttpCmdTime1 = 0;               /** Live360_t1 */
 
 int thread_20ms_en = 1;             
 int thread_1s_en = 1;
@@ -875,6 +878,52 @@ end:
 	destroyCamera();	
 }
 
+void Setting_HDR7P_Proc(int manual, int ev_mode) {
+	int number = 5, increment = 10, strength = 60; 
+    if(manual == 2) {				//Auto
+    	number    = Get_DataBin_HdrNumber();  
+    	increment = Get_DataBin_HdrIncrement();
+    	strength  = Get_DataBin_HdrAutoStrength();
+    }
+    else if(manual == 1) {			//手動開
+    	number    = Get_DataBin_HdrNumber();		//wifiSerThe.mHdrEvModeNumber;
+    	increment = Get_DataBin_HdrIncrement();	//wifiSerThe.mHdrEvModeIncrement;
+    	strength  = Get_DataBin_HdrStrength();	//wifiSerThe.mHdrEvModeStrength;
+    } 
+    else if(manual == 0) {		//手動關
+    	if(ev_mode == 2) {
+    		number    = Get_WifiServer_HdrDefaultMode(0, 0);
+    		increment = Get_WifiServer_HdrDefaultMode(0, 1);
+    		strength  = Get_WifiServer_HdrDefaultMode(0, 2);
+    	} 
+    	else if(ev_mode == 4) {
+    		number    = Get_WifiServer_HdrDefaultMode(1, 0);
+    		increment = Get_WifiServer_HdrDefaultMode(1, 1);
+    		strength  = Get_WifiServer_HdrDefaultMode(1, 2);
+    	} 
+    	else if(ev_mode == 8) {
+    		number    = Get_WifiServer_HdrDefaultMode(2, 0);
+    		increment = Get_WifiServer_HdrDefaultMode(2, 1);
+    		strength  = Get_WifiServer_HdrDefaultMode(2, 2);
+    	}
+    }
+    setting_HDR7P(manual, number, increment * 2, strength);
+}
+
+void Setting_RemovalHDR_Proc(int mode)
+{
+   	int increment = 10, strength = 60;
+   	if(mode == 1) {			//Auto
+   		increment = Get_DataBin_RemoveHdrIncrement();
+   		strength  = Get_DataBin_RemoveHdrAutoStrength();
+   	}
+   	else {
+   		increment = Get_DataBin_RemoveHdrIncrement();
+   		strength  = Get_DataBin_RemoveHdrStrength();
+   	}
+   	setting_Removal_HDR(mode, increment * 2, strength);
+}
+
 void databinInit(int country, int customer) 
 {   
 	ReadUS360DataBin(country, customer);
@@ -897,13 +946,13 @@ void databinInit(int country, int customer)
 	
 	//TagCamPositionMode = 	2;
     switch(Get_DataBin_CamPositionMode() ) {
-    case 0:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_AUTO); break;
-    case 1:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
-    case 2:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_180); break;
-    case 3:  setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_90);  break;
-    default: setCameraPositionCtrlMode(CAMERA_POSITION_CTRL_MODE_MANUAL); setCameraPositionMode(CAMERA_POSITION_0);   break;
+    case 0:  mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_AUTO; break;
+    case 1:  mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_MANUAL; mCameraPositionMode = CAMERA_POSITION_0;   break;
+    case 2:  mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_MANUAL; mCameraPositionMode = CAMERA_POSITION_180; break;
+    case 3:  mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_MANUAL; mCameraPositionMode = CAMERA_POSITION_90;  break;
+    default: mCameraPositionCtrlMode = CAMERA_POSITION_CTRL_MODE_MANUAL; mCameraPositionMode = CAMERA_POSITION_0;   break;
     }
-    set_A2K_DMA_CameraPosition(getCameraPositionMode());
+    set_A2K_DMA_CameraPosition(mCameraPositionMode);
 	
 	//TagPlayMode = 		3;
 	//TagResoultMode = 		4;
@@ -961,9 +1010,9 @@ void databinInit(int country, int customer)
 	
 	//TagDrivingRecord = 	24;
     if(customer == CUSTOMER_CODE_PIIQ)
-    	setDrivingRecordMode(0);	//Get_DataBin_DrivingRecord();
+    	mDrivingRecordMode = 0;	    //Get_DataBin_DrivingRecord();
     else
-    	setDrivingRecordMode(1);	//Get_DataBin_DrivingRecord();
+    	mDrivingRecordMode = 1;	    //Get_DataBin_DrivingRecord();
 	
 	//TagUS360Versin = 		25;
 	//TagWifiChannel = 		26;
@@ -989,7 +1038,7 @@ void databinInit(int country, int customer)
 
 	//TagColorSTMode = 		32;
     setColorStitchingMode(COLOR_STITCHING_MODE_ON);
-//tmp    SetColorSTSW(getColorStitchingMode());      //S2:smooth.c / us360_func.c
+    SetColorSTSW(mColorStitchingMode);      //S2:smooth.c / us360_func.c
 	
 	//TagAutoGlobalPhiAdjMode = 33;
     setAutoGlobalPhiAdjMode(Get_DataBin_AutoGlobalPhiAdjMode());
@@ -1031,7 +1080,7 @@ void databinInit(int country, int customer)
     mBottomMode = Get_DataBin_BottomMode();
 	//TagBottomSize = 		52;
     mBottomSize = Get_DataBin_BottomSize();
-//tmp    SetBottomValue(mBottomMode, mBottomSize);      //S2:awcodec.c
+//tmp    SetBottomValue(mBottomMode, mBottomSize);   //awcodec.c
 
 	//TagHdrEvMode = 		53;
     mHdrIntervalEvMode = Get_DataBin_hdrEvMode();
@@ -1274,13 +1323,13 @@ void Check_Bottom_File(int mode, int tx_mode, int isInit) {
         	
        	databin.setBottomMode(0);
        	BottomMode = databin.getBottomMode();  
-       	SetBottomValue(BottomMode, BottomSize);
+//tmp       	SetBottomValue(mBottomMode, mBottomSize);   //awcodec.c
         	
        	databin.setBottomTMode(0);
-       	BottomTextMode = databin.getBottomTMode();
-       	SetBottomTextMode(BottomTextMode);
+       	mBottomTextMode = databin.getBottomTMode();
+       	SetBottomTextMode(mBottomTextMode);
        	
-       	writeUS360DataBin_flag = 1;        	
+       	writeUS360DataBinFlag = 1;        	
     }*/  
 }
 
@@ -1465,7 +1514,7 @@ void doRecordVideo(int enable, int mode, int res, int time_lapse, int hdmi_state
         }
         else {
             usleep(200000);
-            stopREC(14);
+            stopREC();
         }
     }
     else{
@@ -1656,9 +1705,9 @@ void changeWifiMode(int mode) {
 		set_ipAddrFromAp("");		//ipAddrFromAp = "";
    		paintOLEDWifiSetting(9,wifiSSID.getBytes().length,wifiSSID.getBytes(),"Connecting. ".getBytes().length,"Connecting. ".getBytes());
 		paintOLEDWifiIDPW(ssid.getBytes(), ssid.getBytes().length, pwd.getBytes(), pwd.getBytes().length);
-		startWifiAP();
+		startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);
    	}else{
-   		stopWifiAP();
+   		stopWifiAp();
    		new Thread(new Runnable(){
    			int startError = 0;
            	public void run(){
@@ -1759,7 +1808,7 @@ void changeWifiMode(int mode) {
                			set_ipAddrFromAp("");		//ipAddrFromAp = "";
                    		//paintOLEDWifiSetting(9,wifiSSID.getBytes().length,wifiSSID.getBytes(),"Connecting Error".getBytes().length,"Connecting Error".getBytes());
                			//paintOLEDWifiIDPW(ssid.getBytes(), ssid.getBytes().length, pwd.getBytes(), pwd.getBytes().length);
-               			//startWifiAP();
+               			//startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);
                    	}
            		} catch (InterruptedException e) {
            			// TODO Auto-generated catch block
@@ -1909,13 +1958,13 @@ void onCreate()
         WriteLoadParameterTmpErr(ret);
     }
 
-    ModeTypeSelectS2(Get_DataBin_PlayMode(), Get_DataBin_ResoultMode(), getHdmiState(), Get_DataBin_CameraMode());
+    ModeTypeSelectS2(Get_DataBin_PlayMode(), Get_DataBin_ResoultMode(), hdmiState, Get_DataBin_CameraMode());
 
     int kpixel = ResolutionModeToKPixel(mResolutionMode);
 //tmp    setOLEDMainModeResolu(mPlayModeTmp, kpixel);
 
-//tmp    SetOLEDMainType(mCameraMode, GetCaptureCnt(), GetCaptureMode(), getTimeLapseMode(), 0);
-//tmp    showOLEDDelayValue(Get_DataBin_DelayValue());      	
+//tmp    SetOLEDMainType(mCameraMode, mCaptureCnt, GetCaptureMode(), getTimeLapseMode(), 0);
+//tmp    showOLEDDelayValue(Get_DataBin_DelayValue());   //oled.c      	
 		
     setStitchingOut(mCameraMode, mPlayMode, mResolutionMode, getFPS()); 
     LineTableInit();  
@@ -1942,7 +1991,7 @@ void onCreate()
                 	//getSDPath(path);
                 	//sdPath = path.toString();
                     Log.d("Main", "ACTION_MEDIA_MOUNTED, path = " + sdPath);
-                    setSDPathStr(sdPath.getBytes(), sdPath.getBytes().length);
+                    //setSDPathStr(sdPath.getBytes(), sdPath.getBytes().length);
                     
                     getOutputPath(); 
                 }
@@ -1950,7 +1999,7 @@ void onCreate()
                     Log.d("Main", "ACTION_MEDIA_UNMOUNTED");
                     sdState = 0;
                     sdPath = "/mnt/extsd";
-                    setSDPathStr(sdPath.getBytes(), sdPath.getBytes().length);
+                    //setSDPathStr(sdPath.getBytes(), sdPath.getBytes().length);
                 }
             }
         };*/
@@ -2391,7 +2440,7 @@ int doTakePicture(int enable)
 //tmp    	systemlog.addLog("info", System.currentTimeMillis(), "machine", "doTakePicture", "---");
 
         if(checkCanTakePicture())
-        	ret = setCapEn(enable, getCaptureCnt(), getCaptureIntervalTime());
+        	ret = setCapEn(enable, mCaptureCnt, getCaptureIntervalTime());
         else
         	ret = -1;
 
@@ -2414,7 +2463,7 @@ int doTakePicture(int enable)
     return ret;  
 }
 
-void startREC(void)
+void startREC()
 {   
     /*if(dnaCheckOk != 1 && GetTestToolState() == -1) {
     	db_error("startREC() dna check err!\n");
@@ -2428,7 +2477,7 @@ void startREC(void)
     	return;
     }
 
-    if(getRecordEn() == 0){                                    // 開始rec動作
+    if(recordEn == 0){                                    // 開始rec動作
         setRecordEn(1);
         setRecordCmdFlag(1);
         playSound(4);
@@ -2437,11 +2486,11 @@ void startREC(void)
     }
 }
 
-int stopREC(int debug)
+int stopREC()
 {     
 	unsigned long long nowTime;
 
-    if(getRecordEn() == 1){                                    // 結束rec動作
+    if(recordEn == 1){                                    // 結束rec動作
         setRecordEn(0);
         setRecordCmdFlag(1);
         playSound(5);
@@ -2500,7 +2549,7 @@ void Ctrl_Rec_Cap(int c_mode, int cap_cnt, int rec_en) {
     case 10: //Rec WDR
     case 11: //TimeLapse WDR
         if(rec_en == 0) startREC();
-        else            stopREC(15);
+        else            stopREC();
         break;
     }
     //saveImageTimer = 100;// rex+ 181016, 
@@ -2564,7 +2613,7 @@ void timerLidar() {
 			//lidarCode = 2;
 			//inputSinCosData(lidarSinCosBuffer, LidarBufEnd * 32);
 			int LD363_4in1 = 0;
-			if(LidarBufMod == 1){
+			if(lidarBufMod == 1){
 				LD363_4in1 = 1;
 			}
 			wave8in(lidarSinCosBuffer, LidarBufEnd * 32,ftdiSPI.setup_LD363_ZT,ftdiSPI.setup_LD363_X,ftdiSPI.setup_LD363_Y,LD363_4in1);
@@ -2579,8 +2628,8 @@ void timerLidar() {
        			ftdiSPI.onStart();
        			int isNeedGetVersion = ftdiSPI.getLidarVersion();
        			if(isNeedGetVersion == 1 && lidarState > 0 ){
-       				Log.e("setLidarStart", "LidarSetup: Mod="+LidarBufMod+" End="+LidarBufEnd);
-       		    	LidarSetup(LidarBufMod);
+       				Log.e("setLidarStart", "LidarSetup: Mod="+lidarBufMod+" End="+LidarBufEnd);
+       		    	LidarSetup(lidarBufMod);
        		    	ftdiSPI.onStart();
        		    	ftdiSPI.getLidarVersion();
        				LidarBufPtr = ftdiSPI.doMasterRead(lidarSinCosBuffer);
@@ -2743,7 +2792,7 @@ void do_power_standby() {
     if(powerMode == 3){
         powerMode = 1;                    // power mem
 
-        stopREC(9);
+        stopREC();
         get_current_usec(&standbyTime);
 //tmp        setLEDLightOn(0,1);
         isStandby = 1;
@@ -2767,6 +2816,65 @@ void do_power_standby() {
 
 //        systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is standby.", "---");
     }   
+}
+
+void do_power_on() {
+    unsigned long long nowTime;
+    db_debug("do_power_on, powerMode=%d", powerMode);
+    if(powerMode == 1){
+        powerMode = 3;                    // power on   
+//tmp        systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is wake.", "---");
+        get_current_usec(&nowTime);
+        if(gpsState == 1 && llabs(nowTime - standbyTime) > 600000){
+        	gpsState = 0;
+//tmp        	setGpsStatus(gpsState);     //oled.c
+        	setGPSLocation(gpsState, 0.0, 0.0, 0.0);
+        	db_debug("delete gps location");
+        }
+//tmp        setLEDLightOn(0,1);
+        isStandby = 0;
+        SetAxp81xChg(0);
+        //FanCtrlFunc(mFanCtrl);        //max+ S3 沒有風扇
+
+//tmp        needInitOLED();            //oled.c
+//tmp        paintOLEDStandby(0);       //oled.c
+
+        if(wifiModeState == 1 || wifiModeState == 2 || wifiModeState == 3){
+        	changeWifiMode(1);
+        }else{
+        	startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);
+        }
+//tmp        paintOLEDWifiIDPW(&mWifiApSsid[0], sizeof(mWifiApSsid), &mWifiPassword[0], sizeof(mWifiPassword));       //oled.c
+//tmp        setOledStandByMode(0);
+        FPGA_Ctrl_Power_Func(0, 4); 
+        
+        setPowerMode(powerMode);
+        set_timeout_start(0);
+    }
+}
+
+void do_power_off() {
+    db_debug("do_power_off");  
+//tmp    systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is shutdown.", "---");
+        
+    stopREC();
+    isStandby = 1;
+//tmp    setOledStandByMode(1);
+    SetAxp81xChg(2);
+    setFanSpeed(0);                         //FanLstLv = FanSpeed = 0;
+    setFanRotateSpeed(getFanSpeed());    
+               
+    FPGA_Ctrl_Power_Func(1, 5);             // fpga power off & close uvc 
+//tmp    paintOLEDPoweroff(1);              //oled.c, oled 顯示 poweroff 畫面
+    stopWifiAp();
+        
+    if(get_live360_state() == 0)
+     	set_live360_state(-1);
+}
+
+void do_power_reboot() {
+//tmp   	systemlog.addLog("info", System.currentTimeMillis(), "machine", "system is restart.", "---");
+//tmp    sysPowerReboot();      //oled.c, oled 顯示 reboot 畫面
 }
 
 void createSkipWatchDogFile(){     
@@ -2878,7 +2986,7 @@ void Set_ISP2_Addr(int mdoe, int addr, int sensor)
        	STTableTestS2AllSensor();   
 }
 
-void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode, int debug) {   
+void Set_OLED_MainType(int c_mode, int cap_cnt, int cap_mode, int tl_mode) {   
 #ifdef __CLOSE_CODE__	//tmp	
    	switch(c_mode) {    // 相機模式, 0:Cap 1:Rec 2:TimeLapse 3:HDR(3P) 4:RAW(5P) 5:WDR 6:Night 7:NightWDR
    	case 0:                             // capture
@@ -2912,9 +3020,9 @@ void Change_Cap_12K_Mode() {
     if(mCameraMode != 0 || mResolutionMode != RESOLUTION_MODE_12K || mPlayModeTmp !=0) {	//Change Mode: Cap 12K Mode
         mCameraMode = 0;
         mResolutionMode = 1;
-        Set_OLED_MainType(mCameraMode, getCaptureCnt(), getCaptureMode(), getTimeLapseMode(), 13);
+        Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
         mPlayModeTmp = 0;
-        ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, getHdmiState(), mCameraMode);
+        ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
         choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
     }    
 }
@@ -2923,9 +3031,9 @@ void Change_Raw_12K_Mode() {
     if(mCameraMode != 4 || mResolutionMode != RESOLUTION_MODE_12K || mPlayModeTmp !=0) {	//Change Mode: Raw 12K Mode
         mCameraMode = 4;
         mResolutionMode = 1;
-        Set_OLED_MainType(mCameraMode, getCaptureCnt(), getCaptureMode(), getTimeLapseMode(), 14);
+        Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
         mPlayModeTmp = 0;
-        ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, getHdmiState(), mCameraMode);
+        ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
         choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
     }   
 }
@@ -3207,14 +3315,12 @@ void *thread_1s(void *junk)
 	int state = 0;
 	int do_recovery = 0;
     int wifi_disable_time;
-    int camera_position_mode;
     int sd_state;
 	static int sd_state_lst = -1;
 	static int keepSleep = 0;
 	static int fan_ctrl_cnt = 0;
 	static int kelvin_cnt = 2;
 	static int cp_cnt = 0;
-    static int camera_position_mode_lst = CAMERA_POSITION_0;
 	char zip_name[128], sd_path[128];
 	static unsigned long long curTime, lstTime=0, runTime, nowTime, live360Time;
     //nice(-6);    // 調整thread優先權
@@ -3299,9 +3405,9 @@ void *thread_1s(void *junk)
 			writeUS360DataBinFlag = 1;
 		}
 
-		if(getRecordEn() == 1 && getRecordCmdFlag() == 0){        // SD card full,結束rec動作
+		if(recordEn == 1 && getRecordCmdFlag() == 0){        // SD card full,結束rec動作
 			if(get_rec_state() == -2 && lockStopRecordEn == 0){
-				stopREC(10);
+				stopREC();
 //tmp            	systemlog.addLog("info", System.currentTimeMillis(), "machine", "doRecordStop", "---");
 //tmp            	if(getDebugLogSaveToSDCard() == 1){
 //tmp        			systemlog.writeDebugLogFile();
@@ -3309,13 +3415,13 @@ void *thread_1s(void *junk)
 			}
 		}
 
-		if(getRecordEn() == 1){
+		if(recordEn == 1){
 //tmp       recTime = getOLEDRecTime();
 			set_timeout_start(0);                     // 錄影中，不進入standby
 
 			if(check_power() == 0) {					  // 電量  <= 6% 結束錄影
 //tmp        		systemlog.addLog("info", System.currentTimeMillis(), "machine", "doRecordStop", "LowPower RecordStop");
-				stopREC(11);
+				stopREC();
 			}
 		}
 		else{
@@ -3333,7 +3439,7 @@ void *thread_1s(void *junk)
 
 		set_webserver_getdata_timeout();
 
-		if(getHdmiState() == 1)
+		if(hdmiState == 1)
 			do_Test_Mode_Func(TestToolCmd.MainCmd, TestToolCmd.SubCmd);
 
 		do_Test_Mode_Func(TestToolCmd.MainCmd, TestToolCmd.SubCmd);
@@ -3401,7 +3507,7 @@ void *thread_1s(void *junk)
 //    	captureDCnt = readCaptureDCnt();
 		if(isStandby == 0){
 			if(fan_ctrl_cnt >= 2){
-				FanCtrlFunc(mFanCtrl);
+				//FanCtrlFunc(mFanCtrl);      //max+ S3 沒有風扇
 				fan_ctrl_cnt = 1;
 			}
 			else if(fan_ctrl_cnt < 1) fan_ctrl_cnt = 1;
@@ -3454,10 +3560,10 @@ void *thread_1s(void *junk)
 		}
 
 #ifdef __CLOSE_CODE__	//tmp
-		if(mBmm050Start > 0){
+		if(bmm050Start > 0){
 			if(getBmm050RegulateResult() == -1){
 				db_debug("compass regulate failure\n");
-				mBmm050Start = 0;
+				bmm050Start = 0;
 				set_wifi_compass_value(-1);
 			}else if(getBmm050RegulateResult() == 1){
 				int data[6];
@@ -3469,7 +3575,7 @@ void *thread_1s(void *junk)
 				Set_DataBin_CompassMiny(data[4]);
 				Set_DataBin_CompassMinz(data[5]);
 				writeUS360DataBinFlag = 1;
-				mBmm050Start = 0;
+				bmm050Start = 0;
 
 				set_filetool_compass(&data[0]);
 			}
@@ -3498,11 +3604,10 @@ void *thread_1s(void *junk)
 				else					    mCameraPositionMode = 0;
 			}
             
-            camera_position_mode = getCameraPositionMode();
-			if(camera_position_mode != camera_position_mode_lst) {
+			if(mCameraPositionMode != mCameraPositionModeLst) {
 				get_current_usec(&nowTime);
-				setCameraPositionModeChange(1);
-				camera_position_mode_lst = camera_position_mode;
+				mCameraPositionModeChange = 1;
+				mCameraPositionModeLst = mCameraPositionMode;
 				Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 35);
 				do_Test_Mode_Func(TestToolCmd.MainCmd, TestToolCmd.SubCmd);
 			}
@@ -3546,9 +3651,9 @@ void *thread_1s(void *junk)
 
 				if(nowTime < powerSavingCapRecFinishTime) Set_Cap_Rec_Finish_Time(nowTime, POWER_SAVING_CMD_OVERTIME_5S);
 //tmp        	if(powerSavingCapRecFinishTime != 0 && sendFpgaCmdStep == 3 && getCameraPositionModeChange() == 0 && GetDecBottomStep() == 0 &&
-//tmp        			getHdmiState() == 0 && doCheckStitchingCmdDdrFlag == 1 && (nowTime - powerSavingCapRecFinishTime) > powerSavingOvertime) {
+//tmp        			hdmiState == 0 && doCheckStitchingCmdDdrFlag == 1 && (nowTime - powerSavingCapRecFinishTime) > powerSavingOvertime) {
 				if(powerSavingCapRecFinishTime != 0 && sendFpgaCmdStep == 3 && getCameraPositionModeChange() == 0 /*&& GetDecBottomStep() == 0*/ &&
-						getHdmiState() == 0 && doCheckStitchingCmdDdrFlag == 1 && (nowTime - powerSavingCapRecFinishTime) > powerSavingOvertime) {
+						hdmiState == 0 && doCheckStitchingCmdDdrFlag == 1 && (nowTime - powerSavingCapRecFinishTime) > powerSavingOvertime) {
 					Set_Cap_Rec_Start_Time(0);
 					Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S);
 					SetFPGASleepEn(1);
@@ -3579,6 +3684,2250 @@ void create_thread_1s() {
 void System_Exit() {   
 //tmp    System.exit(0);
 }
+
+#ifdef __CLOSE_CODE_NEW__   //tmp
+void setFeedBackData(char *action, int action_len, int value){
+    if(Get_WifiServer_SendFeedBackEn() == 0){
+        Set_WifiServer_SendFeedBackEn(1);
+        Set_WifiServer_SendFeedBackAction(action, action_len);
+        Set_WifiServer_SendFeedBackValue(value);
+    }
+}
+
+void setTimeZone(char *ZoneID) {
+//tmp
+/*    //Log.d("test", "ZoneID = " + ZoneID);
+    String[] str = TimeZone.getAvailableIDs();
+    int len = str.length;
+    int pos = 0;
+    boolean getID_flag = false;
+    for(pos=0;pos<len;pos++){
+        //Log.d("test", "[" + pos + " ] = " + str[pos]);
+        if(str[pos].equals(ZoneID)){
+            getID_flag = true;
+            break;
+        }
+    }
+    if(getID_flag){  
+        //Log.d("test", "pos = " + pos + " , getID = " + str[pos]);
+        AlarmManager alarm = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+        alarm.setTimeZone(str[pos]);
+    }
+        
+    //AlarmManager alarm = (AlarmManager) getApplicationContext().getSystemService(Context.ALARM_SERVICE);
+    //alarm.setTimeZone(str[308]);*/
+}
+
+int formatMedia(char *path) {
+//tmp    
+/*    paintFormatSD(1);
+    deleteSaveSmoothBin();
+    //Log.d("test", "formatMedia");
+    StorageManager mStorageManager;
+    mStorageManager = context.getApplicationContext().getSystemService(StorageManager.class);
+    
+    Method partitionPublic = null;
+    try {
+        partitionPublic = mStorageManager.getClass().getMethod("partitionPublic", new Class[] { String.class });
+    } 
+    catch (NoSuchMethodException e) { paintFormatSD(0); return 0; }
+    
+    try {
+        partitionPublic.invoke(mStorageManager, new Object[]{"disk:179,24"});
+    } 
+    catch (IllegalAccessException e) { paintFormatSD(0); return 0; }
+    catch (IllegalArgumentException e) { paintFormatSD(0); return 0; } 
+    catch (InvocationTargetException e) { paintFormatSD(0); return 0; }
+
+    IMountService mountService =  getMountService();      
+    int result = 0;
+    try {
+        
+        mountService.unmountVolume(path, true, false);
+        
+        Thread.sleep(4000);
+        result = mountService.formatVolume(path);
+        if (result == 0) {
+            Thread.sleep(4000);
+            int resultMount = mountService.mountVolume(path);
+        }
+    } catch (Exception ex) {
+        ex.printStackTrace();
+    }
+    if (result == 0) {
+        paintFormatSD(0);
+        return 1;
+    }
+    paintFormatSD(0);
+    return 0;*/
+}
+
+void wifiDeleteFile(LINK_NODE* list) {
+    int i, size, length;
+    char name[128], path[128];
+    
+    if(list == NULL) return;
+    
+    length = get_list_length(list);
+    for(i = 0; i < length; i++) {
+        size = serch_node(list, i, &name[0], sizeof(name));
+        if(size > 0) {
+            if(name[0] == 'P'){
+                snprintf(path, sizeof(path), "%s/%s.thm", thmPath, name);
+                deleteFile(&path[0]);
+                snprintf(path, sizeof(path), "%s/%s.jpg", dirPath, name);
+                deleteFile(&path[0]);
+            }
+            else if(name[0] == 'V'){
+                snprintf(path, sizeof(path), "%s/%s.thm", thmPath, name);
+                deleteFile(&path[0]);
+                snprintf(path, sizeof(path), "%s/%s.mp4", dirPath, name);
+                if(checkFileExist(&path[0])) {    
+                    deleteFile(&path[0]);
+                }
+                else {
+                    snprintf(path, sizeof(path), "%s/%s.ts", dirPath, name);
+                    deleteFile(&path[0]);
+                }
+            }
+            else if(name[0] == 'H') || name[0] == 'R' || name[0] == 'T'){
+                snprintf(path, sizeof(path), "%s/%s.thm", thmPath, name);
+                deleteFile(&path[0]);
+                
+                snprintf(path, sizeof(path), "%s/%s", dirPath, name);
+                if(checkIsFolder(&path[0])){
+                    deleteFolder(&path[0]);
+                }else{
+                    /*File dir = new File(DIR_path);
+                    for(File tFile : dir.listFiles()){
+                        if(wifiSerThe.mDeleteFileName.elementAt(i).indexOf(tFile.getName()) != -1){
+                            for(File sFile : tFile.listFiles()){
+                                if(sFile.getName().indexOf(wifiSerThe.mDeleteFileName.elementAt(i)) != -1){
+                                    sFile.delete();
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }*/
+                }
+            }
+        }
+        else {
+            db_error("wifiDeleteFile: delete file error. i=%d", i);
+        }
+    }    
+}
+
+void createRtmp(){
+//tmp    
+/*	try{
+		micSource = checkMicInterface() == 0?0:1;
+    	Thread.sleep(200);
+    	
+    	int rtspW = getRtspWidth();
+    	int rtspH = getRtspHeight();
+    	if(rtspW > 0 && rtspH > 0){
+    		outWidth = rtspW;
+    		outHeight = rtspH;
+    	}
+    	
+    	closeRtmp();
+    	
+        mPublisher = new SrsPublisher();
+        mPublisher.setEncodeHandler(new SrsEncodeHandler(this));
+        mPublisher.setRtmpHandler(new RtmpHandler(this));
+        mPublisher.setOutputResolution(outWidth, outHeight);
+        //mPublisher.setVideoHDMode();
+        if(micSource == 1){
+        	audioRate = getMicRate();
+    		audioChannel = getMicChannel();
+        }
+        int a_channel = audioChannel == 1?AudioFormat.CHANNEL_IN_MONO:AudioFormat.CHANNEL_IN_STEREO;
+        SrsEncoder.ASAMPLERATE = audioRate;
+		SrsEncoder.aChannelConfig = a_channel;
+		
+		Log.d(RTMPTAG,"createRtmp() => rtmpW = " + outWidth + ", rtmpH = " + outHeight);
+		Log.d(RTMPTAG,"createRtmp() => micSource = " + micSource + ", aRate = " + audioRate + ", aChannel = " + audioChannel);
+        
+        //mPublisher.startPublish(serverRtmpUrl);
+		mPublisher.startPublish(rtmpUrl);
+        
+        if(micSource == 0){
+        	if(audioRecThd != null){
+        		audioRecThd.interrupt();
+        		audioRecThd = null;
+        	}
+        	audioRecThd = new AudioRecordThread();
+        	audioRecThd.setName("audioRecordThread");
+        	audioRecThd.start();
+        }
+        rtmp_switch = 0;
+        setRtmpSwitch(rtmp_switch);
+        Log.d(RTMPTAG,"createRtmp() => create sucessful!!");
+	}catch(Exception e){
+		Log.e(RTMPTAG,"createRtmp() Exception",e);
+		rtmpConnectCount = 0;
+		closeRtmp();
+		//stopNginx();
+	}*/
+}
+
+void closeRtmp(){
+//tmp    
+/*	try{
+		canSendRtmp = false;
+    	if(mPublisher != null){
+    		mPublisher.stopPublish();
+    		mPublisher = null;
+    		Log.d(RTMPTAG,"closeRtmp() => clear mPublisher");
+    	}
+    	if(rtmpConnectCount < 2){
+	    	paintOLEDRtmpSetting(9,("Live Streaming").getBytes(),14,
+	    			oled_rtmp_bitrate.getBytes(),oled_rtmp_bitrate.getBytes().length);
+	    	if(mWifiModeState == 1){
+	    		String nowSSID = parseSSID(wifi.getConnectionInfo().getSSID());
+	    		if("unknown ssid".equals(nowSSID) || "NULL".equals(nowSSID)){
+	    			mWifiModeState = 2;
+	    			paintOLEDWifiSetting(1,nowSSID.getBytes().length,nowSSID.getBytes(),"Disconnection".getBytes().length,"Disconnection".getBytes());
+	    		}else if(!wifiSSID.equals(nowSSID)){
+	    			mWifiModeState = 3;
+	    			paintOLEDWifiSetting(1,nowSSID.getBytes().length,nowSSID.getBytes(),"WiFi Changed".getBytes().length,"WiFi Changed".getBytes());
+	    		}else{
+	    			paintOLEDWifiSetting(1,wifiSSID.getBytes().length,wifiSSID.getBytes(),ipAddrFromAp.getBytes().length,ipAddrFromAp.getBytes());
+	    		}
+	    	}else{
+	    		paintOLEDWifiIDPW(ssid.getBytes(), ssid.getBytes().length, pwd.getBytes(), pwd.getBytes().length);
+	    	}
+    	}
+    	rtmpVideoPushReady = false;
+    	rtmpAudioPushReady = false;
+    	oled_rtmp_bitrate = "";
+    	rtmp_switch = 1;
+    	setRtmpSwitch(rtmp_switch);
+    	Thread.sleep(100);
+	}catch(Exception e){
+		Log.e(RTMPTAG,"closeRtmp() Exception",e);
+		mPublisher = null;
+	}*/
+}
+
+int runNginx(){
+//tmp    
+/*	Process localProcess;
+	BufferedReader successResult = null;
+    BufferedReader errorResult = null;
+    StringBuilder successMsg = null;
+    StringBuilder errorMsg = null;
+    try {
+        localProcess = Runtime.getRuntime().exec("sh");        
+        DataOutputStream os = new DataOutputStream(localProcess.getOutputStream());
+        os.writeBytes("cd /data/data/android.nginx\n");
+        os.writeBytes("chmod -R 755 ../android.nginx\n");
+        os.writeBytes("sbin/nginx -p /data/data/android.nginx -c /data/data/android.nginx/conf/nginx.conf\n");
+        os.writeBytes("exit\n");
+        os.flush();
+        
+        successMsg = new StringBuilder();
+        errorMsg = new StringBuilder();
+        successResult = new BufferedReader(new InputStreamReader(localProcess.getInputStream()));
+        errorResult = new BufferedReader(new InputStreamReader(localProcess.getErrorStream()));
+        String s;
+
+        while ((s = successResult.readLine()) != null) {
+            if(successMsg.length() != 0) { successMsg.append("\n");}
+            successMsg.append(s);
+        }
+        while ((s = errorResult.readLine()) != null) {
+            if(errorMsg.length() != 0) { errorMsg.append("\n");}
+            errorMsg.append(s);
+        }
+        
+        Log.d(RTMPTAG,"runNginx()successMsg = " + successMsg);
+        Log.d(RTMPTAG,"runNginx()errorMsg = " + errorMsg);
+        
+        Thread.sleep(1000);
+    } catch (IOException e) {
+    	Log.e(RTMPTAG, "runNginx() IOException", e);
+        return -1;
+    } catch (Exception e){
+    	Log.e(RTMPTAG, "runNginx() Exception", e);
+        return -1;
+    }
+    return 0;*/
+}
+
+int stopNginx(){
+//tmp    
+/*	Process localProcess;
+	BufferedReader successResult = null;
+    BufferedReader errorResult = null;
+    StringBuilder successMsg = null;
+    StringBuilder errorMsg = null;
+    try {
+        localProcess = Runtime.getRuntime().exec("sh");        
+        DataOutputStream os = new DataOutputStream(localProcess.getOutputStream());
+        os.writeBytes("cd /data/data/android.nginx\n");
+        os.writeBytes("sbin/nginx -s stop -p /data/data/android.nginx -c /data/data/android.nginx/conf/nginx.conf\n");
+        os.writeBytes("exit\n");
+        os.flush();
+        
+        successMsg = new StringBuilder();
+        errorMsg = new StringBuilder();
+        successResult = new BufferedReader(new InputStreamReader(localProcess.getInputStream()));
+        errorResult = new BufferedReader(new InputStreamReader(localProcess.getErrorStream()));
+        String s;
+
+        while ((s = successResult.readLine()) != null) {
+            if(successMsg.length() != 0) { successMsg.append("\n");}
+            successMsg.append(s);
+        }
+        while ((s = errorResult.readLine()) != null) {
+            if(errorMsg.length() != 0) { errorMsg.append("\n");}
+            errorMsg.append(s);
+        }
+        
+        Log.d(RTMPTAG,"stopNginx() successMsg = " + successMsg);
+        Log.d(RTMPTAG,"stopNginx() errorMsg = " + errorMsg);
+        
+        Thread.sleep(1000);
+    } catch (IOException e) {
+    	Log.e(RTMPTAG, "stopNginx() IOException", e);
+        return -1;
+    } catch (Exception e){
+    	Log.e(RTMPTAG, "stopNginx() Exception", e);
+        return -1;
+    }
+    return 0;*/
+}
+
+void writeRtmpConfigure(){
+/*	String str1 = "#user  root;\n" +
+            "worker_processes  1;\n" +
+            "\n" +
+            "events {\n" +
+            "    worker_connections  1024;\n" +
+            "}\n" +
+            "rtmp {\n" +
+            "    server {\n" +
+            "        listen 1935;\n" +
+            "        application live {\n" +
+            "            live on;\n" +
+			"            record off;\n" +
+			"            ";
+
+    String str2 = "        }\n" +
+            "    }\n" +
+            "}\n";
+
+    String str = str1 + str2;
+
+    //writeFile("/data/data/android.nginx/conf/nginx.conf", str);*/
+}
+    
+void Click_Cap_Rec_Button(int time) {
+    unsigned long long nowTime;
+    
+	if( (mCameraMode == CAMERA_MODE_REC || mCameraMode == CAMERA_MODE_TIMELAPSE || 
+         mCameraMode == CAMERA_MODE_REC_WDR || mCameraMode == CAMERA_MODE_TIMELAPSE_WDR) && 
+         recordEn == 1) {    // 1:Rec 2:Timelapse
+		stopREC();
+	}
+    else if(sdState != 1 || getImgReadyFlag() == 0) {
+		playSound(11);
+	}
+    else {
+    	if(mPowerSavingMode == 1) {
+    		if(fpgaStandbyEn == 1) {
+    			setFpgaStandbyEn(0);
+    			adjustSensorSyncFlag = 2;  				
+    		}
+           	Set_Cap_Rec_Start_Time(0);
+           	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S);
+    	}
+		
+		mSelfieTime = time;
+		if(mSelfieTime > 0) {
+			switch(mSelfieTime){
+			case 2:  playSound( 9); break;
+			case 5:  playSound(13); break;
+			case 10: playSound(10); break;
+			case 20: playSound(14); break;
+			}
+		}
+		else {			
+            Ctrl_Rec_Cap(mCameraMode, mCaptureCnt, recordEn);
+        }
+        get_current_usec(&nowTime);
+        Set_WifiServer_SetEstimateTime(100);
+        Set_WifiServer_SetEstimateStamp(nowTime);
+        Set_WifiServer_CaptureEpTime(readCapturePrepareTime());
+        Set_WifiServer_CaptureEpStamp(nowTime);
+        Set_WifiServer_SetEstimateEn(1); 
+        Set_WifiServer_GetEstimateEn(1);
+    }
+}
+
+int runUninstallDates(){
+//tmp    
+/*	PackageDeleteObserver observer = new PackageDeleteObserver();
+    PackageManager pm = this.getApplicationContext().getPackageManager();
+    pm.deletePackage("com.camera.AletaS1", observer, 0);
+    Log.d("test", "runUninstallDates()");
+    return 0;*/
+}
+
+int calSaturation(int value) {
+    return ( (value + 7) * 1000 / 7); 
+}
+
+void wifiSerThe_proc()
+{
+	int i, t, ep_t;
+    int format, nLen;
+    int befCameraMode, oriCameraMode;
+    int r, g, b;
+    int data[3];
+    char rgb_str[16];
+    char path[128], text[128];
+    char action[8], zone[16];
+    char ip[INET6_ADDRSTRLEN], mask[INET6_ADDRSTRLEN], gateway[INET6_ADDRSTRLEN], dns[INET6_ADDRSTRLEN];
+    unsigned long long nowTime;
+    LINK_NODE* list = NULL;
+    //tmp
+	/*for(int x = 0; x < OscPreview.qImageDataLen.length; x++){
+		if(cp != null && OscPreview.gImageStream[x] && OscPreview.qImageDataLen[x] == -1){
+    		if(cp.mOutputLength > 0){
+				int nLen = cp.mOutputLength;
+                cp.mOutputLength = -1;                       
+                if(nLen < cp.JAVA_UVC_BUF_MAX){
+                	switch(x){
+                	case 0: System.arraycopy(cp.mOutputData, 0, OscPreview.gImageData0, 0, nLen); break;
+                	case 1: System.arraycopy(cp.mOutputData, 0, OscPreview.gImageData1, 0, nLen); break;
+                	case 2: System.arraycopy(cp.mOutputData, 0, OscPreview.gImageData2, 0, nLen); break;
+                	case 3: System.arraycopy(cp.mOutputData, 0, OscPreview.gImageData3, 0, nLen); break;
+                	case 4: System.arraycopy(cp.mOutputData, 0, OscPreview.gImageData4, 0, nLen); break;
+                	}
+                    OscPreview.qImageDataLen[x] = nLen;
+                    OscPreview.gImageIndex++;
+                }
+                cp.mOutputLength = 0;
+            }
+    	}
+	}*/
+	
+    //if(wifiSerThe != null && cp != null){
+        //tmp
+        /*if(cp.mOutputLength > 0){
+            int nLen = cp.mOutputLength;
+            cp.mOutputLength = -1;                       
+            //if(wifiSerThe.mOutputLength != -1 && nLen < cp.JAVA_UVC_BUF_MAX){ 
+            if(wifiSerThe.mOutputLength == 0 && nLen < cp.JAVA_UVC_BUF_MAX){ 
+                System.arraycopy(cp.mOutputData, 0, wifiSerThe.mOutputData, 0, nLen);
+                wifiSerThe.mOutputLength = nLen;
+                mjpeg_fps ++;
+                mjpeg_send += nLen;
+            }
+            cp.mOutputLength = 0;
+        }*/
+        if(Get_WifiServer_WifiDisableTimeEn == 1){    //設定Wifi Disable時間
+            Set_WifiServer_WifiDisableTimeEn(0);
+            Set_DataBin_WifiDisableTime(Get_WifiServer_WifiDisableTime());
+            mWifiDisableTime = Get_DataBin_WifiDisableTime();
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("WIFI", 4, wifiDisableTime);
+        }
+        if(Get_WifiServer_ZoneEn() == 1){        // 設定時區
+            Set_WifiServer_ZoneEn(0);
+            if(Get_WifiServer_WifiZone(&zone[0]) >= 0)
+                setTimeZone(&zone[0]);
+        }
+        if(Get_WifiServer_SetTime() == 1){        // 設定系統時間
+            Set_WifiServer_SetTime(0);
+            setSysTime(Get_WifiServer_WifiDisableTime());
+            //tmp
+            /*Date dateOld = new Date(wifiSerThe.mSysTime);
+            SimpleDateFormat dateLog = new SimpleDateFormat("yy/MM/dd HH:mm:ss");  
+            String timeStr = dateLog.format(dateOld); 
+	    	systemlog.addLog("Wifi", System.currentTimeMillis(), "User", "mSysTime", ""+timeStr);
+            Log.d("WifiServer", "get date:" + timeStr);*/
+            setMcuDate(Get_WifiServer_WifiDisableTime());
+        }
+        if(Get_WifiServer_SnapshotEn() == 1){    // 啟動拍照                       
+            Set_WifiServer_SnapshotEn(-1);
+            if(mCaptureCnt == 0 || mCaptureMode != 0)
+                doTakePicture(1);
+            else
+                doTakePicture(2);           
+            do_power_on();                  // power standby -> on
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+            setFeedBackData("SNAP", 4, 0);
+        }
+        if(Get_WifiServer_RecordEn() == 1){        // 啟動錄影
+            Set_WifiServer_RecordEn(-1);                       
+            Set_DataBin_TimeLapseMode(Get_WifiServer_TimeLapseMode());
+            mTimeLapseMode = Get_DataBin_TimeLapseMode(); 
+            startREC(); 
+            do_power_on();                  // power standby -> on
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+//tmp            systemlog.addLog("info", System.currentTimeMillis(), "machine", "doRecordStart", "---");
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("RECM", 4, mTimeLapseMode);
+        }
+        if(Get_WifiServer_RecordEn() == 0){        // 關閉錄影
+            Set_WifiServer_RecordEn(-1);
+            stopREC();
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+//tmp            systemlog.addLog("info", System.currentTimeMillis(), "machine", "doRecordStop", "---");
+//tmp            if(mDebugLogSaveToSDCard == 1){
+//tmp        		systemlog.writeDebugLogFile();;
+//tmp            }
+            setFeedBackData("RECD", 4, 0);
+        }
+        if(Get_WifiServer_AdjustEn() == 1){
+            Set_WifiServer_AdjustEn(0);
+            if(Get_WifiServer_EV() != 0xffff){
+            	Set_DataBin_EVValue(Get_WifiServer_EV());
+                setAETergetRateWifiCmd(Get_DataBin_EVValue());
+                writeUS360DataBinFlag = 1;
+                Set_WifiServer_EV(0xffff);
+                setFeedBackData("AJEV", 4, Get_DataBin_EVValue());
+            }
+            if(Get_WifiServer_MF() != 0xffff){
+            	Set_DataBin_MFValue(Get_WifiServer_MF());
+                setALIGlobalPhiWifiCmd(Get_DataBin_MFValue());
+                writeUS360DataBinFlag = 1;
+                Set_WifiServer_MF(0xffff);
+                setFeedBackData("MF11", 4, Get_DataBin_MFValue());
+            }
+            if(Get_WifiServer_MF2() != 0xffff){
+            	Set_DataBin_MF2Value(Get_WifiServer_MF2());
+                setALIGlobalPhi2WifiCmd(Get_DataBin_MF2Value());
+                writeUS360DataBinFlag = 1;
+                Set_WifiServer_MF2(0xffff);
+                setFeedBackData("MF22", 4, Get_DataBin_MF2Value());
+            }
+        }
+        if(Get_WifiServer_ModeSelectEn() == 1){  
+            Set_WifiServer_ModeSelectEn(2);
+            get_current_usec(&nowTime);
+            Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 1);
+            mPlayModeTmp = Get_WifiServer_PlayMode();
+            if(Get_WifiServer_ResoluMode() == 8) ResolutionMode = 1;							//暫時擋掉10K MODE
+            else                                 ResolutionMode = Get_WifiServer_ResoluMode();
+            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
+
+            stopREC();
+            chooseModeFlag = 1;
+            Set_DataBin_PlayMode(mPlayModeTmp);
+            Set_DataBin_ResoultMode(mResolutionMode);
+            TestToolCmdInit();
+            
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("MODE", 4, mResolutionMode); 
+        }
+        if(Get_WifiServer_ISOEn() == 1){            // ISO select
+            Set_WifiServer_ISOEn(0);
+            Set_DataBin_ISOValue(Get_WifiServer_ISOValue());
+            if(Get_WifiServer_ISOValue() == -1) setAEGGainWifiCmd(0, Get_WifiServer_ISOValue());
+            else                                setAEGGainWifiCmd(1, Get_WifiServer_ISOValue());
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("ISOM", 4, Get_DataBin_ISOValue());
+        }
+        if(Get_WifiServer_FEn() == 1){            // 快門 select
+            Set_WifiServer_FEn(0);
+            Set_DataBin_ExposureValue(Get_WifiServer_FValue());
+            if(Get_WifiServer_FValue() == -1)   setExposureTimeWifiCmd(0, Get_DataBin_ExposureValue());
+            else                                setExposureTimeWifiCmd(1, Get_DataBin_ExposureValue());
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("SHOT", 4, Get_DataBin_ExposureValue()); 
+        }
+        if(Get_WifiServer_WBEn() == 1){            // WB select
+            Set_WifiServer_WBEn(0);
+            Set_DataBin_WBMode(Get_WifiServer_WBMode());
+            mWhiteBalanceMode = Get_DataBin_WBMode();
+            setWBMode(mWhiteBalanceMode);
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("WBMD", 4, Get_DataBin_WBMode()); 
+        }
+        if(Get_WifiServer_CamSelEn() == 1){        // Cam select
+            Set_WifiServer_CamSelEn(0);
+            Set_DataBin_CamPositionMode(Get_WifiServer_CamMode());
+            switch(Get_DataBin_CamPositionMode()) {
+            case 0: mCameraPositionCtrlMode = 1;  break;
+            case 1: mCameraPositionCtrlMode = 0; mCameraPositionMode = 0;  break;
+            case 2: mCameraPositionCtrlMode = 0; mCameraPositionMode = 1;  break;
+            case 3: mCameraPositionCtrlMode = 0; mCameraPositionMode = 2; break;
+            default: mCameraPositionCtrlMode = 0; mCameraPositionMode = 0; break;
+            }
+            if(mCameraPositionMode != mCameraPositionModeLst) {
+            	mCameraPositionModeLst = mCameraPositionMode;
+            	mCameraPositionModeChange = 1;
+            	Set_Power_Saving_Wifi_Cmd(System.currentTimeMillis(), POWER_SAVING_CMD_OVERTIME_15S, 5);
+            }
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("CAMS", 4, Get_DataBin_CamPositionMode()); 
+        }
+        if(Get_WifiServer_SaveToSelEn() == 1){        // 儲存至 select
+            Set_WifiServer_SaveToSelEn(0);
+            Set_DataBin_SaveToSel(Get_WifiServer_SaveToSel());
+            if(Get_DataBin_SaveToSel() == 0)            
+                sprintf(sdPath, "/mnt/sdcard\0");
+            else if(Get_DataBin_SaveToSel() == 1)        
+                sprintf(sdPath, "/mnt/extsd\0");   //getSDPath();    //sd_path = "/mnt/extsd";
+            //setSDPathStr(&sdPath[0], strlen(sdPath));
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("SAVE", 4, Get_DataBin_SaveToSel()); 
+        }
+        if(Get_WifiServer_FormatEn() == 1){        // Format SD
+            Set_WifiServer_FormatEn(0);
+            format = formatMedia(&sdPath[0]);
+            setFeedBackData("FMAT", 4, format);
+        }
+        if(Get_WifiServer_DeleteEn() == 1){         // 刪除檔案         
+            list = Get_WifiServer_DeleteFileName();
+            wifiDeleteFile(list);
+            isNeedNewFreeCount = 1;
+            Set_WifiServer_DeleteEn(2);
+            setFeedBackData("DELE", 4, 0);
+        }
+        if(Get_WifiServer_CaptureModeEn() == 1){        // 拍照模式
+            Set_WifiServer_CaptureModeEn(0);
+            Set_DataBin_CameraMode(mCameraMode);
+            Set_DataBin_CaptureMode(Get_WifiServer_CapMode());
+            mCaptureMode = Get_DataBin_CaptureMode();
+            mTimeLapseMode = 0;
+            Set_DataBin_TimeLapseMode(mTimeLapseMode);
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("CPMD", 4, CaptureMode);
+        }
+        if(Get_WifiServer_TimeLapseEn() == 1){        // Time-Lapse模式
+            Set_WifiServer_TimeLapseEn(0);
+            Set_DataBin_TimeLapseMode(Get_WifiServer_TimeLapse());
+            if(Get_WifiServer_TimeLapse() != 0){
+            	Set_DataBin_SaveTimelapse(Get_WifiServer_TimeLapse()); 
+            }
+            if(mCameraMode == 2){
+                mTimeLapseMode = Get_DataBin_TimeLapseMode();
+                Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+            }
+            writeUS360DataBinFlag = 1; 
+            setFeedBackData("TLMD", 4, mTimeLapseMode);
+        }
+        if(Get_WifiServer_SharpnessEn() == 1){        // sharpness
+            Set_WifiServer_SharpnessEn(0);
+            Set_DataBin_Sharpness(Get_WifiServer_Sharpness());
+            setStrengthWifiCmd(Get_DataBin_Sharpness());
+            writeUS360DataBinFlag = 1; 
+            setFeedBackData("SHAR", 4, Get_DataBin_Sharpness());
+        }
+        if(Get_WifiServer_CaptureCntEn() == 1){        // captureCnt
+            Set_WifiServer_CaptureCntEn(0);
+            Set_DataBin_CameraMode(mCameraMode);
+            Set_DataBin_CaptureCnt(Get_WifiServer_CaptureCnt());
+            mCaptureCnt = Get_DataBin_CaptureCnt();
+            mTimeLapseMode = 0;
+            Set_DataBin_TimeLapseMode(mTimeLapseMode);
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("CCNT", mCaptureCnt);
+        }
+        if(Get_WifiServer_EthernetSettingsEn() == 1){    // Ethernet Settings
+            Set_WifiServer_EthernetSettingsEn(0);
+            Set_DataBin_EthernetMode(Get_WifiServer_EthernetMode());
+            if(Get_WifiServer_EthernetIP(&ip[0], sizeof(ip)) == 0)
+                Set_DataBin_EthernetIP(&ip[0]);
+            if(Get_WifiServer_EthernetMask(&mask[0], sizeof(mask)) == 0)
+                Set_DataBin_EthernetMask(&mask[0]);
+            if(Get_WifiServer_EthernetGateway(&gateway[0], sizeof(gateway)) == 0)
+                Set_DataBin_EthernetGateWay(&gateway[0]);
+            if(Get_WifiServer_EthernetDNS(&dns[0], sizeof(dns)) == 0)
+                Set_DataBin_EthernetDNS(&dns[0]);
+//tmp            if(mEth != null)
+//tmp                mEth.SetInfo(databin.getEthernetMode(), databin.getEthernetIP(), databin.getEthernetMask(), databin.getEthernetGateWay(), databin.getEthernetDNS());
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("NETS", Get_DataBin_EthernetMode());
+        }
+        if(Get_WifiServer_ChangeFPSEn() == 1){            // change FPS
+            Set_WifiServer_ChangeFPSEn(0);
+            mFPS = Get_WifiServer_FPS() * 10;
+            if(mFPS == 300 || mFPS == 250)
+                mUserCtrl = 1;
+            else
+                mUserCtrl = 0;
+            Set_DataBin_UserCtrl30Fps(mUserCtrl);
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_MediaPortEn() == 1){            // change media port
+            Set_WifiServer_MediaPortEn(0);
+            Set_DataBin_MediaPort(Get_WifiServer_Port());
+            
+            //tmp
+            /*if(wifiSerThe != null){
+                wifiSerThe.stopThread();
+                wifiSerThe = null;
+                System.gc();
+            }
+            wifiSerThe = new WifiServerThread(context, handler, databin.getMediaPort());
+            wifiSerThe.setName("WifiServerThread " + String.valueOf(databin.getMediaPort()));
+            wifiSerThe.setWifiSerCB(wifiSerCB);
+            wifiSerThe.start();*/
+            
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("PORT", Get_DataBin_MediaPort());
+        }
+        if(Get_WifiServer_DrivingRecordEn() == 1){
+            Set_WifiServer_DrivingRecordEn(0);
+            Set_DataBin_DrivingRecord(Get_WifiServer_DrivingRecord());
+            mDrivingRecordMode = Get_DataBin_DrivingRecord();
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("DVRC", mDrivingRecordMode);
+        }
+        if(Get_WifiServer_WifiChannelEn() == 1){
+            Set_WifiServer_WifiChannelEn(0);
+            Set_DataBin_WifiChannel(Get_WifiServer_WifiChannel());
+            mWifiChannel = Get_DataBin_WifiChannel();
+//tmp            WriteWifiChannel(mWifiChannel);
+            stopWifiAp();
+            usleep(1000000);
+            startWifiAp(&mWifiApSsid[0], &mWifiPassword[0], mWifiChannel, 0);
+            usleep(1000000);
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_EPFreqEn() == 1){
+            Set_WifiServer_EPFreqEn(0);
+            get_current_usec(&nowTime);
+            Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 9);
+            Set_DataBin_ExposureFreq(Get_WifiServer_EPFreq());
+            mAegEpFreq = Get_DataBin_ExposureFreq();
+            setFpgaEpFreq(mAegEpFreq);
+            mPlayModeTmp = mPlayMode;
+            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, 1, mUserCtrl, mCameraMode);
+            chooseModeFlag = 1; 
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("EPFQ", mAegEpFreq);
+        }
+        if(Get_WifiServer_FanCtrlEn() == 1){
+            Set_WifiServer_FanCtrlEn(0);
+            Set_DataBin_FanControl(Get_WifiServer_FanCtrl());
+            mFanCtrl = Get_DataBin_FanControl();
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_ColorSTModeEn() == 1) {
+            Set_WifiServer_ColorSTModeEn(0);
+            Set_DataBin_ColorSTMode((Get_WifiServer_mColorSTMode() & 0x1)); 
+            mColorStitchingMode = Get_DataBin_ColorSTMode();
+            SetColorSTSW(mColorStitchingMode);
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_TranslucentModeEn() == 1) {
+            Set_WifiServer_TranslucentModeEn(0);
+            Set_DataBin_Translucent(Get_WifiServer_TranslucentMode());
+            mTranslucentMode = Get_DataBin_Translucent();
+            SetTransparentEn(mTranslucentMode); 
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_AutoGlobalPhiAdjEn() == 1) {
+            Set_WifiServer_AutoGlobalPhiAdjEn(0);
+            Set_DataBin_AutoGlobalPhiAdjMode(Get_WifiServer_AutoGlobalPhiAdjMode());
+            mAutoGlobalPhiAdjMode = Get_DataBin_AutoGlobalPhiAdjMode();
+            if(mAutoGlobalPhiAdjMode == 0)
+            	setSmoothParameter(3, 0);
+            else
+                setSmoothParameter(3, mAutoGlobalPhiAdjMode);
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_AutoGlobalPhiAdjOneTimeEn() == 1) {
+            Set_WifiServer_AutoGlobalPhiAdjOneTimeEn(0);
+            if(mAutoGlobalPhiAdjMode != 0)
+            	setSmoothParameter(3, 100);
+        }
+        if(Get_WifiServer_HDMITextVisibilityEn() == 1 || Get_WifiServer_HDMITextVisibilityEn() == 2) {
+            if(Get_WifiServer_HDMITextVisibilityEn() == 1){
+                mHDMITextVisibilityMode = Get_WifiServer_HDMITextVisibilityMode();
+                Set_DataBin_HDMITextVisibility(mHDMITextVisibilityMode);
+            }else if(Get_WifiServer_HDMITextVisibilityEn() == 2){
+                mHDMITextVisibilityMode = Get_DataBin_HDMITextVisibility();
+            }
+            Set_WifiServer_HDMITextVisibilityEn(0);
+//tmp            mHandler.obtainMessage(HDMI_TEXT_VISIBILITY).sendToTarget();
+        }
+        if(Get_WifiServer_RTMPSwitchEn() == 1) {
+        	Set_WifiServer_RTMPSwitchEn(0);
+        	rtmpSwitch = Get_WifiServer_RTMPSwitchMode();
+        	if(rtmpSwitch == 0){
+            	/*//啟動server
+            	if(runNginx() == 0) createRtmp();
+            	else rtmpSwitch = 1;*/
+        		runNginx();
+        		rtmpConnectCount = 1;
+            	createRtmp();
+            }else{
+            	/*//暫時停用server
+            	if(stopNginx() == 0) closeRtmp();
+            	else rtmpSwitch = 0;*/
+            	stopNginx();
+            	rtmpConnectCount = 0;
+            	closeRtmp();
+            }
+            Set_WifiServer_SendRtmpStatusCmd(1);
+            setSockCmdSta_rtmpStatus(0);
+        }
+        if(Get_WifiServer_RTMPConfigureEn() == 1) {
+        	Set_WifiServer_RTMPConfigureEn(0);
+        	db_debug("set configure => rtmpUrl %d", rtmpUrl);
+        	//writeRtmpConfigure();
+        }
+        /*if(wifiSerThe.mPlayFpsEn == 1) {
+            wifiSerThe.mPlayFpsEn = 0;
+            int fps = wifiSerThe.mPlayFpsMode;
+            int fpsFreq = fpsMax[databin.getResoultMode()] / fps;
+        	if(fpsFreq != 0){
+        		SetPlayFpsFreq(fpsFreq);
+        	}
+            databin.setPlayFps(fps);
+            writeUS360DataBinFlag = 1;
+        }*/
+        if(Get_WifiServer_BitrateEn() == 1) {
+            Set_WifiServer_BitrateEn(0);
+//tmp            SetBitrateMode(Get_WifiServer_BitrateMode());
+            Set_DataBin_Bitrate(Get_WifiServer_BitrateMode());
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_LiveBitrateEn() == 1) { 
+            Set_WifiServer_LiveBitrateEn(0);
+//tmp            SetLiveBitrateMode(Get_WifiServer_LiveBitrateMode());
+            Set_DataBin_LiveBitrate(Get_WifiServer_LiveBitrateMode());
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_JPEGQualityModeEn() == 1) { 
+        	Set_WifiServer_JPEGQualityModeEn(0);
+            get_current_usec(&nowTime);
+        	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 14);
+        	Set_DataBin_ImageQuality(Get_WifiServer_JPEGQualityMode()); 
+            mJpegQualityMode = Get_DataBin_ImageQuality();
+			writeCmdTable(4, mResolutionMode, mFPS, 0, 0, 1);
+        }
+        if(Get_WifiServer_SpeakerModeEn() == 1) {
+            Set_WifiServer_SpeakerModeEn(0);
+        	Set_DataBin_SpeakerMode(Get_WifiServer_SpeakerMode());
+        	mSpeakerMode = Get_DataBin_SpeakerMode();
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_LedBrightnessEn() == 1) {
+            Set_WifiServer_LedBrightnessEn(0);
+        	Set_DataBin_LedBrightness(Get_WifiServer_LedBrightness());
+        	mLedBrightness = Get_DataBin_LedBrightness();
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_OledControlEn() == 1) {
+            Set_WifiServer_OledControlEn(0);
+        	Set_DataBin_OledControl(Get_WifiServer_OledControl());
+        	mOledControl = Get_DataBin_OledControl();
+//tmp            setOledControl(mOledControl);  //oled.c
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_CmcdTimeEn() == 1) {   
+        	Set_WifiServer_CmcdTimeEn(0);
+        	Click_Cap_Rec_Button(Get_WifiServer_CmcdTime());
+        }
+        if(Get_WifiServer_DelayValEn() == 1) {
+            Set_WifiServer_DelayValEn(0);
+        	Set_DataBin_DelayValue(Get_WifiServer_DelayVal());
+//tmp			showOLEDDelayValue(Get_DataBin_DelayValue());   //oled.c
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_ResoSaveEn() == 1) {
+        	Set_WifiServer_ResoSaveEn(0);
+        	switch(Get_WifiServer_ResoSaveMode()){
+        	case 0:
+        		Set_DataBin_PhotographReso(Get_WifiServer_ResoSaveData());
+        		break;
+        	case 1:
+        		Set_DataBin_RecordReso(Get_WifiServer_ResoSaveData());
+        		break;
+        	case 2:
+        		Set_DataBin_TimeLapseReso(Get_WifiServer_ResoSaveData());
+        		break;
+        	}
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_CompassEn() == 1){
+            Set_WifiServer_CompassEn(0);
+            bmm050Start = 1;
+//tmp            setBmm050Times(Get_WifiServer_CompassVal());   //oled.c
+        }
+        if(Get_WifiServer_CameraModeEn() == 1){           	
+            Set_WifiServer_CameraModeEn(0);
+            get_current_usec(&nowTime);
+            Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 16);
+            Set_DataBin_CameraMode(Get_WifiServer_CameraModeVal());
+            mCameraMode = Get_DataBin_CameraMode();
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+        }
+        if(Get_WifiServer_PlayModeCmdEn() == 1){
+        	Set_WifiServer_PlayModeCmdEn(0);
+        	if(Get_WifiServer_RecordHdrVal() == 1){
+        		if(Get_WifiServer_CameraModeVal() == 1){
+        			Set_WifiServer_CameraModeVal(CAMERA_MODE_REC_WDR);		//切換為錄影WDR
+        		}else if(Get_WifiServer_CameraModeVal() == 2){
+        			Set_WifiServer_CameraModeVal(CAMERA_MODE_TIMELAPSE_WDR);		//切換為縮時WDR
+        		}
+        	}
+        	befCameraMode = mCameraMode;
+        	oriCameraMode = Get_WifiServer_CameraModeVal();
+        	/*if(oriCameraMode != databin.checkIntValue(databin.TagCameraMode, oriCameraMode)){
+        		switch(Get_WifiServer_PlayTypeVal()){
+                    default:
+            		case 0:
+            			Set_WifiServer_CameraModeVal(CAMERA_MODE_CAP);
+            			Set_WifiServer_ResoluMode(RESOLUTION_MODE_12K);
+            			break;
+            		case 1: 
+            			Set_WifiServer_CameraModeVal(CAMERA_MODE_REC);
+            			Set_WifiServer_ResoluMode(RESOLUTION_MODE_4K);
+            			break;
+            		case 2: 
+            			Set_WifiServer_CameraModeVal(CAMERA_MODE_TIMELAPSE);
+            			Set_WifiServer_ResoluMode(RESOLUTION_MODE_6K);
+            			break;
+        		}
+        		db_debug("get Out of range CameraMode:%d,Change to:%d", oriCameraMode, Get_WifiServer_CameraModeVal());
+        	}*/
+        	
+        	Set_DataBin_CameraMode(Get_WifiServer_CameraModeVal());
+            Set_DataBin_PlayMode(Get_WifiServer_PlayMode());
+            Set_DataBin_ResoultMode(Get_WifiServer_ResoluMode());
+            mCameraMode = Get_DataBin_CameraMode();
+            mPlayModeTmp = Get_DataBin_PlayMode();
+            mResolutionMode = Get_DataBin_ResoultMode();
+            
+            get_current_usec(&nowTime);
+        	if(mCameraMode == 2 || mCameraMode == 11)		//Timelapse / TimelapseWDR
+        		Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 17);
+        	else
+        		Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 17);
+            
+            switch(mCameraMode){
+            case 0:
+            	Set_DataBin_CapHdrMode(0);
+            	break;
+            case 1:
+            	Set_DataBin_TimeLapseMode(0);
+            	mTimeLapseMode = Get_DataBin_TimeLapseMode();
+            	break;
+            case 2:
+            	Set_DataBin_TimeLapseMode(databin.getSaveTimelapse());
+                mTimeLapseMode = Get_DataBin_TimeLapseMode();
+            	break;
+            case 5:
+            	Set_DataBin_CapHdrMode(1);
+            	break;
+            case 6:
+            	Set_DataBin_CapHdrMode(2);
+            	break;
+            case 7:
+            	Set_DataBin_CapHdrMode(3);
+            	break;
+            case 8:
+            	if(befCameraMode == CAMERA_MODE_HDR || befCameraMode == CAMERA_MODE_NIGHT_HDR)	//紀錄HDR狀態
+            		Set_DataBin_CapHdrMode(5);
+            	else if(befCameraMode == CAMERA_MODE_CAP || befCameraMode == CAMERA_MODE_NIGHT)
+            		Set_DataBin_CapHdrMode(4);
+            	else if(Get_DataBin_CapHdrMode() != 4 && Get_DataBin_CapHdrMode() != 5)
+            		Set_DataBin_CapHdrMode(4);
+            	break;
+            case 9:
+            	Set_DataBin_CapHdrMode(5);
+            	break;
+            case 14:
+//tmp            	init3dmap();    //awcodec.c
+            	Set_DataBin_CameraMode(CAMERA_MODE_CAP);	//位移取得模式不保留
+            	break;
+            }
+        	
+            Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
+
+            stopREC();
+            chooseModeFlag = 1;
+            
+            TestToolCmdInit();               
+            
+            writeUS360DataBinFlag = 1;
+            setFeedBackData("MODE", mResolutionMode);
+        }
+        if(Get_WifiServer_DebugLogModeEn() == 1){
+            Set_WifiServer_DebugLogModeEn(0);
+            Set_DataBin_DebugLogMode(Get_WifiServer_DebugLogModeVal());
+            mDebugLogSaveToSDCard = Get_DataBin_DebugLogMode();
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_DatabinSyncEn() == 1){
+            Set_WifiServer_DatabinSyncEn(0);
+            Set_WifiServer_SyncEn(1);
+        }
+        if(Get_WifiServer_BottomModeEn() == 1){          	
+        	Set_WifiServer_BottomModeEn(0);
+            get_current_usec(&nowTime);
+        	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 33);
+        	Set_DataBin_BottomMode(Get_WifiServer_BottomModeVal());
+        	Set_DataBin_BottomSize(Get_WifiServer_BottomSizeVal()); 
+        	mBottomMode = Get_DataBin_BottomMode(); 
+        	mBottomSize = Get_DataBin_BottomSize(); 
+//tmp        	SetBottomValue(mBottomMode, mBottomSize);   //awcodec.c
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_BottomEn() == 1) {
+        	Set_WifiServer_BottomEn(0);   
+            get_current_usec(&nowTime);
+        	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 18);
+        	Check_Bottom_File(mBottomMode, mBottomTextMode, 0);
+        }
+        if(Get_WifiServer_BotmEn() == 3){
+        	if(Get_WifiServer_BotmTotle() == -1){
+//tmp                
+/*                snprintf(path, sizeof(path), "/mnt/sdcard/US360/Background/%s.jpg\0", BOTTOM_FILE_NAME_USER);
+        		if(!checkFileExist(&path[0])){
+//tmp        			CreatBackgroundDir();
+        		}
+        		
+        		sendImgThe.setBottomClear();
+                snprintf(path, sizeof(path), "/mnt/sdcard/US360/Background/%s.jpg\0", BOTTOM_FILE_NAME_DEFAULT);
+        		if(checkFileExist(&path[0]))
+        			sendImgThe.setBottomName("/mnt/sdcard/US360/Background",BOTTOM_FILE_NAME_DEFAULT);
+        		
+                snprintf(path, sizeof(path), "/mnt/sdcard/US360/Background/%s.jpg\0", BOTTOM_FILE_NAME_ORG);
+        		if(checkFileExist(&path[0])){
+        			sendImgThe.setBottomName("/mnt/sdcard/US360/Background",BOTTOM_FILE_NAME_ORG);
+        		}else{
+        			sendImgThe.setBottomName("/mnt/sdcard/US360/Background",BOTTOM_FILE_NAME_USER);
+        		}
+        		
+        		Set_WifiServer_BotmTotle(sendImgThe.getBottomTotle());
+        		sendImgThe.startBottomThread();*/
+        	}
+        }
+        if(Get_WifiServer_BotmEn() == 1){
+//tmp            
+/*        	if(sendImgThe.mBottomOutputLen > 0 && sendImgThe.isEnd == false){
+        		nLen = sendImgThe.mBottomOutputLen;
+        		if(Get_WifiServer_BotmLen() == 0 && nLen <= cp.JAVA_UVC_BUF_MAX){
+        			//System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mBotmData, 0, nLen);
+                    Copy_To_WifiServer_BotmData(sendImgThe.mOutputData, nLen, 0);
+        			Set_WifiServer_BotmLen(nLen);
+        			sendImgThe.mBottomOutputLen = -1;
+        		}
+        	}
+        	else if(sendImgThe.mBottomOutputLen == -2 && Get_WifiServer_BotmLen() == 0){
+        		Set_WifiServer_BotmEn(0);
+        		sendImgThe.stopBottomThread();
+        		sendImgThe.mBottomOutputLen = -1;
+        	}*/
+        }
+        if(Get_WifiServer_HdrEvModeEn() == 1){
+            Set_WifiServer_HdrEvModeEn(0);
+            Set_DataBin_hdrEvMode(Get_WifiServer_HdrEvModeVal());
+            mHdrIntervalEvMode = Get_DataBin_hdrEvMode();
+        	if(mHdrIntervalEvMode == 2)      mWdrMode = 2;	//弱
+        	else if(mHdrIntervalEvMode == 4) mWdrMode = 1;	//中
+        	else if(mHdrIntervalEvMode == 8) mWdrMode = 0;	//強
+//tmp            SetWDRLiveStrength(mWdrMode);      //us360_func.c
+            
+            Set_DataBin_HdrManual(Get_WifiServer_HdrEvModeManual());
+            if(Get_WifiServer_HdrEvModeManual() == 2){				//Auto
+            	Set_DataBin_HdrAutoStrength(Get_WifiServer_HdrEvModeStrength());
+            }
+            else if(Get_WifiServer_HdrEvModeManual() == 1){			//手動開
+                Set_DataBin_HdrNumber(Get_WifiServer_HdrEvModeNumber());
+                Set_DataBin_HdrIncrement(Get_WifiServer_HdrEvModeIncrement()); 
+                Set_DataBin_HdrStrength(Get_WifiServer_HdrEvModeStrength());
+            }else if(Get_WifiServer_HdrEvModeManual() == 0) {		//手動關
+            	//
+            }
+            Set_DataBin_HdrDeghosting(Get_WifiServer_HdrEvModeDeghost());
+            set_A2K_DeGhostEn(Get_DataBin_HdrDeghosting() );
+            Setting_HDR7P_Proc(Get_DataBin_HdrManual(), mHdrIntervalEvMode);
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_AebModeEn() == 1){
+            Set_WifiServer_AebModeEn(0);
+            Set_DataBin_AebNumber(Get_WifiServer_AebModeNumber());
+            Set_DataBin_AebIncrement(Get_WifiServer_AebModeIncrement());
+            setting_AEB(Get_DataBin_AebNumber(), Get_DataBin_AebIncrement() * 2);
+            if(mCameraMode == 3) {
+            	isNeedNewFreeCount = 1;
+            }
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_LiveQualityEn() == 1){
+            Set_WifiServer_LiveQualityEn(0);
+            Set_DataBin_LiveQualityMode(Get_WifiServer_LiveQualityMode());
+			mJpegLiveQualityMode = Get_DataBin_LiveQualityMode();
+			set_A2K_JPEG_Live_Quality_Mode(mJpegLiveQualityMode);						
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_SendToneEn() == 1){
+            Set_WifiServer_SendToneEn(0);
+            Set_DataBin_HdrTone(Get_WifiServer_SendToneVal());
+            SetHDRTone(Get_DataBin_HdrTone());					
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_SendWbTempEn() == 1){
+            Set_WifiServer_SendWbTempEn(0);
+            mWhiteBalanceMode = 5;
+            Set_DataBin_WbTemperature(Get_WifiServer_SendWbTempVal());
+            Set_DataBin_WbTint(Get_WifiServer_SendWbTintVal());
+            Set_DataBin_WBMode(mWhiteBalanceMode);
+            setWBMode(mWhiteBalanceMode);
+            setWBTemperature(Get_DataBin_WbTemperature() * 100, Get_DataBin_WbTint() );
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_GetRemoveHdrEn() == 1){
+        	Set_WifiServer_GetRemoveHdrEn(0);
+        	Set_DataBin_RemoveHdrMode(Get_WifiServer_GetRemoveHdrMode());
+        	if(Get_WifiServer_GetRemoveHdrMode() == 1) {			//Auto
+        		Set_DataBin_RemoveHdrAutoStrength(Get_WifiServer_GetRemoveHdrStrength());  
+        	}
+        	else {
+            	Set_DataBin_RemoveHdrIncrement(Get_WifiServer_GetRemoveHdrEv());
+            	Set_DataBin_RemoveHdrStrength(Get_WifiServer_GetRemoveHdrStrength());  
+        	}
+            Setting_RemovalHDR_Proc(Get_DataBin_RemoveHdrMode());
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_GetAntiAliasingEn() == 1){
+            Set_WifiServer_GetAntiAliasingEn(0);
+            if(customerCode == CUSTOMER_CODE_ALIBABA) {
+            	Set_DataBin_AntiAliasingEn(0);
+            	SetAntiAliasingEn(0);
+            }
+            else {
+            	Set_DataBin_AntiAliasingEn(Get_WifiServer_etAntiAliasingVal());
+            	SetAntiAliasingEn(Get_DataBin_AntiAliasingEn() );
+            }
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_GetRemoveAntiAliasingEn() == 1){
+            Set_WifiServer_GetRemoveAntiAliasingEn(0);
+            if(customerCode == CUSTOMER_CODE_ALIBABA) {
+            	Set_DataBin_RemoveAntiAliasingEn(0);		
+            	SetRemovalAntiAliasingEn(0);
+            }
+            else {
+            	Set_DataBin_RemoveAntiAliasingEn(Get_WifiServer_GetRemoveAntiAliasingVal());		
+            	SetRemovalAntiAliasingEn(Get_DataBin_RemoveAntiAliasingEn());
+            }
+            writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_GetDefectivePixelEn() == 1){
+        	Set_WifiServer_GetDefectivePixelEn(0);
+        	defectStep = 1;
+        	defectType = DEFECT_TYPE_USER;
+			SetDefectType(defectType);
+			SetDefectStep(defectStep);
+        	Set_Cap_Rec_Start_Time(0, 3);
+        	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S, 7);
+//tmp			
+/*        	new Thread(new Runnable(){  //壞點檢測最多等100秒
+				public void run(){
+					try {
+						Thread.sleep(30000);
+						int getState = 0;
+						for(int x = 0; x < 70; x++){	//最多等待100秒
+							if(defectState != DEFECT_STATE_NONE){
+								Set_WifiServer_SendDefectivePixelVal(defectState);
+								getState = 1;
+								break;
+							}
+							Thread.sleep(1000);
+						}
+						if(getState == 0){
+							Set_WifiServer_SendDefectivePixelVal(-1);
+							db_error("wifi BadDog Timeout");
+						}
+						Set_WifiServer_SendDefectivePixelEn(1);
+						
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+            	}
+            }).start();*/       	
+        }
+        if(Get_WifiServer_GetEstimateEn() == 1){
+            switch(CameraMode){
+            case 1:
+            case 2:
+            case 10:
+            case 11:
+            	Set_WifiServer_GetEstimateEn(0);
+            	break;
+            }
+            if(readCaptureDCnt() == 0){
+            	Set_WifiServer_GetEstimateEn(0);
+            }else{
+            	t = getCaptureEstimatedTime();
+                ep_t = getCaptureEpTime();
+                get_current_usec(&nowTime);
+                if(t != -1){
+                	Set_WifiServer_SetEstimateTime(t);
+                    Set_WifiServer_SetEstimateStamp(nowTime);
+                    Set_WifiServer_SetEstimateEn(1);
+                }
+                if(ep_t != -1){
+                	Set_WifiServer_CaptureEpTime(ep_t);
+                	Set_WifiServer_CaptureEpStamp(nowTime);
+                	Set_WifiServer_SetEstimateEn(1);
+                }
+            }	
+        }
+        if(Get_WifiServer_UninstalldatesEn() == 1){
+        	Set_WifiServer_UninstalldatesEn(0);
+        	runUninstallDates();
+        }
+        if(Get_WifiServer_InitializeDataBinEn() == 1){
+        	Set_WifiServer_InitializeDataBinEn(0);
+//tmp        	
+/*        	try{
+    			DeleteUS360DataBin();
+    			System.exit(0);
+        	}catch(Exception ex){
+        		Log.d("Main",ex.getMessage());
+        	}*/
+        }
+        if(Get_WifiServer_SensorControlEn() == 1){
+        	Set_WifiServer_SensorControlEn(0);
+        	Set_DataBin_CompassMode(Get_WifiServer_CompassModeVal());
+        	Set_DataBin_GsensorMode(Get_WifiServer_GsensorModeVal());
+//tmp        	setBmm050Enable(Get_DataBin_CompassMode());     //bmm050_support.c
+//tmp        	setBma2x2Enable(Get_DataBin_GsensorMode());     //bma2x2_support.c
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_BottomTextEn() == 1){
+        	Set_WifiServer_BottomTextEn(0);
+            get_current_usec(&nowTime);
+        	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 27);
+        	mBottomTextMode = Get_WifiServer_BottomTMode();
+        	SetBottomTextMode(Get_WifiServer_BottomTMode());
+        	Set_DataBin_BottomTMode(Get_WifiServer_BottomTMode());
+        	Set_DataBin_BottomTColor(Get_WifiServer_BottomTColor());
+        	Set_DataBin_BottomBColor(Get_WifiServer_BottomBColor());
+        	Set_DataBin_BottomTFont(Get_WifiServer_BottomTFont());
+        	Set_DataBin_BottomTLoop(Get_WifiServer_BottomTLoop());
+            if(Get_WifiServer_BottomText(&text[0], sizeof(text)) >= 0)
+                Set_DataBin_BottomText(&text[0]);  
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_FpgaEncodeTypeEn() == 1){
+        	Set_WifiServer_FpgaEncodeTypeEn(0);
+        	Set_DataBin_FpgaEncodeType(Get_WifiServer_FpgaEncodeTypeVal());
+        	mTimelapseEncodeType = Get_DataBin_FpgaEncodeType();
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_SetWBColorEn() == 1){
+        	Set_WifiServer_SetWBColorEn(0);
+        	mWhiteBalanceMode = 5;
+        	r = Get_WifiServer_SetWBRVal();
+        	g = Get_WifiServer_SetWBGVal();
+        	b = Get_WifiServer_SetWBBVal();
+            snprintf(rgb_str, sizeof(rgb_str), "%d.%d.%d\0", r, g, b);
+        	Set_DataBin_WBMode(mWhiteBalanceMode);
+        	Set_DataBin_WbRGB(&rgb_str[0]);
+            setWBMode(mWhiteBalanceMode);
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_GetWBColorEn() == 1){
+        	Set_WifiServer_GetWBColorEn(0);
+        	getWBRgbData(&data[0]);
+        	Set_WifiServer_SendWBRVal(data[0]);
+        	Set_WifiServer_SendWBGVal(data[1]);
+        	Set_WifiServer_SendWBBVal(data[2]);
+        	Set_WifiServer_SendWBColorEn(1);
+        	writeUS360DataBinFlag = 1;
+        }
+        if(Get_WifiServer_SetContrastEn() == 1){
+        	Set_WifiServer_SetContrastEn(0);
+        	Set_DataBin_Contrast(Get_WifiServer_SetContrastVal());
+        	setContrast(Get_DataBin_Contrast());
+        	writeUS360DataBinFlag = 1;	
+        }
+        if(Get_WifiServer_SetSaturationEn() == 1){
+        	Set_WifiServer_SetSaturationEn(0);
+        	Set_DataBin_Saturation(Get_WifiServer_SetSaturationVal());
+        	//mSetSaturationVal: -7 ~ 7
+        	mSaturation = calSaturation(Get_WifiServer_SetSaturationVal());
+        	SetSaturationValue(0, mSaturation);
+        	writeUS360DataBinFlag = 1;	
+        }
+        if(Get_WifiServer_WbTouchEn() == 1){
+        	Set_WifiServer_WbTouchEn(0);
+        	//尚未動作
+        }
+        if(Get_WifiServer_BModeEn() == 1){
+        	Set_WifiServer_BModeEn(0);
+            get_current_usec(&nowTime);
+        	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 32);
+        	Set_DataBin_BmodeSec(Get_WifiServer_BModeSec());
+        	Set_DataBin_BmodeGain(Get_WifiServer_BModeGain());
+        	setAEGBExp1Sec(Get_DataBin_BmodeSec());
+        	setAEGBExpGain(Get_DataBin_BmodeGain());
+        	writeUS360DataBinFlag = 1;	
+        }
+        if(Get_WifiServer_LaserSwitchEn() == 1){
+        	Set_WifiServer_LaserSwitchEn(0);
+        	if(Get_WifiServer_LaserSwitchVal() == 0)
+        		lidarBufMod = 0;
+        	else
+        		lidarBufMod = 1;
+        }
+        if(Get_WifiServer_GetTHMListEn() == 1){
+        	Set_WifiServer_GetTHMListEn(0);
+//tmp            
+/*        	nLen = sendImgThe.getTHMListSize(DIR_path, THM_path);
+    		Set_WifiServer_THMListSize(nLen);
+    		wifiSerThe.mTHMListData = sendImgThe.mTHMListString;
+    		Set_WifiServer_L63StatusSize(sendImgThe.mL63StatusString.getBytes().length);
+    		wifiSerThe.mL63StatusData = sendImgThe.mL63StatusString;
+    		Set_WifiServer_PCDStatusSize(sendImgThe.mPCDStatusString.getBytes().length);
+    		wifiSerThe.mPCDStatusData = sendImgThe.mPCDStatusString;
+    		Set_WifiServer_SendTHMListEn(1);*/
+        }
+        if(Get_WifiServer_GetFolderEn() == 1){
+        	Set_WifiServer_GetFolderEn(0);
+//tmp             
+/*        	nLen = sendImgThe.getFolderList(DIR_path, THM_path, wifiSerThe.mGetFolderVal);
+    		Set_WifiServer_SendFolderLen(nLen);
+    		wifiSerThe.mSendFolderNames = sendImgThe.mFolderListString;
+    		wifiSerThe.mSendFolderSizes = sendImgThe.mFolderListSizeString;
+    		Set_WifiServer_SendFolderSize(sendImgThe.mFolderSize);
+    		Set_WifiServer_SendFolderEn(1);*/ 
+        }
+        if(wifiSerThe.mPowerSavingEn == 1) { 
+            wifiSerThe.mPowerSavingEn = 0;
+            int mode = wifiSerThe.mPowerSavingMode;
+            databin.setPowerSaving(mode);
+            Power_Saving_Mode = databin.getPowerSaving();
+            if(Power_Saving_Mode == 1)
+            	Set_Cap_Rec_Finish_Time(System.currentTimeMillis(), 0, 14);
+            else {		 		
+            	if(fpgaStandbyEn == 1)
+            		setFpgaStandbyEn(0);		//Off   
+            }
+            writeUS360DataBinFlag = 1;
+        }
+        
+        if(wifiSerThe.mSetingUIEn == 1) { 
+            wifiSerThe.mSetingUIEn = 0;
+            Seting_UI_State = wifiSerThe.mSetingUIState;	//0:close	1:open
+            if(Seting_UI_State == 1) {		//open, power saving off
+    			if(fpgaStandbyEn == 1) {
+    				setFpgaStandbyEn(0);
+    				adjustSensorSyncFlag = 2;  	
+    			}
+				Seting_UI_t1 = System.currentTimeMillis();
+				Seting_UI_t2 = 0;
+            	Set_Cap_Rec_Start_Time(0, 4);
+            	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S, 8);
+            }
+            else {				//close, power saving on
+            	if(fpgaStandbyEn == 0) {
+            		Seting_UI_t2 = System.currentTimeMillis();
+            		long over_t;
+            		if( (Seting_UI_t2 - Seting_UI_t1) > POWER_SAVING_CMD_OVERTIME_5S)
+            			over_t = 0;
+            		else
+            			over_t = POWER_SAVING_CMD_OVERTIME_5S;
+            		Set_Cap_Rec_Finish_Time(Seting_UI_t1, over_t, 9);
+            	}
+            }
+        }
+        
+        if(wifiSerThe.mDoAutoStitchEn == 1) { 
+            wifiSerThe.mDoAutoStitchEn = 0;
+			if(doAutoStitch() >= 0) {
+				WriteSensorAdjFile();
+				ReadSensorAdjFile();
+                
+				// write cmd to fpga
+				AdjFunction();
+				Send_ST_Cmd_Proc();  
+				
+				WriteTestResult(0, 0);
+			}
+			paintOLEDStitching(0);
+        }
+        
+        if(wifiSerThe.mDoGsensorResetEn == 1) { 
+            wifiSerThe.mDoGsensorResetEn = 0;
+            setBma2x2ZeroingState(1);
+        }
+        
+        String resize_path;
+        int resize_len;
+        byte[] resize_buf = new byte[128];
+        //void getdoResize(int *en, char *resize_path)
+        //*en     = doResize_buf.cmd[resize_p2].mode;  //(-1:None 0:Cap 1:Rec 2:Timelaspe, 3:HDR, 4:RAW)
+        //*(en+1) = doResize_buf.cmd[resize_p2].cap_file_cnt;
+        //*(en+2) = doResize_buf.cmd[resize_p2].rsv1;
+        //*(en+3) = doResize_buf.cmd[resize_p2].rec_file_cnt;
+        //*(en+4) = doResize_buf.cmd[resize_p2].rsv2;
+        //*(en+5) = resize_len;
+        getdoResize(doResize, resize_buf);
+        if(doResize[0] != -1 && doResize_mode[doResize_flag] == -1 && doResize_path[doResize_flag] == null){
+            Log.d("Main", "doResize 00");
+            resize_len = doResize[5];
+            resize_path = new String(resize_buf);
+            doResize_path[doResize_flag] = resize_path.substring(0, resize_len);
+            doResize_mode[doResize_flag] = doResize[0];
+            doResize_flag++;
+            if(doResize_flag >= 8)    doResize_flag = 0;
+        }  
+        
+        if(wifiSerThe.mImgEn == 8){
+            if(wifiSerThe.mImgTotle == -1){
+            	sendImgThe.mDownloadTHMName.clear();
+            	String listString = new String(wifiSerThe.mSendTHMListData);
+            	String[] array = listString.split(",");
+            	for(String name : array){
+            		sendImgThe.mDownloadTHMName.add(name);
+            	}
+                wifiSerThe.mImgTotle = sendImgThe.getTrgTHMTotle(DIR_path, THM_path);
+            }
+        }
+        if(wifiSerThe.mImgEn == 5){
+            if(wifiSerThe.mImgTotle == -1){
+                wifiSerThe.mImgTotle = sendImgThe.getTHMTotle(DIR_path, THM_path);
+            }
+        }
+        else if(wifiSerThe.mImgEn == 6){
+            sendImgThe.startTHMThread();
+            if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
+                int nLen = sendImgThe.mOutputLen;
+                if(wifiSerThe.mImgLen == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
+                    System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mImgData, 0, nLen);
+                    wifiSerThe.mImgLen = nLen;
+                    sendImgThe.mOutputLen = -1;
+                }                            
+            }                        
+            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mImgLen == 0){
+                wifiSerThe.mImgEn = 7;
+                sendImgThe.stopTHMThread();
+                sendImgThe.mOutputLen = -1;
+            }
+        }
+        else if(wifiSerThe.mImgEn == 3){
+            if(wifiSerThe.mImgTotle == -1){
+                sendImgThe.setExistName(wifiSerThe.mExistFileName);
+                wifiSerThe.mImgTotle = sendImgThe.getTotle();
+            }                       
+        }
+        else if(wifiSerThe.mImgEn == 1){
+            sendImgThe.startThread();
+            if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
+                int nLen = sendImgThe.mOutputLen;
+                if(wifiSerThe.mImgLen == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
+                    System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mImgData, 0, nLen);
+                    wifiSerThe.mImgLen = nLen;
+                    sendImgThe.mOutputLen = -1;
+                }                            
+            }                        
+            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mImgLen == 0){
+                wifiSerThe.mImgEn = 4;
+                sendImgThe.stopThread();
+                sendImgThe.mOutputLen = -1;
+            }
+        }  
+        else if(wifiSerThe.mImgEn == 2){
+            wifiSerThe.mImgEn = 4;
+            sendImgThe.stopThread();
+            sendImgThe.mOutputLen = -1;
+        }                                        
+        else if(wifiSerThe.mDownloadEn == 3){
+            if(wifiSerThe.mDownloadTotle == -1){
+                sendImgThe.setDownloadName(wifiSerThe.mDownloadFileName, wifiSerThe.mDownloadFileSkip);
+                wifiSerThe.mDownloadTotle = sendImgThe.getDownloadTotle();
+                if(downloadLevel == 0){
+                	if(sendImgThe.mDownloadTotle > (100 * 1024 * 1024)){
+                		downloadLevel = 2;
+                		//FPGA_Ctrl_Power_Func(1, 6);
+                		if(Power_Saving_Mode == 0) 
+                			setFpgaStandbyEn(1);
+                	}else{
+                		downloadLevel = 1;
+                	}
+                }
+            }
+        }
+        else if(wifiSerThe.mDownloadEn == 1){
+            sendImgThe.startDownloadThread();
+            setDownloadOlad(sendImgThe.mDownloadNow,sendImgThe.mDownloadTotle);
+            if(downloadLevel == 2){
+            	if( (sendImgThe.mDownloadTotle - sendImgThe.mDownloadNow) < (10 * 1024 * 1024)){
+            		downloadLevel = 1;
+            		//FPGA_Ctrl_Power_Func(0, 7);
+            		if(Power_Saving_Mode == 0) 
+            			setFpgaStandbyEn(0);
+            	}
+            }
+            if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
+                int nLen = sendImgThe.mOutputLen;
+                if(wifiSerThe.mDownloadLen == 0 && nLen <= cp.JAVA_UVC_BUF_MAX){
+                    System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mDownloadData, 0, nLen);
+                    wifiSerThe.mDownloadLen = nLen;
+                    sendImgThe.mOutputLen = -1;
+                }
+            }
+            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mDownloadLen == 0){
+                wifiSerThe.mDownloadEn = 4;
+                sendImgThe.stopDownloadThread();
+                sendImgThe.mOutputLen = -1;
+            }
+        }
+        else if(wifiSerThe.mDownloadEn == 2){
+            wifiSerThe.mDownloadEn = 4;
+            sendImgThe.stopDownloadThread();
+            sendImgThe.mOutputLen = -1;
+        }
+        else{
+            sendImgThe.stopTHMThread();
+            sendImgThe.stopThread();
+            sendImgThe.stopDownloadThread();
+            sendImgThe.mOutputLen = -1;
+            if(downloadLevel == 1){
+            	downloadLevel = 0;
+            	setDownloadOlad(0,0);
+            }else if(downloadLevel == 2){
+            	downloadLevel = 0;
+            	setDownloadOlad(0,0);
+            	FPGA_Ctrl_Power_Func(0, 7);
+            }
+        }
+        
+        if(wifiSerThe.mWifiConfigEn == 1){
+            WriteUS360SystemConfig(wifiSerThe.mWifiConfigSsid, wifiSerThe.mWifiConfigPwd);
+            wifiSerThe.mWifiConfigEn = 0;
+        }  
+        
+        if(wifiSerThe.mGPSEn == 1){
+        	mGps = 1;
+        	setGpsStatus(mGps);
+        	wifiSerThe.mGPSEn = 0;
+        }
+        
+        if(wifiSerThe.mChangeDebugToolStateEn == 1){
+            wifiSerThe.mChangeDebugToolStateEn = 0; 
+            if(wifiSerThe.isDebugToolConnect == 1){
+                if(!stateTool.isRun)
+                    stateTool.startThread();
+            }
+            else{
+                if(stateTool.isRun)
+                    stateTool.stopThread();  
+            }
+            wifiSerThe.isDebugToolConnect = 0; 
+        }
+        if(wifiSerThe.mCtrlOLEDEn == 1){
+            if(wifiSerThe.ctrlOLEDNum != 0){
+                if(!stateTool.isRun)
+                    stateTool.startThread();
+            }
+            setOLEDPage(wifiSerThe.ctrlOLEDNum);
+            wifiSerThe.mCtrlOLEDEn = 0;
+        }
+        
+        if(wifiSerThe.mSetParametersToolEn == 1){
+            if(parametersTool != null){
+                //parametersTool.setParameterValue(wifiSerThe.mParametersNum, wifiSerThe.mParametersVal);
+                
+                switch(wifiSerThe.mParametersNum) {
+                case 1: setAdjWB(0, wifiSerThe.mParametersVal); break;    //R
+                case 2: setAdjWB(1, wifiSerThe.mParametersVal); break;    //G
+                case 3: setAdjWB(2, wifiSerThe.mParametersVal); break;    //B
+                case 4: 
+                    Show_DDR_En = wifiSerThe.mParametersVal;
+                    if(Show_DDR_En == 1) {
+                    	Set_ISP2_Addr(1, Show_DDR_Addr, -99);
+                        writeCmdTable(4, ResolutionMode, FPS, 1, 0, 1);
+                        writeCmdTable(5, ResolutionMode, FPS, 1, 0, 1);
+                    }
+                    else { 
+                    	Set_ISP2_Addr(0, 0, -99);
+                        PlayMode2_tmp = PlayMode2; 
+                        chooseModeFlag = 1;
+                    }
+                    break;    //Show DDR En
+                case 5:         
+                    Show_DDR_En = 1;           
+                    Show_DDR_Addr = wifiSerThe.mParametersVal;
+                    Set_ISP2_Addr(1, Show_DDR_Addr, -99);
+                    writeCmdTable(4, ResolutionMode, FPS, 1, 0, 1);
+                    writeCmdTable(5, ResolutionMode, FPS, 1, 0, 1);
+                    break;    //Show DDR Addr
+                case 6:     // fan cpu temp threshold
+                    if(wifiSerThe.mParametersVal >=0 && wifiSerThe.mParametersVal <= 105){
+                        CpuTempThreshold = wifiSerThe.mParametersVal;
+                    }
+                    break;
+                case 7:        // fan cpu temp down close
+                    if(wifiSerThe.mParametersVal >= -20 && wifiSerThe.mParametersVal <= 0){
+                        CpuTempDownClose = wifiSerThe.mParametersVal;
+                    }
+                    break;
+                case 8:      
+                    setSensorMaskLineShiftAdj(wifiSerThe.mParametersVal);
+                    writeCmdTable(2, ResolutionMode, FPS, 0, 0, 1);
+                    break;    //Sensor_Mask_Line_Shift_Adj
+                case 9:      
+                    if(wifiSerThe.mParametersVal >= 1 && wifiSerThe.mParametersVal <= 4)
+                        setCpuFreq(wifiSerThe.mParametersVal, CpuFullSpeed);
+                    break;    //Set CPU Core
+                case 10:     //Skip WatchDog 
+                    if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 2)
+                        skipWatchDog = wifiSerThe.mParametersVal;
+                    break;
+				case 11: setSensroLensTable(0, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Gain 	
+				case 12: setSensroLensTable(1, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[0]
+				case 13: setSensroLensTable(2, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[1]
+				case 14: setSensroLensTable(3, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[2]
+				case 15: setSensroLensTable(4, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[3]
+				case 16: setSensroLensTable(5, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[4]
+				case 17: setSensroLensTable(6, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[5]
+				case 18: setSensroLensTable(7, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[6]
+				case 19: setSensroLensTable(8, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[7]
+				case 20: setSensroLensTable(9, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[8]
+				case 21: setSensroLensTable(10, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[9]
+				case 22: setSensroLensTable(11, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Adj_Sensor_Lens_Th
+				case 23: setSensroLensTable(12, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Th  
+                case 24: setSmoothSpeed(0, wifiSerThe.mParametersVal); break;    	// Smooth_YUV_Speed
+                case 25: setSmoothSpeed(1, wifiSerThe.mParametersVal); break;    	// Smooth_Z_Speed
+                case 26: setLOGEEn( wifiSerThe.mParametersVal); break;				// LOGE_Enable
+                case 32: SetSensorLensYLimit(0, wifiSerThe.mParametersVal); break;
+                case 33: SetSensorLensYLimit(1, wifiSerThe.mParametersVal); break;
+                case 34: SetColorSTSW(wifiSerThe.mParametersVal); break;
+                case 35: setSTMixEn(wifiSerThe.mParametersVal); break;    //ST_Mix_En
+                case 36: break;    //Show_40point_En
+                case 37:
+                    /*doAutoGlobalPhiAdjEn = (wifiSerThe.mParametersVal & 0x1);
+                    if(doAutoGlobalPhiAdjEn == 1) {
+                        doAutoGlobalPhiAdjStep = 1;
+                    }
+                    else {
+                          AutoGlobalPhiClose();
+                    }*/
+                    break;    //doGlobalPhiAdj 
+                case 38: setALIRelationRate(0, wifiSerThe.mParametersVal); break;    //ALIRelationD0
+                case 39: setALIRelationRate(1, wifiSerThe.mParametersVal); break;    //ALIRelationD1
+                case 40: setALIRelationRate(2, wifiSerThe.mParametersVal); break;    //ALIRelationD2
+				case 41: setGlobalPhiRate(0, wifiSerThe.mParametersVal); break;	//GP_CloseRate 
+				case 42: setGlobalPhiRate(1, wifiSerThe.mParametersVal); break;	//GP_FarRate
+                case 42: 
+                	if(wifiSerThe.mParametersVal == 1) {
+                		doAutoStitch_flag = 1; 
+                		do_Auto_Stitch(1); 
+                	}
+                	break;
+				case 43: setLensRateTable( 0, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 44: setLensRateTable( 1, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 45: setLensRateTable( 2, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 46: setLensRateTable( 3, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 47: setLensRateTable( 4, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 48: setLensRateTable( 5, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 49: setLensRateTable( 6, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 50: setLensRateTable( 7, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 51: setLensRateTable( 8, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 52: setLensRateTable( 9, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 53: setLensRateTable(10, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 54: setLensRateTable(11, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 55: setLensRateTable(12, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 56: setLensRateTable(13, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 57: setLensRateTable(14, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 58: setLensRateTable(15, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 59: 
+					if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 4)
+						Set_ISP2_Addr(1, 0, wifiSerThe.mParametersVal);
+					else if(wifiSerThe.mParametersVal == 5) {
+						Set_ISP2_Addr(PlayMode2, ResolutionMode, FPS, 1, -1);
+					}	
+					else if(wifiSerThe.mParametersVal == 6) {
+						Set_ISP2_Addr(1, 0, -2);
+					}	
+					else if(wifiSerThe.mParametersVal == 7) {
+  						Set_ISP2_Addr(PlayMode2, ResolutionMode, FPS, 1, -3);
+					}
+					else
+						chooseModeFlag = 1;
+					break;	//ShowSensor
+				case 60: 
+					setSensorXStep(wifiSerThe.mParametersVal); 
+					break;	//SensroXStep
+				case 61: 
+					setSensorLensRate(wifiSerThe.mParametersVal);
+					//AdjFunction();
+					//Send_ST_Cmd_Proc();
+					break;	//SensroLensRate
+				case 62: 
+					setS2RGB(0, wifiSerThe.mParametersVal);
+					break;	//S2_R_Gain
+				case 63: 
+					setS2RGB(1, wifiSerThe.mParametersVal);
+					break;	//S2_R_Gain
+				case 64: 
+					setS2RGB(2, wifiSerThe.mParametersVal);
+					break;	//S2_R_Gain
+				case 65: 
+					setS2ISO(0, wifiSerThe.mParametersVal);
+					break;	//S2_A_Gain
+				case 66: 
+					setS2ISO(1, wifiSerThe.mParametersVal);
+					break;	//S2_D_Gain 
+				case 67: 
+					RXDelaySet(wifiSerThe.mParametersVal, 0, 0xF);
+					break;	//RXDelaySet F0
+				case 68: 
+					RXDelaySet(wifiSerThe.mParametersVal, 1, 0xF);
+					break;	//RXDelaySet F1
+				case 69:
+					if(wifiSerThe.mParametersVal < 5) {
+						STTableTestS2Focus(wifiSerThe.mParametersVal);
+						Set_ISP2_Addr(1, 0, -4);
+					}
+					else {
+						STTableTestS2Focus(-1);
+						chooseModeFlag = 1; 
+					}
+					break;	//New_Focus
+				case 70: break;	//Set_Sensor_Reg_S_ID
+				case 71: break;	//Set_Sensor_Reg_Idx
+				case 72:
+					if(wifiSerThe.mParametersVal == 1) {
+						Set_ISP2_Addr(1, 0, -5);
+						AdjFunction();
+						STTableTestS2ShowSTLine();
+					}
+					else
+						chooseModeFlag = 1;
+					break;	//Show_ST_Line
+				case 73: 
+					setGlobalSensorXOffset(1, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_X_Offset_1
+				case 74: 
+					setGlobalSensorYOffset(1, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_Y_Offset_1
+				case 75: 
+					setGlobalSensorXOffset(2, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_X_Offset_2
+				case 76: 
+					setGlobalSensorYOffset(2, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_Y_Offset_2
+				case 77:
+					setGlobalSensorXOffset(3, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_X_Offset_3
+				case 78:
+					setGlobalSensorYOffset(3, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_Y_Offset_3
+				case 79:
+					setGlobalSensorXOffset(4, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_X_Offset_4
+				case 80:
+					setGlobalSensorYOffset(4, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_Y_Offset_4
+				case 81:
+					setGlobalSensorXOffset(5, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_X_Offset_6
+				case 82:
+					setGlobalSensorYOffset(5, wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	// Global_Sensor_Y_Offset_6	
+				case 83:
+					if(wifiSerThe.mParametersVal == 1){
+						if(doAutoStitch() >= 0){
+							WriteSensorAdjFile();
+							ReadSensorAdjFile();
+                            
+							// write cmd to fpga
+							AdjFunction();
+							Send_ST_Cmd_Proc();  
+							
+							WriteTestResult(0, 0);
+						}
+						paintOLEDStitching(0);
+					}
+					break;
+				case 84: 
+					SetAutoSTSW(wifiSerThe.mParametersVal); 
+					AdjFunction(); 
+					Send_ST_Cmd_Proc();
+					break;
+				case 85: 
+					//setALIGlobalPhi3Idx(wifiSerThe.mParametersVal); 
+					AdjFunction();
+					break;
+				case 86: 
+					setSmoothParameter(0, wifiSerThe.mParametersVal); 	// Smooth_Debug_Flag
+					break;
+				case 87:
+					setSmoothParameter(2, wifiSerThe.mParametersVal);	// Smooth_Avg_Weight
+					break;
+				case 88:
+					if(wifiSerThe.mParametersVal < 512 && wifiSerThe.mParametersVal >= 0)
+						Smooth_O_Idx = wifiSerThe.mParametersVal;
+					break;
+				case 89:
+					setSmoothY(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
+					break;
+				case 90:
+					setSmoothU(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
+					break;
+				case 91:
+					setSmoothV(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
+					break;
+				case 92:
+					setSmoothZ(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
+					break;
+				case 93:
+					setSmoothParameter(4, wifiSerThe.mParametersVal);
+					break;
+				case 94:
+					setSmoothParameter(1, wifiSerThe.mParametersVal);
+					break;
+				case 95:
+					setSmoothParameter(6, wifiSerThe.mParametersVal);
+					break;
+				case 96:
+					setSmoothParameter(5, wifiSerThe.mParametersVal);
+					break;
+				case 97:
+					//SetNR3DStrength(wifiSerThe.mParametersVal); 
+					setShowSmoothIdx(2, wifiSerThe.mParametersVal); 
+					break; 
+				case 98:
+					//parametersTool.setParameterValue(98, wifiSerThe.mParametersVal);
+					smoothShow = wifiSerThe.mParametersVal;
+					if(smoothShow == -1) {
+                        ShowPaintVisibilityMode = 0;  
+                        mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
+					}
+					else {
+						setShowSmoothIdx(1, smoothShow);
+                        if(ShowPaintVisibilityMode == 0) {
+                        	ShowPaintVisibilityMode = 1;
+                        	mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
+                        }
+					}
+					break;
+				case 99: setShowSmoothIdx(0, wifiSerThe.mParametersVal); break;	
+				case 100: setSmoothXYSpace(wifiSerThe.mParametersVal); break;
+				case 101: setSmoothFarWeight(wifiSerThe.mParametersVal); break;
+				case 102: setSmoothDelSlope(wifiSerThe.mParametersVal); break;
+				case 103: setSmoothFunction(wifiSerThe.mParametersVal); break;
+				case 104:
+					//parametersTool.setParameterValue(98, wifiSerThe.mParametersVal);
+					stitchShow = wifiSerThe.mParametersVal;
+					if(stitchShow == -1) {
+                        ShowStitchVisibilityMode = 0;  
+                        mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
+					}
+					else {
+                        if(ShowStitchVisibilityMode == 0) {
+                        	ShowStitchVisibilityMode = 1;
+                        	mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
+                        }
+					}
+					break;
+				case 105:
+					ShowStitchVisibilityType = wifiSerThe.mParametersVal;
+					break;
+				case 106:
+					if(wifiSerThe.mParametersVal == -1)
+						chooseModeFlag = 1;
+					else
+						Set_ISP2_Addr(1, wifiSerThe.mParametersVal, -8);
+					break;
+				case 107:
+					
+					if(wifiSerThe.mParametersVal == -1)
+						chooseModeFlag = 1;
+					else
+						Set_ISP2_Addr(1, wifiSerThe.mParametersVal, -9);
+					break;
+				case 108:
+					SetNR3DLeve(wifiSerThe.mParametersVal);
+					break;
+				case 109:
+					setSaveSmoothEn(wifiSerThe.mParametersVal);
+					if(wifiSerThe.mParametersVal == 1)
+					    createSaveSmoothBin();
+					else
+					    deleteSaveSmoothBin(); 
+					break;
+				case 110:
+					setSTCmdDebugMode(wifiSerThe.mParametersVal);
+					break;
+				case 111:
+					if(wifiSerThe.mParametersVal == 1) 
+						adjustSensorSyncFlag = 3;
+					break;
+				case 112:
+					Translucent_Mode = wifiSerThe.mParametersVal & 0x1;
+					SetTransparentEn(Translucent_Mode); 
+					break;
+				case 113:
+					SetUVtoRGB(0, wifiSerThe.mParametersVal);
+					break;
+				case 114:
+					SetUVtoRGB(1, wifiSerThe.mParametersVal);
+					break;
+				case 115:
+					SetUVtoRGB(2, wifiSerThe.mParametersVal);
+					break;
+				case 116:
+					SetUVtoRGB(3, wifiSerThe.mParametersVal);
+					break;
+				case 117:
+					SetUVtoRGB(4, wifiSerThe.mParametersVal);
+					break;
+				case 118:
+					SetUVtoRGB(5, wifiSerThe.mParametersVal);
+					break;
+				case 119:
+					SetSmoothOIdx(wifiSerThe.mParametersVal);
+					break;
+				case 120:
+					Focus_Tool_Num = wifiSerThe.mParametersVal;
+					SetFocusToolNum(Focus_Tool_Num);
+					break;
+				case 121:
+					if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 4) {
+						if(CameraMode != 0 || ResolutionMode != 1 || PlayMode2_tmp !=0) {	//Change Mode: Cap 12K Mode
+			            	CameraMode = 0;
+			                Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+			                ResolutionMode = 1;	
+			            	PlayMode2_tmp = 0;
+                            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);
+			                choose_mode(CameraMode, PlayMode2_tmp, ResolutionMode, FPS);
+						}
+						
+						Focus2_Sensor = wifiSerThe.mParametersVal;
+						FocusScanTableTranInit();
+						FocusResultInit();
+						if(ShowFocusVisibilityMode == 0) {
+							ShowFocusVisibilityMode = 1;  
+							mHandler.obtainMessage(SHOW_FOCUS_VISIBILITY).sendToTarget();
+						}
+						STTableTestS2Focus(Focus2_Sensor);
+						Set_ISP2_Addr(1, 0, -6);
+						do2DNR(1);		//銳利度調至最低
+					}
+					else {
+						Focus2_Sensor = -1;
+						STTableTestS2Focus(Focus2_Sensor);
+						do2DNR(0);
+						ShowFocusVisibilityMode = 0;  
+						chooseModeFlag = 1; 
+						testtool.doTestToolCmdInit();
+					}
+					break;	//New_Focus2
+
+				case 122:			//BatteryWorkR
+					batteryWorkR = wifiSerThe.mParametersVal;
+					ledStateArray[workResistL] = batteryWorkR % 256;
+					ledStateArray[workResistH] = batteryWorkR / 256;
+					Log.d("debug", "workR:" + batteryWorkR / 256 + " " + batteryWorkR % 256);
+					break;
+				case 123:			//GammaLineOff
+					setGammaLineOff(wifiSerThe.mParametersVal);
+					break;
+				case 124: setISP1RGBOffset(0, wifiSerThe.mParametersVal); break;
+				case 125: setISP1RGBOffset(1, wifiSerThe.mParametersVal); break;
+				case 126: setWDR1PI0(wifiSerThe.mParametersVal); break;	// WDR
+				case 127: setWDR1PI1(wifiSerThe.mParametersVal); break;	// WDR
+				case 128: setWDR1PV0(wifiSerThe.mParametersVal); break;	// WDR
+				case 129: setWDR1PV1(wifiSerThe.mParametersVal); break;	// WDR
+				case 130: SetMaskAdd(0, wifiSerThe.mParametersVal); break;	//Add_Mask_X
+				case 131: SetMaskAdd(1, wifiSerThe.mParametersVal); break;	//Add_Mask_Y
+				case 132: SetMaskAdd(2, wifiSerThe.mParametersVal); break;	//Add_Pre_Mask_X
+				case 133: SetMaskAdd(3, wifiSerThe.mParametersVal); break;	//Add_Pre_Mask_Y
+				case 134: SetDGOffset(0, wifiSerThe.mParametersVal); break;	//DG_Offset[0]
+				case 135: SetDGOffset(1, wifiSerThe.mParametersVal); break;	//DG_Offset[1]
+				case 136: SetDGOffset(2, wifiSerThe.mParametersVal); break;	//DG_Offset[2]
+				case 137: SetDGOffset(3, wifiSerThe.mParametersVal); break;	//DG_Offset[3]
+				case 138: SetDGOffset(4, wifiSerThe.mParametersVal); break;	//DG_Offset[4]
+				case 139: SetDGOffset(5, wifiSerThe.mParametersVal); break;	//DG_Offset[5]
+				case 140: setISP1SkipOffset(2, wifiSerThe.mParametersVal); break;	//Skip_Offset_BX
+				case 141: setISP1SkipOffset(3, wifiSerThe.mParametersVal); break;	//Skip_Offset_BY
+				case 142: setISP1SkipOffset(4, wifiSerThe.mParametersVal); break;	//Skip_Offset_B_RY
+				case 143: setISP1SkipOffset(5, wifiSerThe.mParametersVal); break;	//Skip_Offset_B_BY
+				case 144: setLensSkipRRate(wifiSerThe.mParametersVal); break;	//Skip_R_Rate
+				case 145: setWDRTablePixel(wifiSerThe.mParametersVal); break;	// WDR 
+				case 146: setWDR2PI0(wifiSerThe.mParametersVal); break;	// WDR
+				case 147: setWDR2PI1(wifiSerThe.mParametersVal); break;	// WDR
+				case 148: setWDR2PV0(wifiSerThe.mParametersVal); break;	// WDR
+				case 149: setWDR2PV1(wifiSerThe.mParametersVal); break;	// WDR
+				case 150:
+					Focus_Sensor = wifiSerThe.mParametersVal;
+					break;	//Focus_Sensor
+				case 151:
+					Focus_Idx = wifiSerThe.mParametersVal;
+					break;	//Focus_Idx
+				case 152:
+					setFocusPosiOffsetXY(Focus_Sensor, Focus_Idx, 0, wifiSerThe.mParametersVal);
+					break;	//Focus_Offset_X
+				case 153:
+					setFocusPosiOffsetXY(Focus_Sensor, Focus_Idx, 1, wifiSerThe.mParametersVal);
+					break;	//Focus_Offset_Y
+				case 154:
+					setFocusEPIdx(wifiSerThe.mParametersVal);
+					break;	//Focus_EP_Idx
+				case 155:
+					setFocusGainIdx(wifiSerThe.mParametersVal);
+					break;	//Focus_Gain_Idx
+				case 156:
+					setFPGASpeed(0, wifiSerThe.mParametersVal);
+					break;	//F0_Speed
+				case 157:
+					setFPGASpeed(1, wifiSerThe.mParametersVal);
+					break;	//F1_Speed
+				case 158:
+					setFPGASpeed(2, wifiSerThe.mParametersVal);
+					break;	//F2_Speed
+				case 159:
+					setGammaAdjA(wifiSerThe.mParametersVal);
+					break;	//GAMMA
+				case 160:
+					setGammaAdjB(wifiSerThe.mParametersVal);
+					break;	//GAMMA
+				case 161:
+					setYOffValue(wifiSerThe.mParametersVal);
+					break;	//Y OFF
+				case 162:
+					SetSaturationValue(0, wifiSerThe.mParametersVal);
+					break;	//Saturation_C
+				case 163:
+					SetSaturationValue(1, wifiSerThe.mParametersVal);
+					break;	//Saturation_Ku
+				case 164:
+					SetSaturationValue(2, wifiSerThe.mParametersVal);
+					break;	//Saturationa_Kv
+				case 165:
+					SetSLAdjGap0(wifiSerThe.mParametersVal);
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					break;	//SL_Adj_Gap0
+				case 166: SetSensorLensDE(wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_D_E	
+				case 167: SetSensorLensEnd(wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_End	
+				case 168: SetSensorLensCY(wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_C_Y	
+				case 169:
+					SetSaturationValue(3, wifiSerThe.mParametersVal);
+					break;	//Saturationa_Th
+				case 170: setAEGBExp1Sec(wifiSerThe.mParametersVal); break;
+				case 171: setAEGBExpGain(wifiSerThe.mParametersVal); break;
+				case 172: setAGainDebugOffset(wifiSerThe.mParametersVal); break;				//AGainOffset
+				case 173: setAdjRsY( wifiSerThe.mParametersVal); break;				// 173
+				case 174: setAdjGsY( wifiSerThe.mParametersVal); break;				// 174
+				case 175: setAdjBsY( wifiSerThe.mParametersVal); break;				// 175
+				case 176: setAdjRnX( wifiSerThe.mParametersVal); break;				// 176
+				case 177: setAdjGnX( wifiSerThe.mParametersVal); break;				// 177
+				case 178: setAdjBnX( wifiSerThe.mParametersVal); break;				// 178
+				case 179: SetBDTHDebug( wifiSerThe.mParametersVal); break;			// BD_TH_Debug
+				case 180: SetAWBTHDebug(0, wifiSerThe.mParametersVal); break;			// AWB_TH_H_Debug
+				case 181: SetAWBTHDebug(1, wifiSerThe.mParametersVal); break;			// AWB_TH_L_Debug
+				case 182: setAWBCrCbG( wifiSerThe.mParametersVal); break;			// 182
+				case 183: SetRGBMatrix(0, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RR
+				case 184: SetRGBMatrix(1, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RG
+				case 185: SetRGBMatrix(2, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RB
+				case 186: SetRGBMatrix(3, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GR
+				case 187: SetRGBMatrix(4, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GG
+				case 188: SetRGBMatrix(5, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GB
+				case 189: SetRGBMatrix(6, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BR
+				case 190: SetRGBMatrix(7, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BG
+				case 191: SetRGBMatrix(8, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BB        
+				case 192: SetRGB2YUVMatrix(0, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YR
+				case 193: SetRGB2YUVMatrix(1, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YG
+				case 194: SetRGB2YUVMatrix(2, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YB
+				case 195: SetRGB2YUVMatrix(3, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UR
+				case 196: SetRGB2YUVMatrix(4, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UG
+				case 197: SetRGB2YUVMatrix(5, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UB
+				case 198: SetRGB2YUVMatrix(6, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VR
+				case 199: SetRGB2YUVMatrix(7, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VG
+				case 200: SetRGB2YUVMatrix(8, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VB
+				case 201: SetHDRTone(wifiSerThe.mParametersVal); break;			// HDR_Tone
+				case 202: 
+					LiveQualityMode = wifiSerThe.mParametersVal & 0x1;
+					set_A2K_JPEG_Live_Quality_Mode(LiveQualityMode);	
+					//testHonz = wifiSerThe.mParametersVal;
+					break;				//Live_Quality_Mode
+				case 203: SetGammaMax(wifiSerThe.mParametersVal); break;			// Gamma_Max
+				case 204: SetA2KWDRPixel(wifiSerThe.mParametersVal); break;			// WDR_Pixel
+				case 205: break;			// XXXX
+				case 206: break;			// XXXX
+				case 207: 
+					defectStep = wifiSerThe.mParametersVal;
+					defectType = DEFECT_TYPE_TESTTOOL;
+					SetDefectType(defectType);
+					SetDefectStep(defectStep);
+					
+					if(defectStep == 5) {
+				    	SetDefectEn(0);
+				    	defectState = DEFECT_STATE_NONE;
+					}
+					break;			// do_Defect
+				case 208: SetDefectTh(wifiSerThe.mParametersVal); break;				// Defect_Th
+				case 209: SetDefectOffset(0, wifiSerThe.mParametersVal); break;			// Defect_X
+				case 210: SetDefectOffset(1, wifiSerThe.mParametersVal); break;			// Defect_Y
+				case 211: SetDefectEn(wifiSerThe.mParametersVal); break;				// Defect_En
+				case 212: SetDefectDebugEn(wifiSerThe.mParametersVal); break;			// Defect_Debug_En
+				case 213: SetRGBGainI(0, wifiSerThe.mParametersVal); break;				// GainI_R
+				case 214: SetRGBGainI(1, wifiSerThe.mParametersVal); break;				// GainI_G
+				case 215: SetRGBGainI(2, wifiSerThe.mParametersVal); break;				// GainI_B
+				case 216: SetHDR7PAutoTh(0, wifiSerThe.mParametersVal); break;			// HDR_Auto_Th[0]
+				case 217: SetHDR7PAutoTh(1, wifiSerThe.mParametersVal); break;			// HDR_Auto_Th[1]
+				case 218: SetHDR7PAutoTarget(0, wifiSerThe.mParametersVal); break;		// HDR_Auto_Target[0]
+				case 219: SetHDR7PAutoTarget(1, wifiSerThe.mParametersVal); break;		// HDR_Auto_Target[1]
+				case 220: SetRemovalVariable(0, wifiSerThe.mParametersVal); break;
+				case 221: SetRemovalVariable(1, wifiSerThe.mParametersVal); break;
+				case 222: SetRemovalVariable(2, wifiSerThe.mParametersVal); break;
+				case 223: SetRemovalVariable(3, wifiSerThe.mParametersVal); break;
+				case 224: SetDeGhostParameter(0, wifiSerThe.mParametersVal); break;		// Motion_Th
+				case 225: SetDeGhostParameter(1, wifiSerThe.mParametersVal); break;		// Motion_Diff_Pix
+				case 226: SetDeGhostParameter(2, wifiSerThe.mParametersVal); break;		// Overlay_Mul
+				case 227: SetDeGhostParameter(3, wifiSerThe.mParametersVal); break;		// DeGhost_Th
+				case 228: SetColorRate(0, wifiSerThe.mParametersVal); break;			// Color_Rate_0
+				case 229: SetColorRate(1, wifiSerThe.mParametersVal); break;			// Color_Rate_1
+				case 230: ReadFXDDR(0, wifiSerThe.mParametersVal); break;				// Read_F0_ADDR
+				case 231: ReadFXDDR(1, wifiSerThe.mParametersVal); break;				// Read_F1_ADDR
+				case 232: 
+					makeDNAfile();
+					dna_check_ok = dnaCheck();
+					break;			// Make_DNA
+				case 233: SetColorTempGRate(wifiSerThe.mParametersVal); break;			// Color_Temp_G_Rate
+				case 234: SetColorTempTh(wifiSerThe.mParametersVal); break;				// Color_Temp_Th
+				case 235: SetADTAdj(0, wifiSerThe.mParametersVal); break;				// ADT_Adj_Idx
+				case 236: SetADTAdj(1, wifiSerThe.mParametersVal); break;				// ADT_Adj_Value
+				case 237: adc_ratio = wifiSerThe.mParametersVal; break;					// ADC_value
+				case 238: break;			// XXXX
+				case 239: break;			// XXXX
+				case 240: break;			// XXXX
+				case 241: break;			// XXXX
+				case 242: break;			// XXXX
+				case 243: SetConvertState(wifiSerThe.mParametersVal); break;			// doConver
+				case 244: SetMuxerType(wifiSerThe.mParametersVal);	break;				// Muxer_Type
+				case 245: Set3DModelResMode(wifiSerThe.mParametersVal); break;			// 3D_Res_Mode
+				case 246: DrivingModeDeleteFile(); break;								// Driving_Mode
+				case 247: SetPlantParameter(99, wifiSerThe.mParametersVal); break;		// Plant_Adj_En
+				case 248: SetPlantParameter(0, wifiSerThe.mParametersVal); break;		// Plant_Pan
+				case 249: SetPlantParameter(1, wifiSerThe.mParametersVal); break;		// Plant_Tilt
+				case 250: SetPlantParameter(2, wifiSerThe.mParametersVal); break;		// Plant_Rotate
+				case 251: SetPlantParameter(3, wifiSerThe.mParametersVal); break;		// Plant_Wide
+				case 252: 
+	            	CameraMode = 14;		
+	                Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
+	                ResolutionMode = 1;	
+	            	PlayMode2_tmp = 0;
+                    ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);
+					chooseModeFlag = 1; 
+					init3dmap();
+					break;			// 3D-Model
+				case 253: SetNoiseTh(wifiSerThe.mParametersVal); break;				// Noise_TH
+				case 254: SetAdjYtarget(wifiSerThe.mParametersVal); break;			// Adj_Y_target
+				case 255: SetGammaOffset(0, wifiSerThe.mParametersVal); break;		// Gamma_Offset[0]
+				case 256: SetGammaOffset(1, wifiSerThe.mParametersVal); break;		// Gamma_Offset[1]
+                }
+            }
+            wifiSerThe.mSetParametersToolEn = 0;
+            wifiSerThe.mParametersNum = -1;
+            wifiSerThe.mParametersVal = -1;
+        }
+        
+        if(wifiSerThe.mSetSensorToolEn == 1){
+        	if(sensorTool != null){
+                if(wifiSerThe.mSensorToolNum >= 1 &&
+                   wifiSerThe.mSensorToolNum <= 15) 
+                {
+					setSensor(AdjSensorIdx, (wifiSerThe.mSensorToolNum-1), wifiSerThe.mSensorToolVal); 
+					AdjFunction();
+					Send_ST_Cmd_Proc();
+					SaveConfig(1);
+                }
+            }
+            wifiSerThe.mSetSensorToolEn = 0;
+            wifiSerThe.mSensorToolNum = -1;
+            wifiSerThe.mSensorToolVal = -1;
+        }
+        
+        if(ControllerServer.mUpdateEn == 1){
+        	wifiDisableTime = -2;
+        	ledStateArray[sleepTimerStart] = 0;
+        	ledStateArray[watchdogFlag] = 1;
+        	setSendMcuA64Version(ssid,pwd,"            ");
+        	setMcuDate(System.currentTimeMillis());
+        	ControllerServer.mUpdateEn = 0;
+        }
+        
+        if(socketChkThe.mUpdateEn == 1){
+        	wifiDisableTime = -2;
+        	ledStateArray[sleepTimerStart] = 0;
+        	ledStateArray[watchdogFlag] = 1;
+        	setSendMcuA64Version(ssid,pwd,"            ");
+        	setMcuDate(System.currentTimeMillis());
+        	socketChkThe.mUpdateEn = 2;
+        }
+        if(socketChkThe.mUpdateEn == 2){
+        	int[] mData = new int[20];
+            getMCUSendData(mData);
+            Log.d("test", "watchdogState: "+ mData[8]);
+        	if(mData[8] == 1){
+        		try {
+                	String fileStr = "/cache/recovery/command";
+                    File file = new File(fileStr);
+                    if(!file.exists()) {
+                        try {    
+                            file.createNewFile();              
+                        } catch (IOException e) {
+                        	
+                        }
+                    } 
+                	FileWriter fw = new FileWriter(fileStr, false);
+                	BufferedWriter bw = new BufferedWriter(fw);
+                    bw.write("boot-recovery\r\n");
+                    bw.write("--update_package="+ "/cache/" + socketChkThe.mUpdateFileName +"\r\n");
+                    bw.write("reboot\r\n");
+                    bw.close();
+                    fw.close();
+                
+                	Main.systemlog.addLog("info", System.currentTimeMillis(), "web", "Reboot Machine", " ");
+                	String cmd = "reboot recovery";
+                    Runtime runtime = Runtime.getRuntime();
+                    Process process = runtime.exec(cmd);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+        	}
+        }
+    //}
+}
+#endif
 
 void *thread_5ms(void *junk)
 {    
@@ -3643,10 +5992,10 @@ void *thread_5ms(void *junk)
 		}
 
 		//依HDMI狀態, 改變CPU頻率和FPS
-		if(getHdmiState() != hdmi_state_lst) {
-//tmp       SetRenderEn(getHdmiState());
+		if(hdmiState != hdmi_state_lst) {
+//tmp       SetRenderEn(hdmiState);
 
-			if(getHdmiState() == 1) {				//HDMI插上, 喚醒省電狀態
+			if(hdmiState == 1) {				//HDMI插上, 喚醒省電狀態
 				if(getPowerSavingMode() == 1) {
 					if(fpgaStandbyEn == 1) {
 						SetFPGASleepEn(0);
@@ -3661,7 +6010,7 @@ void *thread_5ms(void *junk)
 					Set_Cap_Rec_Finish_Time(curTime, 0);
 			}
 
-			hdmi_state_lst = getHdmiState();
+			hdmi_state_lst = hdmiState;
 			setHdmiStateChange(1);
 		}
 
@@ -3853,7 +6202,7 @@ void *thread_5ms(void *junk)
                     set_A2K_DMA_CameraPosition(mCameraPositionMode);
 					AdjFunction();
 					Send_ST_Cmd_Proc();
-					setCameraPositionModeChange(0);
+					mCameraPositionModeChange = 0;
 				}
 				else {
 					if(get_ISP2_Sensor() == -5) {
@@ -3864,12 +6213,12 @@ void *thread_5ms(void *junk)
 			}
 
 			if(getRecordCmdFlag() == 1) {
-				if(getRecordEn() == 1){
+				if(recordEn == 1){
 					lockStopRecordEn = 1;
 					get_current_usec(&task5s_lock_time);
 					task5s_lock_flag = 1;
 				}
-				doRecordVideo(getRecordEn(), mPlayMode, mResolutionMode, getTimeLapseMode(), getHdmiState());
+				doRecordVideo(recordEn, mPlayMode, mResolutionMode, getTimeLapseMode(), hdmiState);
 				setRecordCmdFlag(2);
 			}
 
@@ -4063,7 +6412,7 @@ void *thread_20ms(void *junk)
                 selfTimeMode = 0;
 //tmp                ChangeLedMode(ledControlMode);
                 if(getSdState() == 1){
-                	Ctrl_Rec_Cap(mCameraMode, getCaptureCnt(), getRecordEn());
+                	Ctrl_Rec_Cap(mCameraMode, mCaptureCnt, recordEn);
                 	Set_WifiServer_GetEstimateEn(1);
                 }
                 else{

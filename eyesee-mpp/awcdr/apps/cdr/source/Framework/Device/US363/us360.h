@@ -147,7 +147,6 @@ int get_fpga_encode_type();
 int getImgReadyFlag();
 int Capture_Is_Finish();
 void Set_Init_Image_Time(unsigned long long time);
-int stopREC(int debug);
 void free_us360_buf();
 int malloc_us360_buf();
 int errnoexit(const char *s);
@@ -172,8 +171,6 @@ void writeWifiMaxLink(int maxLink);
 void setBmxSensorLogEnable(int enable);
 void WriteWifiChannel(int channel);
 int GetSaturationValue(int value);
-void Setting_RemovalHDR_Proc(int mode);
-void Setting_HDR7P_Proc(int manual, int ev_mode);
 void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag);
 void getPath();
 void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec);
@@ -192,6 +189,7 @@ int getImgPixelformat();
 void setCapFileCnt(int cnt);
 int getCapFileCnt();
 void setSaveParameterFlag(int flag);
+int readCapturePrepareTime();
 
 #ifdef __cplusplus
 }   // extern "C"

@@ -1874,7 +1874,7 @@ int Cap_Ep_Time = -1, Cap_Ep_Time2 = 0;
 void setCaptureAddTime(int start_idx, int end_idx, int sensor_idx, int c_mode, int i_mode)
 {
 	extern void getLiveShowValue(int *value);               // fpga_driver.c
-	extern int getCapturePrepareTime(void);
+	//extern int getCapturePrepareTime(void);
     //i_mode = F_Com_In.Big_Mode;
     //c_mode = F_Com_In.Record_Mode;
     int usb_t = get_USB_Spend_Time(i_mode) / 100000;        // 1us -> 100ms
@@ -1979,7 +1979,7 @@ int getCap_Add_Time2(void)
 /*
  * 拍照前準備時間, [Auto HDR]約需多花2-4秒
  */
-int getCapturePrepareTime(void)
+int getCapturePrepareTime()
 {
     int c_mode = F_Com_In.Record_Mode;
     int par_T=10, add_time=15;

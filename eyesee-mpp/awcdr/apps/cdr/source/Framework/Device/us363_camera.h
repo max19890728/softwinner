@@ -237,6 +237,7 @@ void create_thread_5ms();
 void create_thread_20ms();
 void do_Test_Mode_Func(int m_cmd, int s_cmd);
 int GetDiskInfo();
+int stopREC();
 
 //==================== get/set =====================
 void getUS363Version(char *version);

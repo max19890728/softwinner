@@ -22,6 +22,7 @@ LINK_NODE* new_node(char *data, int size) {
 			if(buf != NULL) {
 				memcpy(buf, data, size);
 				node->data = buf;
+                node->size = size;
 			}
 			else
 				printf("new_node() malloc buf error!\n");
@@ -66,7 +67,7 @@ void clear_list(LINK_NODE *list) {
 }
 
 //get size
-int get_list_size(LINK_NODE *list) {
+int get_list_length(LINK_NODE *list) {
 	int size = 0;
 	LINK_NODE *node;
 
@@ -81,7 +82,7 @@ int get_list_size(LINK_NODE *list) {
 //insert, insert one node after idx
 int insert_node(LINK_NODE **list, int idx, char *data, int d_size) {
 	int cnt=0;
-	int size = get_list_size(*list);
+	int size = get_list_length(*list);
 	LINK_NODE *node, *pre, *node2;
 
 	if(idx < 0) {
@@ -123,7 +124,7 @@ int insert_node(LINK_NODE **list, int idx, char *data, int d_size) {
 //remove idx
 int remove_node(LINK_NODE **list, int idx) {
 	int cnt=0;
-	int size = get_list_size(*list);
+	int size = get_list_length(*list);
 	LINK_NODE *node, *pre, *next;
 
 	if(idx >= size || idx < 0) {
@@ -157,7 +158,7 @@ int remove_node(LINK_NODE **list, int idx) {
 //swap
 int swap_node(LINK_NODE **list, int idx1, int idx2) {
 	int cnt=0;
-	int size = get_list_size(*list);
+	int size = get_list_length(*list);
 	LINK_NODE *node1, *pre1, *next1;
 	LINK_NODE *node2, *pre2, *next2;
 	
@@ -195,11 +196,11 @@ int swap_node(LINK_NODE **list, int idx1, int idx2) {
 //serch idx
 int serch_node(LINK_NODE *list, int idx, char *data, int d_size) {
 	int cnt=0;
-	int size = get_list_size(list);
+	int length = get_list_length(list);
 	LINK_NODE *node;
 
-	if(idx >= size || idx < 0) {
-		printf("serch_node() idx over size!\n");
+	if(idx >= length || idx < 0) {
+		printf("serch_node() idx over length!\n");
 		return -1;
 	}
 		
@@ -213,16 +214,22 @@ int serch_node(LINK_NODE *list, int idx, char *data, int d_size) {
 		return -1;
 	}
 	else {		  	 
-		if(d_size > 0)
-			memcpy(data, node->data, d_size);
+        if(d_size >= node->size) {
+            if(node->size > 0)
+                memcpy(data, node->data, node->size);
+        }
+        else {
+        	printf("serch_node() d_size too small!\n");
+            return -1;
+        }
 	}
-	return 0;
+	return node->size;
 }
 
 //set list
 int set_list(LINK_NODE *list, int idx, char *data, int d_size) {
 	int cnt=0;
-	int size = get_list_size(list);
+	int size = get_list_length(list);
 	LINK_NODE *node;
 
 	if(idx >= size || idx < 0) {
@@ -240,8 +247,9 @@ int set_list(LINK_NODE *list, int idx, char *data, int d_size) {
 		return -1;
 	}
 	else {		  	 
-		if(d_size > 0)
-			memcpy(node->data, data, d_size);
+        node->size = d_size;
+		if(node->size > 0)
+			memcpy(node->data, data, node->size);
 	}
 	return 0;
 }
@@ -268,11 +276,11 @@ void set_gsensor_val(GSENSOR_VAL *gsensor, float pan, float titl, unsigned long 
 }
 
 //show all data
-void show_list(int type, LINK_NODE *list, int d_size) {
+void show_list(int type, LINK_NODE *list) {
 	int data_int;
 	double data_double;
 	char data_str[LINK_NODE_STR_DATA_MAX];
-	int size = get_list_size(list);
+	int size = get_list_length(list);
 	LINK_NODE *node;
 	GSENSOR_VAL data_gsensor;
 
@@ -280,28 +288,28 @@ void show_list(int type, LINK_NODE *list, int d_size) {
 	case LIST_TYPE_INTEGER:
 		node = list;
 		while(node != NULL) {
-			memcpy(&data_int, node->data, d_size);
+			memcpy(&data_int, node->data, node->size);
 			node = node->next;
 		}
 		break;
 	case LIST_TYPE_STRING:
 		node = list;
 		while(node != NULL) {
-			memcpy(&data_str[0], node->data, d_size);
+			memcpy(&data_str[0], node->data, node->size);
 			node = node->next;
 		}
 		break;
 	case LIST_TYPE_DOUBLE:
 		node = list;
 		while(node != NULL) {
-			memcpy(&data_double, node->data, d_size);
+			memcpy(&data_double, node->data, node->size);
 			node = node->next;
 		}
 		break;
 	case LIST_TYPE_STRUCT_GSENSOR:
 		node = list;
 		while(node != NULL) {
-			memcpy(&data_gsensor, node->data, d_size);
+			memcpy(&data_gsensor, node->data, node->size);
 			node = node->next;
 		}
 		break;
@@ -327,11 +335,11 @@ void list_int_test_func(void) {
 	data = 6;
 	insert_node(list_p, 0, (char*)&data, sizeof(data));
 
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_INTEGER, list, sizeof(data));
 
 	remove_node(list_p, 2);
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_INTEGER, list, sizeof(data));
 
 	serch_node(list, 2, (char*)&data, sizeof(data));
@@ -365,11 +373,11 @@ void list_str_test_func(void) {
 	sprintf(str, "No.6\0");
 	insert_node(list_p, 0, &str[0], sizeof(str));
 
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_STRING, list, sizeof(str));
 
 	remove_node(list_p, 2);
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_STRING, list, sizeof(str));
 
 	serch_node(list, 2, &str[0], sizeof(str));
@@ -403,11 +411,11 @@ void list_double_test_func(void) {
 	data = 6.123;
 	insert_node(list_p, 0, (char*)&data, sizeof(data));
 
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_DOUBLE, list, sizeof(data));
 
 	remove_node(list_p, 2);
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_DOUBLE, list, sizeof(data));
 
 	serch_node(list, 2, (char*)&data, sizeof(data));
@@ -441,11 +449,11 @@ void list_struct_test_func(void) {
 	set_gsensor_val(&gsensor, 6.0, 6.1, 20200306);
 	insert_node(list_p, 0, (char*)&gsensor, sizeof(gsensor));
 
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_STRUCT_GSENSOR, list, sizeof(gsensor));
 
 	remove_node(list_p, 2);
-	size = get_list_size(list);
+	size = get_list_length(list);
 	show_list(LIST_TYPE_STRUCT_GSENSOR, list, sizeof(gsensor));
 
 	serch_node(list, 2, (char*)&gsensor, sizeof(gsensor));

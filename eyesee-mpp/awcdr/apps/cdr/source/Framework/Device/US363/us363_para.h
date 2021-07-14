@@ -22,6 +22,7 @@ int get_ISP2_Sensor(void);
 void SendMainCmdPipe(int c_mode, int t_mode, int sync_mode);
 void reset_JPEG_Quality(int quality);
 void setJPEGaddr(int mode, int addr, int sensor);
+void setGPSLocation(int en, double latitude, double longitude, double altitude);
 
 #ifdef __cplusplus
 }   // extern "C"

@@ -616,7 +616,7 @@ int do_Defect_Func() {
     	setAEGBExp1Sec(Defect_Ep);
     	setAEGBExpGain(0);
 //tmp        ModeTypeSelectS2(0, getResolutionMode(), getHdmiState(), getCameraMode());        // return: FPS、ResolutionWidth、ResolutionHeight
-//tmp        stopREC(12);
+        stopREC();
 //tmp        choose_mode_flag = 1;
 
 //tmp        get_current_usec(&Defect_T1);
@@ -675,7 +675,7 @@ int do_Defect_Func() {
     	setAEGBExp1Sec(Defect_Ep_lst);
     	setAEGBExpGain(Defect_Gani_lst);
 //tmp        ModeTypeSelectS2(0, getResolutionMode(), getHdmiState(), getCameraMode());
-//tmp        stopREC(13);
+        stopREC();
 //tmp        choose_mode_flag = 1;
         Defect_Step = 0;
 //tmp        get_current_usec(&nowTime);

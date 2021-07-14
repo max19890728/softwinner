@@ -294,6 +294,9 @@ void setting_AEB(int frame_cnt,int ae_scale);
 void SetAntiAliasingEn(int en);
 void SetRemovalAntiAliasingEn(int en);
 void SetPipeReStart();
+int getCapturePrepareTime();
+void setting_HDR7P(int manual, int frame_cnt, int ae_scale, int strength);
+void setting_Removal_HDR(int manual, int ae_scale, int strength);
 
 #ifdef __cplusplus
 }   // extern "C"

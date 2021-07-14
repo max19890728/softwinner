@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 typedef struct link_node {
+    int size;
 	char *data;
 	struct link_node *pre;
 	struct link_node *next;
@@ -19,7 +20,7 @@ typedef struct link_node {
 LINK_NODE* new_node(char *data, int size);
 void add_node(LINK_NODE *list, char *data, int size);
 void clear_list(LINK_NODE *list);
-int get_list_size(LINK_NODE *list);
+int get_list_length(LINK_NODE *list);
 int insert_node(LINK_NODE **list, int idx, char *data, int d_size);
 int remove_node(LINK_NODE **list, int idx);
 int serch_node(LINK_NODE *list, int idx, char *data, int d_size);

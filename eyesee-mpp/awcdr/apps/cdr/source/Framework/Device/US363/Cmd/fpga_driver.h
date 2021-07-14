@@ -427,6 +427,8 @@ void setPhotoLuxValue();
 int GetColorTemperature();
 int GetTint();
 void do2DNR(int en);
+void SetHDRTone(int value);
+void getWBRgbData(int *value);
 
 #ifdef __cplusplus
 }   // extern "C"
