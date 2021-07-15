@@ -93,15 +93,15 @@ int fpgaDbtReadWriteReg(fpga_reg_rw_struct* reg_p) {
 void fpgaDbtReadWriteDdrService(fpga_ddr_rw_struct* ddr_p) {          
     fpgaDbtReadWriteDdr(ddr_p);
     if(ddr_p->cmd.rw == FPGA_READ) 
-        setDbtOutputDdrDataEn(1);    
+        Set_WifiServer_DbtOutputDdrDataEn(1);    
     else
-        setDbtInputDdrDataFinish(1);
+        Set_WifiServer_DbtInputDdrDataFinish(1);
 }
 
 void fpgaDbtReadWriteRegService(fpga_reg_rw_struct* reg_p) {            
     fpgaDbtReadWriteReg(reg_p);
     if(reg_p->cmd.rw == FPGA_READ)
-        setDbtOutputRegDataEn(1);
+        Set_WifiServer_DbtOutputRegDataEn(1);
     else
-        setDbtInputRegDataFinish(1);  
+        Set_WifiServer_DbtInputRegDataFinish(1);  
 }

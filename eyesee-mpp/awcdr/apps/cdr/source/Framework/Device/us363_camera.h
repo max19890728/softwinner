@@ -281,6 +281,7 @@ void setSdFreeSize(unsigned long long size);
 unsigned long long getSdFreeSize();
 void subSdFreeSize(int size);
 int getTimeLapseMode();
+void wifiSerThe_proc();
     
 	
 #ifdef __cplusplus

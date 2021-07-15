@@ -232,7 +232,7 @@ void SetMCUData(int cpuNowTemp) {
        		db_debug("a64 reset delete databin Start\n");
        		DeleteUS360DataBin();
        		db_debug("a64 reset delete databin End\n");
-       		WriteUS360SystemConfig(&newSSID[0], "88888888\0");
+       		writeWifiConfig(&newSSID[0], "88888888\0");
        		db_debug("a64 reset new SSID: %s\n", newSSID);
        		//for(x = 0; x < 70; x++){
        		//for(x = 20; x < 70; x++){

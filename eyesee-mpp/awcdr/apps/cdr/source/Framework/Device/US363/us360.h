@@ -156,7 +156,6 @@ void set_rec_proc_en(int en);
 void setRecEn(int recState, int time_lapse, int timelapse_enc);
 
 //-----------------------------------------------------
-void us360_init();
 
 void calSdFreeSize(unsigned long long *size);
 
@@ -165,6 +164,9 @@ void copyDataToDbtDdrRWBuf(char *buf, int size, int offset);
 void getDbtDdrRWStruct(fpga_ddr_rw_struct *ddr_p);
 void setDbtRegRWCmd(fpga_reg_rw_struct *reg_p);
 void getDbtRegRWStruct(fpga_reg_rw_struct *reg_p);
+void doFpgaDbtReadWriteDdrService();
+void doFpgaDbtReadWriteRegService();
+int getDbtDdrCmdReadWrite();
 
 void setModelName(char *ver);
 void writeWifiMaxLink(int maxLink);
@@ -173,7 +175,6 @@ void WriteWifiChannel(int channel);
 int GetSaturationValue(int value);
 void FPGA_Ctrl_Power_Func(int ctrl_pow, int flag);
 void getPath();
-void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec);
 void set_timeout_start(int sel);
 int checksd();
 int CheckSDcardState(char *path);
@@ -190,6 +191,7 @@ void setCapFileCnt(int cnt);
 int getCapFileCnt();
 void setSaveParameterFlag(int flag);
 int readCapturePrepareTime();
+void getdoResize(int *en, char *resize_path);
 
 #ifdef __cplusplus
 }   // extern "C"

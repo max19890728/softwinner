@@ -28,20 +28,21 @@ void setSendFeedBackCmd(int idx, char *cmd);
 
 void free_wifiserver_buf();
 int malloc_wifiserver_buf();
-void setDbtDdrCmdEn(int en);
-int getDbtDdrCmdEn();
-void setDbtInputDdrDataEn(int en);
-int getDbtInputDdrDataEn();
-void setDbtInputDdrDataFinish(int flag);
-int getDbtInputDdrDataFinish();
-void setDbtOutputDdrDataEn(int en);
-int getDbtOutputDdrDataEn();
-void setDbtRegCmdEn(int en);
-int getDbtRegCmdEn();
-void setDbtInputRegDataFinish(int flag);
-int getDbtInputRegDataFinish();
-void setDbtOutputRegDataEn(int en);
-int getDbtOutputRegDataEn();
+
+void Set_WifiServer_DbtDdrCmdEn(int en);
+int Get_WifiServer_DbtDdrCmdEn();
+void Set_WifiServer_DbtInputDdrDataEn(int en);
+int Get_WifiServer_DbtInputDdrDataEn();
+void Set_WifiServer_DbtInputDdrDataFinish(int flag);
+int Get_WifiServer_DbtInputDdrDataFinish();
+void Set_WifiServer_DbtOutputDdrDataEn(int en);
+int Get_WifiServer_DbtOutputDdrDataEn();
+void Set_WifiServer_DbtRegCmdEn(int en);
+int Get_WifiServer_DbtRegCmdEn();
+void Set_WifiServer_DbtInputRegDataFinish(int flag);
+int Get_WifiServer_DbtInputRegDataFinish();
+void Set_WifiServer_DbtOutputRegDataEn(int en);
+int Get_WifiServer_DbtOutputRegDataEn();
 
 //---------------------------------------
 void Set_WifiServer_SendFeedBackEn(int en);
@@ -135,10 +136,10 @@ int Get_WifiServer_CaptureCnt();
 void Set_WifiServer_EthernetSettingsEn(int en);
 int Get_WifiServer_EthernetSettingsEn();
 int Get_WifiServer_EthernetMode();
-void Get_WifiServer_EthernetIP(char *dst_buf, int dst_size);
-void Get_WifiServer_EthernetMask(char *dst_buf, int dst_size);
-void Get_WifiServer_EthernetGateway(char *dst_buf, int dst_size);
-void Get_WifiServer_EthernetDNS(char *dst_buf, int dst_size);
+int Get_WifiServer_EthernetIP(char *dst_buf, int dst_size);
+int Get_WifiServer_EthernetMask(char *dst_buf, int dst_size);
+int Get_WifiServer_EthernetGateway(char *dst_buf, int dst_size);
+int Get_WifiServer_EthernetDNS(char *dst_buf, int dst_size);
 
 void Set_WifiServer_ChangeFPSEn(int en);
 int Get_WifiServer_ChangeFPSEn();
@@ -311,7 +312,7 @@ int Get_WifiServer_GetRemoveHdrStrength();
 
 void Set_WifiServer_GetAntiAliasingEn(int en);
 int Get_WifiServer_GetAntiAliasingEn();
-int Get_WifiServer_etAntiAliasingVal();
+int Get_WifiServer_GetAntiAliasingVal();
 
 void Set_WifiServer_GetRemoveAntiAliasingEn(int en);
 int Get_WifiServer_GetRemoveAntiAliasingEn();
@@ -398,17 +399,70 @@ int Copy_To_WifiServer_SendFolderSizes(char *sbuf, int size, int dst_offset);
 void Set_WifiServer_SendFolderSize(long size);
 void Set_WifiServer_SendFolderEn(int en);
 
+void Set_WifiServer_PowerSavingEn(int en);
+int Get_WifiServer_PowerSavingEn();
+int Get_WifiServer_PowerSavingMode();
 
+void Set_WifiServer_SetingUIEn(int en);
+int Get_WifiServer_SetingUIEn();
+int Get_WifiServer_SetingUIState();
 
+void Set_WifiServer_DoAutoStitchEn(int en);
+int Get_WifiServer_DoAutoStitchEn();
 
+void Set_WifiServer_DoGsensorResetEn(int en);
+int Get_WifiServer_DoGsensorResetEn();
 
+void Set_WifiServer_ImgEn(int en);
+int Get_WifiServer_ImgEn();
+void Set_WifiServer_ImgTotle(int size);
+int Get_WifiServer_ImgTotle();
+void Set_WifiServer_ImgLen(int size);
+int Get_WifiServer_ImgLen();
+void Get_WifiServer_SendTHMListData(char *dst_buf, int dst_size);
+int Copy_To_WifiServer_ImgData(char *sbuf, int size, int dst_offset);
+LINK_NODE *Get_WifiServer_ExistFileName();
 
+void Set_WifiServer_DownloadEn(int en);
+int Get_WifiServer_DownloadEn();
+void Set_WifiServer_DownloadTotle(int size);
+int Get_WifiServer_DownloadTotle();
+void Set_WifiServer_DownloadLen(int size);
+int Get_WifiServer_DownloadLen();
+LINK_NODE *Get_WifiServer_DownloadFileName();
+LINK_NODE *Get_WifiServer_DownloadFileSkip();
+int Copy_To_WifiServer_DownloadData(char *sbuf, int size, int dst_offset);
 
+void Set_WifiServer_WifiConfigEn(int en);
+int Get_WifiServer_WifiConfigEn();
+void Get_WifiServer_WifiConfigSsid(char *dst_buf, int dst_size);
+void Get_WifiServer_WifiConfigPwd(char *dst_buf, int dst_size);
 
+void Set_WifiServer_GPSEn(int en);
+int Get_WifiServer_GPSEn();
 
+void Set_WifiServer_ChangeDebugToolStateEn(int en);
+int Get_WifiServer_ChangeDebugToolStateEn();
+void Set_WifiServer_IsDebugToolConnect(int val);
+int Get_WifiServer_IsDebugToolConnect();
 
+void Set_WifiServer_CtrlOLEDEn(int en);
+int Get_WifiServer_CtrlOLEDEn();
+int Get_WifiServer_CtrlOLEDNum();
 
+void Set_WifiServer_SetSensorToolEn(int en);
+int Get_WifiServer_SetSensorToolEn();
+void Set_WifiServer_SensorToolNum(int val);
+int Get_WifiServer_SensorToolNum();
+void Set_WifiServer_SensorToolVal(int val);
+int Get_WifiServer_SensorToolVal();
 
+void Set_WifiServer_SetParametersToolEn(int en);
+int Get_WifiServer_SetParametersToolEn();
+void Set_WifiServer_ParametersNum(int val);
+int Get_WifiServer_ParametersNum();
+void Set_WifiServer_ParametersVal(int val);
+int Get_WifiServer_ParametersVal();
 
 
 #ifdef __cplusplus

@@ -1936,7 +1936,7 @@ void setCaptureAddTime(int start_idx, int end_idx, int sensor_idx, int c_mode, i
 /*
  * 整張處理含曝光時間, APP使用
  */
-int getCaptureAddTime(void){
+int getCaptureAddTime(){
 	int re = -1;
 	if(Cap_Add_Time != -1){
 		re = Cap_Add_Time;
@@ -1947,7 +1947,7 @@ int getCaptureAddTime(void){
 /*
  * 曝光時間, APP使用
  */
-int getCaptureEpTime(void){
+int getCaptureEpTime(){
 	int re = -1;
 	if(Cap_Ep_Time != -1){
 		re = Cap_Ep_Time;

@@ -3351,15 +3351,15 @@ void set_AE_adj_tout(int rec_state, int time_lapse)
     }
 }
 
-void SetUVtoRGB(int idx, int value)
-{
-	set_A2K_ISP2_UVtoRGB(idx, value);
-}
+//void SetUVtoRGB(int idx, int value)
+//{
+//	set_A2K_ISP2_UVtoRGB(idx, value);
+//}
 
-void GetUVtoRGB(int *value)
-{
-	get_A2K_ISP2_UVtoRGB(value);
-}
+//void GetUVtoRGB(int *value)
+//{
+//	get_A2K_ISP2_UVtoRGB(value);
+//}
 
 int HDR_Tone   = 0;		//-10 ~ +10
 int Gamma_Rate[4] = {1, 30, 70, 110};	//HDR_Tone: -10:1	 	0:30		+10:70		+20:110

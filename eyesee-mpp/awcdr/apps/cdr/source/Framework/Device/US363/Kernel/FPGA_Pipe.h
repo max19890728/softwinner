@@ -297,6 +297,11 @@ void SetPipeReStart();
 int getCapturePrepareTime();
 void setting_HDR7P(int manual, int frame_cnt, int ae_scale, int strength);
 void setting_Removal_HDR(int manual, int ae_scale, int strength);
+void SetHDR7PAutoTh(int idx, int value);
+void SetHDR7PAutoTarget(int idx, int value);
+void SetRemovalVariable(int sel, int val);
+int getCaptureAddTime();
+int getCaptureEpTime();
 
 #ifdef __cplusplus
 }   // extern "C"

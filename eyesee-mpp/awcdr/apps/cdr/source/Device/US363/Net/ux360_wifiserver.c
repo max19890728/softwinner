@@ -189,8 +189,8 @@ int mWifiPwdEn = 0;			// wifi password
 char sendWifiPwdValue[8];
     
 int mWifiConfigEn = 0;		//modify ssid/password
-char mWifiConfigSsid[16];
-char mWifiConfigPwd[16];;
+char mWifiConfigSsid[32];
+char mWifiConfigPwd[16];
     
 int sendFeedBackEn = 0;
 char sendFeedBackAction[8];
@@ -647,7 +647,7 @@ int Get_WifiServer_CaptureCnt() { return captureCnt; }
 void Set_WifiServer_EthernetSettingsEn(int en) { mEthernetSettingsEn = en; }
 int Get_WifiServer_EthernetSettingsEn() { return mEthernetSettingsEn; }
 int Get_WifiServer_EthernetMode() { return mEthernetMode; }
-void Get_WifiServer_EthernetIP(char *dst_buf, int dst_size) {
+int Get_WifiServer_EthernetIP(char *dst_buf, int dst_size) {
     int size = sizeof(mEthernetIP);
     if(size > dst_size)
         return -1;
@@ -655,7 +655,7 @@ void Get_WifiServer_EthernetIP(char *dst_buf, int dst_size) {
         memcpy(dst_buf, &mEthernetIP[0], sizeof(mEthernetIP));
     return 0;
 }
-void Get_WifiServer_EthernetMask(char *dst_buf, int dst_size) {
+int Get_WifiServer_EthernetMask(char *dst_buf, int dst_size) {
     int size = sizeof(mEthernetMask);
     if(size > dst_size)
         return -1;
@@ -663,7 +663,7 @@ void Get_WifiServer_EthernetMask(char *dst_buf, int dst_size) {
         memcpy(dst_buf, &mEthernetMask[0], sizeof(mEthernetMask));
     return 0;
 }
-void Get_WifiServer_EthernetGateway(char *dst_buf, int dst_size) {
+int Get_WifiServer_EthernetGateway(char *dst_buf, int dst_size) {
     int size = sizeof(mEthernetGateway);
     if(size > dst_size)
         return -1;
@@ -671,7 +671,7 @@ void Get_WifiServer_EthernetGateway(char *dst_buf, int dst_size) {
         memcpy(dst_buf, &mEthernetGateway[0], sizeof(mEthernetGateway));
     return 0;
 }
-void Get_WifiServer_EthernetDNS(char *dst_buf, int dst_size) {
+int Get_WifiServer_EthernetDNS(char *dst_buf, int dst_size) {
     int size = sizeof(mEthernetDNS);
     if(size > dst_size)
         return -1;
@@ -813,11 +813,11 @@ int Get_WifiServer_BotmTotle() { return mBotmTotle; }
 void Set_WifiServer_BotmLen(int size) { mBotmLen = size; }
 int Get_WifiServer_BotmLen() { return mBotmLen; }
 int Copy_To_WifiServer_BotmData(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > UVC_BUF_MAX)
+    if((dst_offset + size) > UVC_BUF_MAX)
         return -1;
 
     if(mBotmData != NULL) {
-        memcpy(&mBotmData[offset], sbuf, size);
+        memcpy(&mBotmData[dst_offset], sbuf, size);
     }
     return 0;
 }
@@ -938,31 +938,31 @@ void Set_WifiServer_GetTHMListEn(int en) { mGetTHMListEn = en; }
 int Get_WifiServer_GetTHMListEn() { return mGetTHMListEn; }
 void Set_WifiServer_THMListSize(int size) { mTHMListSize = size; }
 int Copy_To_WifiServer_THMListData(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > 0x20000)
+    if((dst_offset + size) > 0x20000)
         return -1;
 
     if(mTHMListData != NULL) {
-        memcpy(&mTHMListData[offset], sbuf, size);
+        memcpy(&mTHMListData[dst_offset], sbuf, size);
     }
     return 0;
 }
 void Set_WifiServer_L63StatusSize(int size) { mL63StatusSize = size; }
 int Copy_To_WifiServer_L63StatusData(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > 0x20000)
+    if((dst_offset + size) > 0x20000)
         return -1;
 
     if(mL63StatusData != NULL) {
-        memcpy(&mL63StatusData[offset], sbuf, size);
+        memcpy(&mL63StatusData[dst_offset], sbuf, size);
     }
     return 0;
 }
 void Set_WifiServer_PCDStatusSize(int size) { mPCDStatusSize = size; }
 int Copy_To_WifiServer_PCDStatusData(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > 0x20000)
+    if((dst_offset + size) > 0x20000)
         return -1;
 
     if(mPCDStatusData != NULL) {
-        memcpy(&mPCDStatusData[offset], sbuf, size);
+        memcpy(&mPCDStatusData[dst_offset], sbuf, size);
     }
     return 0;
 }
@@ -980,29 +980,127 @@ int Get_WifiServer_GetFolderVal(char *dst_buf, int dst_size) {
 }
 void Set_WifiServer_SendFolderLen(int size) { mSendFolderLen = size; }
 int Copy_To_WifiServer_SendFolderNames(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > 0x20000)
+    if((dst_offset + size) > 0x20000)
         return -1;
 
     if(mSendFolderNames != NULL) {
-        memcpy(&mSendFolderNames[offset], sbuf, size);
+        memcpy(&mSendFolderNames[dst_offset], sbuf, size);
     }
     return 0;
 }
 int Copy_To_WifiServer_SendFolderSizes(char *sbuf, int size, int dst_offset) {
-    if((offset + size) > 0x20000)
+    if((dst_offset + size) > 0x20000)
         return -1;
 
     if(mSendFolderSizes != NULL) {
-        memcpy(&mSendFolderSizes[offset], sbuf, size);
+        memcpy(&mSendFolderSizes[dst_offset], sbuf, size);
     }
     return 0;
 }
 void Set_WifiServer_SendFolderSize(long size) { mSendFolderSize = size; }
 void Set_WifiServer_SendFolderEn(int en) { mSendFolderEn = en; }
 
+void Set_WifiServer_PowerSavingEn(int en) { mPowerSavingEn = en; }
+int Get_WifiServer_PowerSavingEn() { return mPowerSavingEn; }
+int Get_WifiServer_PowerSavingMode() { return PowerSavingMode; }
 
+void Set_WifiServer_SetingUIEn(int en) { mSetingUIEn = en; }
+int Get_WifiServer_SetingUIEn() { return mSetingUIEn; }
+int Get_WifiServer_SetingUIState() { return mSetingUIState; }
 
+void Set_WifiServer_DoAutoStitchEn(int en) { mDoAutoStitchEn = en; }
+int Get_WifiServer_DoAutoStitchEn() { return mDoAutoStitchEn; }
 
+void Set_WifiServer_DoGsensorResetEn(int en) { mDoGsensorResetEn = en; }
+int Get_WifiServer_DoGsensorResetEn() { return mDoGsensorResetEn; }
+
+void Set_WifiServer_ImgEn(int en) { mImgEn = en; }
+int Get_WifiServer_ImgEn() { return mImgEn; }
+void Set_WifiServer_ImgTotle(int size) { mImgTotle = size; }
+int Get_WifiServer_ImgTotle() { return mImgTotle; }
+void Set_WifiServer_ImgLen(int size) { mImgLen = size; }
+int Get_WifiServer_ImgLen() { return mImgLen; }
+void Get_WifiServer_SendTHMListData(char *dst_buf, int dst_size) {
+    int size = mSendTHMListSize;
+    if(size > dst_size)
+        return -1;
+    else
+        memcpy(dst_buf, &mSendTHMListData[0], mSendTHMListSize);
+    return 0;
+}
+int Copy_To_WifiServer_ImgData(char *sbuf, int size, int dst_offset) {
+    if((dst_offset + size) > UVC_BUF_MAX)
+        return -1;
+
+    if(mImgData != NULL) {
+        memcpy(&mImgData[dst_offset], sbuf, size);
+    }
+    return 0;
+}
+LINK_NODE *Get_WifiServer_ExistFileName() { return mExistFileName; }
+
+void Set_WifiServer_DownloadEn(int en) { mDownloadEn = en; }
+int Get_WifiServer_DownloadEn() { return mDownloadEn; }
+void Set_WifiServer_DownloadTotle(int size) { mDownloadTotle = size; }
+int Get_WifiServer_DownloadTotle() { return mDownloadTotle; }
+void Set_WifiServer_DownloadLen(int size) { mDownloadLen = size; }
+int Get_WifiServer_DownloadLen() { return mDownloadLen; }
+LINK_NODE *Get_WifiServer_DownloadFileName() { return mDownloadFileName; }
+LINK_NODE *Get_WifiServer_DownloadFileSkip() { return mDownloadFileName; }
+int Copy_To_WifiServer_DownloadData(char *sbuf, int size, int dst_offset) {
+    if((dst_offset + size) > UVC_BUF_MAX)
+        return -1;
+
+    if(mDownloadData != NULL) {
+        memcpy(&mDownloadData[dst_offset], sbuf, size);
+    }
+    return 0;
+}
+
+void Set_WifiServer_WifiConfigEn(int en) { mWifiConfigEn = en; }
+int Get_WifiServer_WifiConfigEn() { return mWifiConfigEn; }
+void Get_WifiServer_WifiConfigSsid(char *dst_buf, int dst_size) {
+    int size = sizeof(mWifiConfigSsid);
+    if(size > dst_size)
+        return -1;
+    else
+        memcpy(dst_buf, &mWifiConfigSsid[0], mWifiConfigSsid);
+    return 0;
+}
+void Get_WifiServer_WifiConfigPwd(char *dst_buf, int dst_size) {
+    int size = sizeof(mWifiConfigPwd);
+    if(size > dst_size)
+        return -1;
+    else
+        memcpy(dst_buf, &mWifiConfigPwd[0], mWifiConfigPwd);
+    return 0;
+}
+
+void Set_WifiServer_GPSEn(int en) { mGPSEn = en; }
+int Get_WifiServer_GPSEn() { return mGPSEn; }
+
+void Set_WifiServer_ChangeDebugToolStateEn(int en) { mChangeDebugToolStateEn = en; }
+int Get_WifiServer_ChangeDebugToolStateEn() { return mChangeDebugToolStateEn; }
+void Set_WifiServer_IsDebugToolConnect(int val) { isDebugToolConnect = val; }
+int Get_WifiServer_IsDebugToolConnect() { return isDebugToolConnect; }
+
+void Set_WifiServer_CtrlOLEDEn(int en) { mCtrlOLEDEn = en; }
+int Get_WifiServer_CtrlOLEDEn() { return mCtrlOLEDEn; }
+int Get_WifiServer_CtrlOLEDNum() { return ctrlOLEDNum; }
+
+void Set_WifiServer_SetSensorToolEn(int en) { mSetSensorToolEn = en; }
+int Get_WifiServer_SetSensorToolEn() { return mSetSensorToolEn; }
+void Set_WifiServer_SensorToolNum(int val) { mSensorToolNum = val; }
+int Get_WifiServer_SensorToolNum() { return mSensorToolNum; }
+void Set_WifiServer_SensorToolVal(int val) { mSensorToolVal = val; }
+int Get_WifiServer_SensorToolVal() { return mSensorToolVal; }
+
+void Set_WifiServer_SetParametersToolEn(int en) { mSetParametersToolEn = en; }
+int Get_WifiServer_SetParametersToolEn() { return mSetParametersToolEn; }
+void Set_WifiServer_ParametersNum(int val) { mParametersNum = val; }
+int Get_WifiServer_ParametersNum() { return mParametersNum; }
+void Set_WifiServer_ParametersVal(int val) { mParametersVal = val; }
+int Get_WifiServer_ParametersVal() { return mParametersVal; }
 
 
 //==================== fucntion ====================
@@ -7322,23 +7420,23 @@ error:
 	return -1;
 }
 
-void setDbtDdrCmdEn(int en) { mDbtDdrCmdEn = en; }
-int getDbtDdrCmdEn() { return mDbtDdrCmdEn; }
+void Set_WifiServer_DbtDdrCmdEn(int en) { mDbtDdrCmdEn = en; }
+int Get_WifiServer_DbtDdrCmdEn() { return mDbtDdrCmdEn; }
 
-void setDbtInputDdrDataEn(int en) { mDbtInputDdrDataEn = en; }
-int getDbtInputDdrDataEn() { return mDbtInputDdrDataEn; }
+void Set_WifiServer_DbtInputDdrDataEn(int en) { mDbtInputDdrDataEn = en; }
+int Get_WifiServer_DbtInputDdrDataEn() { return mDbtInputDdrDataEn; }
 
-void setDbtInputDdrDataFinish(int flag) { mDbtInputDdrDataFinish = flag; }
-int getDbtInputDdrDataFinish() { return mDbtInputDdrDataFinish; }
+void Set_WifiServer_DbtInputDdrDataFinish(int flag) { mDbtInputDdrDataFinish = flag; }
+int Get_WifiServer_DbtInputDdrDataFinish() { return mDbtInputDdrDataFinish; }
 
-void setDbtOutputDdrDataEn(int en) { mDbtOutputDdrDataEn = en; }
-int getDbtOutputDdrDataEn() { return mDbtOutputDdrDataEn; }
+void Set_WifiServer_DbtOutputDdrDataEn(int en) { mDbtOutputDdrDataEn = en; }
+int Get_WifiServer_DbtOutputDdrDataEn() { return mDbtOutputDdrDataEn; }
 
-void setDbtRegCmdEn(int en) { mDbtRegCmdEn = en; }
-int getDbtRegCmdEn() { return mDbtRegCmdEn; }
+void Set_WifiServer_DbtRegCmdEn(int en) { mDbtRegCmdEn = en; }
+int Get_WifiServer_DbtRegCmdEn() { return mDbtRegCmdEn; }
 
-void setDbtInputRegDataFinish(int flag) { mDbtInputRegDataFinish = flag; }
-int getDbtInputRegDataFinish() { return mDbtInputRegDataFinish; }
+void Set_WifiServer_DbtInputRegDataFinish(int flag) { mDbtInputRegDataFinish = flag; }
+int Get_WifiServer_DbtInputRegDataFinish() { return mDbtInputRegDataFinish; }
 
-void setDbtOutputRegDataEn(int en) { mDbtOutputRegDataEn = en; }
-int getDbtOutputRegDataEn() { return mDbtOutputRegDataEn; }
+void Set_WifiServer_DbtOutputRegDataEn(int en) { mDbtOutputRegDataEn = en; }
+int Get_WifiServer_DbtOutputRegDataEn() { return mDbtOutputRegDataEn; }

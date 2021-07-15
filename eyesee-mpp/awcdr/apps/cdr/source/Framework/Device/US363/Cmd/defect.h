@@ -51,8 +51,16 @@ typedef struct Defect_8x8_Struct_h {
 	Defect_Cmd_Struct  Table[DEFECT_IMG_Y >> 3][DEFECT_IMG_X >> 3];
 } Defect_8x8_Struct;
 
+void SetDefectType(int type);
+int GetDefectType();
 void SetDefectStep(int step);
 int GetDefectStep();
+void SetDefectTh(int th);
+int GetDefectTh();
+void SetDefectOffsetX(int offset);
+int GetDefectOffsetX();
+void SetDefectOffsetY(int offset);
+int GetDefectOffsetY();
 int DefectInit();
 void SetDefectDebugEn(int en);
 void SetDefectState(int state);

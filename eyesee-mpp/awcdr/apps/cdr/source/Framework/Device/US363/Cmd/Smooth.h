@@ -88,6 +88,13 @@ void SaveSmoothFile(char *cap_path);
 int ReadSmoothFile(char *path);
 void setSmoothParameter(int idx, int value);
 void checkSaveSmoothBin();
+void setSmoothSpeed(int idx, int value);
+void setSmoothXYSpace(int space);
+void setSmoothFarWeight(int weight);
+void setSmoothDelSlope(int slope);
+void setSmoothFunction(int func);
+void setSaveSmoothEn(int en);
+void SetSmoothOIdx(int idx);
 
 #ifdef __cplusplus
 }   // extern "C"

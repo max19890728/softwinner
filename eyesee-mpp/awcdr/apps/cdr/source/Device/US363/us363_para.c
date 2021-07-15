@@ -97,16 +97,16 @@ void setSensor(int sensor, int idx, int value)
 	do_ST_Line_Offset();
 }
 
-int Sensor_Mask_Line_Shift_Adj = -5;
-void setSensorMaskLineShiftAdj(int value)
-{
-    Sensor_Mask_Line_Shift_Adj = value;
-}
+//int Sensor_Mask_Line_Shift_Adj = -5;
+//void setSensorMaskLineShiftAdj(int value)
+//{
+//    Sensor_Mask_Line_Shift_Adj = value;
+//}
 
-void getSensorMaskLineShiftAdj(int *val)
-{
-    *val = Sensor_Mask_Line_Shift_Adj;
-}
+//void getSensorMaskLineShiftAdj(int *val)
+//{
+//    *val = Sensor_Mask_Line_Shift_Adj;
+//}
 
 int DebugJPEGMode = 0;    // 0:normal 1:debug
 int DebugJPEGaddr = 0x00080000;
@@ -569,12 +569,12 @@ void get_cardboard_Resolution(int *w, int *h)
 }*/
 
 //Debug
-void setSTCmdDebugMode(int value)
-{
- Set_ST_S_Cmd_Debug_Flag(value);
-}
+//void setSTCmdDebugMode(int value)
+//{
+// Set_ST_S_Cmd_Debug_Flag(value);
+//}
 
-int getSTCmdDebugMode(void)
-{
-	return Get_ST_S_Cmd_Debug_Flag();
-}
+//int getSTCmdDebugMode(void)
+//{
+//	return Get_ST_S_Cmd_Debug_Flag();
+//}

@@ -53,13 +53,19 @@ int Defect_Gani_lst  = 0;
 unsigned long long Defect_T1 = 0;
 unsigned long long Defect_T2 = 0;
 
-void SetDefectStep(int step) {
-	Defect_Step = step;
-}
+void SetDefectType(int type) { Defect_Type = type; }
+int GetDefectType() { return Defect_Type; }
 
-int GetDefectStep() {
-	return Defect_Step;
-}
+void SetDefectStep(int step) { Defect_Step = step; }
+int GetDefectStep() { return Defect_Step; }
+
+void SetDefectTh(int th) { Defect_Th = th; }
+int GetDefectTh() { return Defect_Th; }
+
+void SetDefectOffsetX(int offset) { Defect_X_Offset = offset; }
+int GetDefectOffsetX() { return Defect_X_Offset; }
+void SetDefectOffsetY(int offset) { Defect_Y_Offset = offset; }
+int GetDefectOffsetY() { return Defect_Y_Offset; }
 
 /*
  * 3x3 Table

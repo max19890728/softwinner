@@ -137,6 +137,7 @@ void WriteAdjFocusPosi(int tool_num);
 void ReadAdjFocusPosi(int s_id, int tool_num);
 int check_focus_time(unsigned long long time);
 void ReadTestToolFocusAdjFile(int s_id);
+void setFocusPosiOffsetXY(int s_id, int idx, int xy, int value);
 
 #ifdef __cplusplus
 }   // extern "C"

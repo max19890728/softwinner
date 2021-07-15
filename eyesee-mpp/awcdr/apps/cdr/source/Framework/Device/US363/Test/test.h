@@ -121,6 +121,7 @@ int get_TestToolCmd(void);
 int GetTestToolState();
 void SetTestToolStep(int step);
 int GetTestToolStep();
+void STTableTestS2Focus(int s_id);
 
 #ifdef __cplusplus
 }   // extern "C"

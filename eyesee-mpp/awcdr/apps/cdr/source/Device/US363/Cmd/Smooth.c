@@ -1561,7 +1561,7 @@ int getSmoothXYSpace(){
 	return BSmooth_XY_Space; 
 }
 void setSmoothFarWeight(int weight){ 
-BSmooth_FarWeight = weight; BSmooth_Set = 1; 
+    BSmooth_FarWeight = weight; BSmooth_Set = 1; 
 }   // 101
 int getSmoothFarWeight(){
 	return BSmooth_FarWeight; 

@@ -288,17 +288,10 @@ int HDR_Default_Parameter[3][4] = {
 int doResize_flag = 0, doResize_flag_lst = 0;
 char doResize_path[8][64];                                                                
 	
-int customerCode = 0;		//辨識編號 0:Ultracker	10137:Let's   2067001:阿里巴巴
-int LangCode = 840;			//國家代碼 對應ISO 3166-1  158台灣 392日本 156中國 840美國 
+//int customerCode = 0;		//辨識編號 0:Ultracker	10137:Let's   2067001:阿里巴巴
+//int LangCode = 840;			//國家代碼 對應ISO 3166-1  158台灣 392日本 156中國 840美國 
 
 int versionDate = 190507;
-	
-//480000    600000    720000    816000    1008000   1104000   1152000   1200000   1344000
-int CpuFullSpeed     = 1152000;
-int CpuAutoMoveSpeed = 600000;  	// 4核 x 600Mhz
-int CpuHighSpeed     = 600000;     	// 2核 x 600Mhz        // 480000, 2MB Live會不順
-int CpuMiddleSpeed   = 480000;    	// 4核 x 480Mhz
-int CpuLowSpeed      = 480000;  	// 2核 x 480Mhz
 
 //fpga dbt
 fpga_ddr_rw_struct ddrReadWriteCmd;
@@ -2396,29 +2389,6 @@ void checkPowerLog(int vol, int cur, int temp, int fan) {
    	}
 }
 
-/*void wifiSerThe_proc_jni() {
-	//wifiSerThe_proc
-}*/
-void wifiSerThe_proc() {
-    if(getDbtDdrCmdEn() == 1) { 
-        if(ddrReadWriteCmd.cmd.rw == FPGA_READ) {
-           fpgaDbtReadWriteDdrService(&ddrReadWriteCmd);
-           setDbtDdrCmdEn(0);
-        }
-        else {
-            if(getDbtInputDdrDataEn() == 1) {
-                fpgaDbtReadWriteDdrService(&ddrReadWriteCmd);
-                setDbtDdrCmdEn(0);
-                setDbtInputDdrDataEn(0);
-            }
-        }
-    }
-    else if(getDbtRegCmdEn()) {
-        fpgaDbtReadWriteRegService(&regReadWriteCmd);
-        setDbtRegCmdEn(0);
-    }
-}
-
 int Make_Defect_3x3_Table_jni(int type) {
 	int ret;
 	//Make_Defect_3x3_Table
@@ -3842,14 +3812,14 @@ int GetSDState(void)
 //{
 //	setting_AEB(frame_cnt,ae_scale);
 //}
-int getCaptureEstimatedTime()
-{
-	return getCaptureAddTime();
-}
-int doGetCaptureEpTime()
-{
-	return getCaptureEpTime();
-}
+//int getCaptureEstimatedTime()
+//{
+//	return getCaptureAddTime();
+//}
+//int doGetCaptureEpTime()
+//{
+//	return getCaptureEpTime();
+//}
 
 void save_Removal_bin_file(char fname, char *fptr, int size)
 {
@@ -3869,9 +3839,9 @@ void save_Removal_bin_file(char fname, char *fptr, int size)
             db_debug("save_Removal_bin_file: size=%d\n", size);
         }
 }
-int readCaptureDCnt(void) {
-	return read_F_Com_In_Capture_D_Cnt();
-}
+//int readCaptureDCnt(void) {
+//	return read_F_Com_In_Capture_D_Cnt();
+//}
 
 int readCapturePrepareTime(){
 	return getCapturePrepareTime();
@@ -3884,162 +3854,10 @@ int GetSaturationValue(int value) {
 
 //--------------------------------------------------------------------------
 
-void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec) {
-    char message[64];
-    char mode_st[16]; 
-    char res_st[16];
-    char fps_st[16];
-    char live_rec_st[16];
-        
-    switch(mode) {
-    case 0: sprintf(mode_st, "Global\0"); break;
-    case 1: sprintf(mode_st, "Front\0");  break;
-    case 2: sprintf(mode_st, "360\0");    break;
-    case 3: sprintf(mode_st, "240\0");    break;
-    case 4: sprintf(mode_st, "180\0");    break;
-    case 5: sprintf(mode_st, "Split4\0"); break;
-    case 6: sprintf(mode_st, "PIP\0");    break;
-    }
-        
-    switch(res) {
-    case 0: break;
-    case 1: sprintf(res_st, "12K\0");      break;
-    case 2: sprintf(res_st, "4K\0");       break;
-    case 7: sprintf(res_st, "8K\0");       break;
-    case 8: sprintf(res_st, "10K\0");      break;
-    case 12: sprintf(res_st, "6K\0");      break;
-    case 13: sprintf(res_st, "3K\0");      break;
-    case 14: sprintf(res_st, "2K\0");      break;
-    }
-        
-    sprintf(fps_st, "%d\0", (fps/10) );
-        
-    if(live_rec == 0) sprintf(live_rec_st, "live\0");
-    else              sprintf(live_rec_st, "rec\0");
-          
-	sprintf(message, "%s, %s, %s fps, %s", mode_st, res_st, fps_st, live_rec_st);
-//tmp    textModeMessage.setText(message);
-}
-
 int errnoexit(const char *s)
 {
     db_error("%s error %d, %s\n", s, errno, strerror (errno));
     return ERROR_LOCAL;
-}
-
-//#define TEST_SPI_IO_RW		1
-//#define TEST_SPI_DDR_RW		1
-//#define TEST_QSPI			1
-#define TEST_MIPI			1
-
-pthread_t thread_test_id;
-pthread_mutex_t mut_test_buf;
-int test_thread_en = 1;
-
-void Write_Test_SPI_Cmd() {
-	int i, Addr = 0;
-	unsigned Data[896], rBuf[128];		//QSPI至少需要超過&對齊512Byte 
-	unsigned short Data_c[1792];
-	
-#if defined(TEST_SPI_IO_RW)
-	Addr = 0x3F0;
-	//spi write io
-    Data[0] = Addr;
-    Data[1] = 0xABCD;
-    SPI_Write_IO_S2(0x9, (int *) &Data[0], 8);
-	//spi read io
-	memset(&Data[0], 0, sizeof(Data) );
-	spi_read_io_porcess_S2(Addr, (int *) &Data[0], 4);
-	db_debug("Write_Test_SPI_Cmd: value=0x%x", Data[0]);
-#else
-	//qspi write ddr
-	memset(&Data[0], 0, sizeof(Data) );
-	memset(&rBuf[0], 0, sizeof(rBuf) );
-	memset(&Data_c[0], 0, sizeof(Data_c) );
-	for(i = 0; i < 1792; i++) {
-		Data_c[i] = i;
-	}
-
-  #if defined(TEST_MIPI)	 
-	for(i = 0; i < 1920; i++) {	
-		Addr = MTX_S_ADDR + (i << 16);	// 0x10000: DDR一列
-		Data_c[0] = i;
-		//ua360_qspi_ddr_write(Addr, (int *) &Data_c[0], sizeof(Data_c) );
-		ua360_spi_ddr_write(Addr, (int *) &Data_c[0], sizeof(Data_c) );
-	}
-  #else
-	Addr = 0x10000000;
-   #if defined(TEST_QSPI)
-	ua360_qspi_ddr_write(Addr, (int *) &Data[0], sizeof(Data) );
-   #else
-	ua360_spi_ddr_write(Addr, (int *) &Data[0], sizeof(Data) );
-   #endif	// defined(TEST_QSPI)
-   
-//	ua360_spi_ddr_read(Addr, (int *) &rBuf[0],  sizeof(rBuf), 2, 0);
-//	for(i = 0; i < 8; i++)
-//		db_debug("Write_Test_SPI_Cmd: rBuf[%d]=0x%x", i, rBuf[i]);
-  #endif	// defined(TEST_MIPI)
-  
-#endif	// defined(TEST_SPI_IO_RW)
-}
-
-enum time_state {
-	TIME_STATE_STOP = -1,
-    TIME_STATE_NONE = 0,
-    TIME_STATE_SEC  = 3		//delay 3s 才執行 QSPI, 避免開機初期導致 flash error
-};
-
-void *test_thread(void)
-{
-    static unsigned long long curTime, lstTime=0, runTime, show_img_ok=1;
-    nice(-6);    // 調整thread優先權
-
-	int testFlag = TIME_STATE_NONE;
-	
-    while(test_thread_en)
-    {
-        get_current_usec(&curTime);
-        if(curTime < lstTime) lstTime = curTime;    // rex+ 151229, 防止例外錯誤
-        else if((curTime - lstTime) >= 1000000){
-            //db_debug("test_thread: runTime=%lld", runTime);
-            lstTime = curTime;
-            if(testFlag >= TIME_STATE_NONE) testFlag++;
-        }
-
-		if(testFlag >= TIME_STATE_SEC) {
-			Write_Test_SPI_Cmd();
-			wifiSerThe_proc();
-#if defined(TEST_MIPI)
-			as3_reg_addr_init();
-			testFlag = TIME_STATE_STOP;
-db_debug("max+ test_thread: do mipi cmd!");			
-			break;
-#else
-			testFlag = TIME_STATE_SEC;
-#endif			
-		}
-
-        get_current_usec(&runTime);
-        runTime -= curTime;
-        if(runTime < 10000){
-            usleep(10000 - runTime);
-            get_current_usec(&runTime);
-            runTime -= curTime;
-        }
-    }	
-}
-
-void create_test_thread() {
-    pthread_mutex_init(&mut_test_buf, NULL);
-    if(pthread_create(&thread_test_id, NULL, test_thread, NULL) != 0) {
-        db_error("Create test_thread fail !");
-    }	
-}
-
-void us360_init() {
-	DDR_Reset();
-	recoder_thread_init();
-	create_test_thread();
 }
 
 void setDbtDdrRWCmd(fpga_dbt_rw_cmd_struct *ddr_cmd) {
@@ -4072,4 +3890,16 @@ void setDbtRegRWCmd(fpga_reg_rw_struct *reg_p) {
 
 void getDbtRegRWStruct(fpga_reg_rw_struct *reg_p) {
     *reg_p = regReadWriteCmd;
+}
+
+void doFpgaDbtReadWriteDdrService() {
+    fpgaDbtReadWriteDdrService(&ddrReadWriteCmd);
+}
+
+void doFpgaDbtReadWriteRegService() {
+    fpgaDbtReadWriteRegService(&regReadWriteCmd);
+}
+
+int getDbtDdrCmdReadWrite() {
+    return ddrReadWriteCmd.cmd.rw;
 }

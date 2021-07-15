@@ -735,6 +735,32 @@ void LineTableInit(void);
 //---------------------------------------
 int WriteLensRateTable();
 void ReadAdjSensorLensFile();
+void setSensroLensTable(int idx, int value);
+void SetSensorLensYLimit(int idx, int value);
+void setSTMixEn(int en);
+void setALIRelationRate(int idx, int value);
+void setLensRateTable(int idx, int value);
+void setSensorXStep(int value);
+void setSensorLensRate(int value);
+void setGlobalSensorXOffset(int idx, int offset);
+void setGlobalSensorYOffset(int idx, int offset);
+void SetAutoSTSW(int en);
+void setSmooth(int idx, int yuvz, int value, int f_id);
+void setShowSmoothIdx(int idx, int value);
+void setWDR1PI0(int pi0);
+void setWDR1PI1(int pi1);
+void setWDR1PV0(int pv0);
+void setWDR1PV1(int pv1);
+void setWDRTablePixel(int pix);
+void setWDR2PI0(int pi0);
+void setWDR2PI1(int pi1);
+void setWDR2PV0(int pv0);
+void setWDR2PV1(int pv1);
+void SetSLAdjGap0(int value);
+void SetSensorLensDE(int value);
+void SetSensorLensEnd(int value);
+void SetSensorLensCY(int value);
+void SetPlantParameter(int idx, int value);
 
 #ifdef __cplusplus
 }   // extern "C"

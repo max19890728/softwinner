@@ -169,6 +169,15 @@ void set_A2K_JPEG_Live_Quality_Mode(int mode);
 int get_A2K_JPEG_Live_Quality_Mode(void);
 int set_A2K_Softwave_Version(char *ver);
 int get_A2K_Softwave_Version(char *ver);
+void SetMaskAdd(int idx, int value);
+void set_A2K_ISP2_DG_Offset(int idx, int offset);
+void setAGainDebugOffset(int value);
+void SetBDTHDebug(int value);
+void SetAWBTHDebug(int idx, int value);
+int set_A2K_WDRPixel(int val);
+void SetDeGhostParameter(int idx, int value);
+void set_A2K_JPEG_3D_Res_Mode(int mode);
+void set_A2K_ISP1_Noise_Th(int value);
 
 #ifdef __cplusplus
 }   // extern "C"

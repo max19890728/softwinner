@@ -429,6 +429,35 @@ int GetTint();
 void do2DNR(int en);
 void SetHDRTone(int value);
 void getWBRgbData(int *value);
+void setLOGEEn(int en);
+void setS2RGB(int idx, int value);
+void setS2ISO(int idx, int value);
+void SetNR3DLeve(int value);
+void setGammaLineOff(int val);
+void setFocusEPIdx(int value);
+void setFocusGainIdx(int value);
+void setGammaAdjA(int adj_a);
+void setGammaAdjB(int adj_b);
+void setYOffValue(int value);
+void setAdjRsY(int R);
+void setAdjGsY(int G);
+void setAdjBsY(int B);
+void setAdjRnX(int R);
+void setAdjGnX(int G);
+void setAdjBnX(int B);
+void setAWBCrCbG(int G);
+void SetRGBMatrix(int idx, int value);
+void SetRGB2YUVMatrix(int idx, int value);
+void SetGammaMax(int value);
+void SetRGBGainI(int idx, int gain);
+void SetColorRate(int idx, int value);
+void SetColorTempGRate(int value);
+void SetColorTempTh(int value);
+void SetADTAdj(int idx, int value);
+void SetAdjYtarget(int y);
+void SetGammaOffset(int idx, int value);
+void setAdjWB(int idx, int value);
+
 
 #ifdef __cplusplus
 }   // extern "C"

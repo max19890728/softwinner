@@ -7,6 +7,9 @@
 #include <pthread.h>
 #include <mpi_sys.h>
 #include <mpi_venc.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <common/extension/vector.h>
 
 #include "Device/spi.h"
@@ -19,6 +22,8 @@
 #include "Device/US363/Driver/MCU/mcu.h"
 #include "Device/US363/Driver/Fan/fan.h"
 #include "Device/US363/Cmd/spi_cmd.h"
+#include "Device/US363/Cmd/spi_cmd_s3.h"
+#include "Device/US363/Cmd/us363_spi.h"
 #include "Device/US363/Cmd/fpga_driver.h"
 #include "Device/US363/Cmd/Smooth.h"
 #include "Device/US363/Cmd/us360_func.h"
@@ -29,6 +34,7 @@
 #include "Device/US363/Cmd/h264_header.h"
 #include "Device/US363/Net/ux363_network_manager.h"
 #include "Device/US363/Net/ux360_wifiserver.h"
+#include "Device/US363/Net/ux360_sock_cmd_sta.h"
 #include "Device/US363/Data/databin.h"
 #include "Device/US363/Data/wifi_config.h"
 #include "Device/US363/Data/pcb_version.h"
@@ -336,8 +342,8 @@ int doAutoStitchingFlag = 0;                    /** doAutoStitch_flag */
 //int mcuAdcValue = 1000;                         /** adcValue */
 
 int focusSensor2 = -1;                          /** Focus2_Sensor */
-//int focusSensor = 0;                            /** Focus_Sensor */
-int focusIdx = 0;                               /** Focus_Idx */
+int focusSensor = 0;                            /** Focus_Sensor */    //debug
+int focusIdx = 0;                               /** Focus_Idx */    //debug
 int focusToolNum = 0;                           /** Focus_Tool_Num */
 
 int downloadFileState = 0;                      /** downloadLevel */    //download 狀態
@@ -846,6 +852,124 @@ int initSysConfig()
 	return AW_MPI_SYS_Init_S1();  
 }
 
+//--------------------------------------------
+
+//#define TEST_SPI_IO_RW		1
+//#define TEST_SPI_DDR_RW		1
+//#define TEST_QSPI			1
+#define TEST_MIPI			1
+
+pthread_t thread_test_id;
+pthread_mutex_t mut_test_buf;
+int test_thread_en = 1;
+
+void Write_Test_SPI_Cmd() {
+	int i, Addr = 0;
+	unsigned Data[896], rBuf[128];		//QSPI至少需要超過&對齊512Byte 
+	unsigned short Data_c[1792];
+	
+#if defined(TEST_SPI_IO_RW)
+	Addr = 0x3F0;
+	//spi write io
+    Data[0] = Addr;
+    Data[1] = 0xABCD;
+    SPI_Write_IO_S2(0x9, (int *) &Data[0], 8);
+	//spi read io
+	memset(&Data[0], 0, sizeof(Data) );
+	spi_read_io_porcess_S2(Addr, (int *) &Data[0], 4);
+	db_debug("Write_Test_SPI_Cmd: value=0x%x", Data[0]);
+#else
+	//qspi write ddr
+	memset(&Data[0], 0, sizeof(Data) );
+	memset(&rBuf[0], 0, sizeof(rBuf) );
+	memset(&Data_c[0], 0, sizeof(Data_c) );
+	for(i = 0; i < 1792; i++) {
+		Data_c[i] = i;
+	}
+
+  #if defined(TEST_MIPI)	 
+	for(i = 0; i < 1920; i++) {	
+		Addr = MTX_S_ADDR + (i << 16);	// 0x10000: DDR一列
+		Data_c[0] = i;
+		//ua360_qspi_ddr_write(Addr, (int *) &Data_c[0], sizeof(Data_c) );
+		ua360_spi_ddr_write(Addr, (int *) &Data_c[0], sizeof(Data_c) );
+	}
+  #else
+	Addr = 0x10000000;
+   #if defined(TEST_QSPI)
+	ua360_qspi_ddr_write(Addr, (int *) &Data[0], sizeof(Data) );
+   #else
+	ua360_spi_ddr_write(Addr, (int *) &Data[0], sizeof(Data) );
+   #endif	// defined(TEST_QSPI)
+   
+//	ua360_spi_ddr_read(Addr, (int *) &rBuf[0],  sizeof(rBuf), 2, 0);
+//	for(i = 0; i < 8; i++)
+//		db_debug("Write_Test_SPI_Cmd: rBuf[%d]=0x%x", i, rBuf[i]);
+  #endif	// defined(TEST_MIPI)
+  
+#endif	// defined(TEST_SPI_IO_RW)
+}
+
+enum time_state {
+	TIME_STATE_STOP = -1,
+    TIME_STATE_NONE = 0,
+    TIME_STATE_SEC  = 3		//delay 3s 才執行 QSPI, 避免開機初期導致 flash error
+};
+
+void *test_thread(void *junk)
+{
+    static unsigned long long curTime, lstTime=0, runTime, show_img_ok=1;
+    nice(-6);    // 調整thread優先權
+
+	int testFlag = TIME_STATE_NONE;
+	
+    while(test_thread_en)
+    {
+        get_current_usec(&curTime);
+        if(curTime < lstTime) lstTime = curTime;    // rex+ 151229, 防止例外錯誤
+        else if((curTime - lstTime) >= 1000000){
+            //db_debug("test_thread: runTime=%lld", runTime);
+            lstTime = curTime;
+            if(testFlag >= TIME_STATE_NONE) testFlag++;
+        }
+
+		if(testFlag >= TIME_STATE_SEC) {
+			Write_Test_SPI_Cmd();
+			wifiSerThe_proc();
+#if defined(TEST_MIPI)
+			as3_reg_addr_init();
+			testFlag = TIME_STATE_STOP;
+db_debug("max+ test_thread: do mipi cmd!");			
+			break;
+#else
+			testFlag = TIME_STATE_SEC;
+#endif			
+		}
+
+        get_current_usec(&runTime);
+        runTime -= curTime;
+        if(runTime < 10000){
+            usleep(10000 - runTime);
+            get_current_usec(&runTime);
+            runTime -= curTime;
+        }
+    }	
+}
+
+void create_test_thread() {
+    pthread_mutex_init(&mut_test_buf, NULL);
+    if(pthread_create(&thread_test_id, NULL, test_thread, NULL) != 0) {
+        db_error("Create test_thread fail !");
+    }	
+}
+
+void us360_init() {
+	DDR_Reset();
+	recoder_thread_init();
+	create_test_thread();
+}
+//--------------------------------------------
+
 void initCamera()
 {      
 	if(malloc_us360_buf() < 0) 	       goto end;
@@ -1327,7 +1451,7 @@ void Check_Bottom_File(int mode, int tx_mode, int isInit) {
         	
        	databin.setBottomTMode(0);
        	mBottomTextMode = databin.getBottomTMode();
-       	SetBottomTextMode(mBottomTextMode);
+       	setBottomTextMode(mBottomTextMode);
        	
        	writeUS360DataBinFlag = 1;        	
     }*/  
@@ -1584,7 +1708,7 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
          	mResolutionMode = RESOLUTION_MODE_12K;
             break;
         }
-        setFPS(100);
+        mFPS = 100;
     }
     else if(camera_mdoe == CAMERA_MODE_NIGHT || camera_mdoe == CAMERA_MODE_NIGHT_HDR || 
             camera_mdoe == CAMERA_MODE_M_MODE) {
@@ -1598,11 +1722,11 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
          	mResolutionMode = RESOLUTION_MODE_12K;
             break;
         }
-        setFPS(50);
+        mFPS = 50;
     }
     else if(camera_mdoe == CAMERA_MODE_AEB || camera_mdoe == CAMERA_MODE_RAW) {
       	mResolutionMode = RESOLUTION_MODE_12K;
-        setFPS(100);
+        mFPS = 100;
     }
     else if(camera_mdoe == CAMERA_MODE_REC || camera_mdoe == CAMERA_MODE_REC_WDR) {
         switch(resolution) {
@@ -1611,20 +1735,20 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
         case RESOLUTION_MODE_2K:
           	mResolutionMode = resolution;
             if(resolution == RESOLUTION_MODE_4K) {
-                setFPS(100);
+                mFPS = 100;
             }
             else if(resolution == RESOLUTION_MODE_3K) {
-                if(getAegEpFreq() == 60) setFPS(240);
-                else                     setFPS(200);   
+                if(getAegEpFreq() == 60) mFPS = 240;
+                else                     mFPS = 200;   
             }
             else if(resolution == RESOLUTION_MODE_2K) {
-                if(getAegEpFreq() == 60) setFPS(300);
-                else                     setFPS(250);   
+                if(getAegEpFreq() == 60) mFPS = 300;
+                else                     mFPS = 250;   
             }
             break;
         default:
           	mResolutionMode = RESOLUTION_MODE_4K;
-            setFPS(100);
+            mFPS = 100;
             break;
         }
     }
@@ -1640,15 +1764,15 @@ void ModeTypeSelectS2(int play_mode, int resolution, int hdmi_state, int camera_
           	mResolutionMode = RESOLUTION_MODE_6K;
             break;
         }
-        setFPS(100);
+        mFPS = 100;
     }
     else if(camera_mdoe == CAMERA_MODE_REMOVAL) {
     	mResolutionMode = RESOLUTION_MODE_12K;
-        setFPS(100);
+        mFPS = 100;
     }
     else if(camera_mdoe == CAMERA_MODE_3D_MODEL) {
     	mResolutionMode = RESOLUTION_MODE_12K;
-        setFPS(100);
+        mFPS = 100;
     }
 
     setResolutionWidthHeight(mResolutionMode);
@@ -1819,6 +1943,43 @@ void changeWifiMode(int mode) {
    	}*/  
 }
 
+void Show_Now_Mode_Message(int mode, int res, int fps, int live_rec) {
+    char message[64];
+    char mode_st[16]; 
+    char res_st[16];
+    char fps_st[16];
+    char live_rec_st[16];
+        
+    switch(mode) {
+    case 0: sprintf(mode_st, "Global\0"); break;
+    case 1: sprintf(mode_st, "Front\0");  break;
+    case 2: sprintf(mode_st, "360\0");    break;
+    case 3: sprintf(mode_st, "240\0");    break;
+    case 4: sprintf(mode_st, "180\0");    break;
+    case 5: sprintf(mode_st, "Split4\0"); break;
+    case 6: sprintf(mode_st, "PIP\0");    break;
+    }
+        
+    switch(res) {
+    case 0: break;
+    case 1: sprintf(res_st, "12K\0");      break;
+    case 2: sprintf(res_st, "4K\0");       break;
+    case 7: sprintf(res_st, "8K\0");       break;
+    case 8: sprintf(res_st, "10K\0");      break;
+    case 12: sprintf(res_st, "6K\0");      break;
+    case 13: sprintf(res_st, "3K\0");      break;
+    case 14: sprintf(res_st, "2K\0");      break;
+    }
+        
+    sprintf(fps_st, "%d\0", (fps/10) );
+        
+    if(live_rec == 0) sprintf(live_rec_st, "live\0");
+    else              sprintf(live_rec_st, "rec\0");
+          
+	sprintf(message, "%s, %s, %s fps, %s", mode_st, res_st, fps_st, live_rec_st);
+//tmp    textModeMessage.setText(message);
+}
+
 /*
  * 播放音效
  * id :
@@ -1966,11 +2127,11 @@ void onCreate()
 //tmp    SetOLEDMainType(mCameraMode, mCaptureCnt, GetCaptureMode(), getTimeLapseMode(), 0);
 //tmp    showOLEDDelayValue(Get_DataBin_DelayValue());   //oled.c      	
 		
-    setStitchingOut(mCameraMode, mPlayMode, mResolutionMode, getFPS()); 
+    setStitchingOut(mCameraMode, mPlayMode, mResolutionMode, mFPS); 
     LineTableInit();  
         
     for(i = 0; i < 8; i++) 
-        writeCmdTable(i, mResolutionMode, getFPS(), 0, 1, 0); 
+        writeCmdTable(i, mResolutionMode, mFPS, 0, 1, 0); 
         
     getPath();		//取得 THMPath / DirPath  //產生資料夾
  
@@ -2004,7 +2165,7 @@ void onCreate()
             }
         };*/
 
-    Show_Now_Mode_Message(mPlayMode, mResolutionMode, getFPS(), 0);
+    Show_Now_Mode_Message(mPlayMode, mResolutionMode, mFPS, 0);
         
 //tmp        handler1 = new Handler();
 //tmp        handler1.post(runnable1);
@@ -3023,7 +3184,7 @@ void Change_Cap_12K_Mode() {
         Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
         mPlayModeTmp = 0;
         ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
-        choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
+        choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, mFPS);
     }    
 }
 
@@ -3034,7 +3195,7 @@ void Change_Raw_12K_Mode() {
         Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
         mPlayModeTmp = 0;
         ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
-        choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
+        choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, mFPS);
     }   
 }
 
@@ -3504,7 +3665,7 @@ void *thread_1s(void *junk)
 
 		set_eth_connect_timeout();
 
-//    	captureDCnt = readCaptureDCnt();
+    	//captureDCnt = read_F_Com_In_Capture_D_Cnt();
 		if(isStandby == 0){
 			if(fan_ctrl_cnt >= 2){
 				//FanCtrlFunc(mFanCtrl);      //max+ S3 沒有風扇
@@ -3685,7 +3846,7 @@ void System_Exit() {
 //tmp    System.exit(0);
 }
 
-#ifdef __CLOSE_CODE_NEW__   //tmp
+//#ifdef __CLOSE_CODE_NEW__   //tmp
 void setFeedBackData(char *action, int action_len, int value){
     if(Get_WifiServer_SendFeedBackEn() == 0){
         Set_WifiServer_SendFeedBackEn(1);
@@ -3790,7 +3951,7 @@ void wifiDeleteFile(LINK_NODE* list) {
                     deleteFile(&path[0]);
                 }
             }
-            else if(name[0] == 'H') || name[0] == 'R' || name[0] == 'T'){
+            else if(name[0] == 'H' || name[0] == 'R' || name[0] == 'T'){
                 snprintf(path, sizeof(path), "%s/%s.thm", thmPath, name);
                 deleteFile(&path[0]);
                 
@@ -4081,6 +4242,36 @@ int calSaturation(int value) {
     return ( (value + 7) * 1000 / 7); 
 }
 
+void do_Sensor_Lens_Adj(int mode) {
+	for(int i = 0; i < 5; i++)
+        doSensorLensAdj(i, mode);
+	doCheckStitchingCmdDdrFlag = 0;
+}
+
+void deleteSaveSmoothBin(){
+    char fileStr[128] = "/mnt/sdcard/US360/SaveSmoothEn.bin\0";
+    if(checkFileExist(&fileStr[0])) {
+        deleteFile(&fileStr[0]); 
+    }
+}
+
+void createSaveSmoothBin(){
+    FILE *fp;
+    char dirStr[128]  = "/mnt/sdcard/US360\0";
+    char fileStr[128] = "/mnt/sdcard/US360/SaveSmoothEn.bin\0";
+
+    if(!checkFileExist(&dirStr[0])) {       
+        makeFolder(&dirStr[0]);    
+    }
+       
+    if(!checkFileExist(&fileStr[0])) { 
+        fp = fopen(fileStr, "wb");
+        if(fp != NULL) {
+            fclose(fp);
+        }
+    } 
+}
+
 void wifiSerThe_proc()
 {
 	int i, t, ep_t;
@@ -4130,16 +4321,16 @@ void wifiSerThe_proc()
             }
             cp.mOutputLength = 0;
         }*/
-        if(Get_WifiServer_WifiDisableTimeEn == 1){    //設定Wifi Disable時間
+        if(Get_WifiServer_WifiDisableTimeEn() == 1){    //設定Wifi Disable時間
             Set_WifiServer_WifiDisableTimeEn(0);
             Set_DataBin_WifiDisableTime(Get_WifiServer_WifiDisableTime());
             mWifiDisableTime = Get_DataBin_WifiDisableTime();
             writeUS360DataBinFlag = 1;
-            setFeedBackData("WIFI", 4, wifiDisableTime);
+            setFeedBackData("WIFI", 4, mWifiDisableTime);
         }
         if(Get_WifiServer_ZoneEn() == 1){        // 設定時區
             Set_WifiServer_ZoneEn(0);
-            if(Get_WifiServer_WifiZone(&zone[0]) >= 0)
+            if(Get_WifiServer_WifiZone(&zone[0], sizeof(zone)) >= 0)
                 setTimeZone(&zone[0]);
         }
         if(Get_WifiServer_SetTime() == 1){        // 設定系統時間
@@ -4213,8 +4404,8 @@ void wifiSerThe_proc()
             get_current_usec(&nowTime);
             Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_5S, 1);
             mPlayModeTmp = Get_WifiServer_PlayMode();
-            if(Get_WifiServer_ResoluMode() == 8) ResolutionMode = 1;							//暫時擋掉10K MODE
-            else                                 ResolutionMode = Get_WifiServer_ResoluMode();
+            if(Get_WifiServer_ResoluMode() == 8) mResolutionMode = 1;							//暫時擋掉10K MODE
+            else                                 mResolutionMode = Get_WifiServer_ResoluMode();
             ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
 
             stopREC();
@@ -4263,7 +4454,8 @@ void wifiSerThe_proc()
             if(mCameraPositionMode != mCameraPositionModeLst) {
             	mCameraPositionModeLst = mCameraPositionMode;
             	mCameraPositionModeChange = 1;
-            	Set_Power_Saving_Wifi_Cmd(System.currentTimeMillis(), POWER_SAVING_CMD_OVERTIME_15S, 5);
+                get_current_usec(&nowTime);
+            	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 5);
             }
             writeUS360DataBinFlag = 1;
             setFeedBackData("CAMS", 4, Get_DataBin_CamPositionMode()); 
@@ -4300,7 +4492,7 @@ void wifiSerThe_proc()
             Set_DataBin_TimeLapseMode(mTimeLapseMode);
             Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
             writeUS360DataBinFlag = 1;
-            setFeedBackData("CPMD", 4, CaptureMode);
+            setFeedBackData("CPMD", 4, mCaptureMode);
         }
         if(Get_WifiServer_TimeLapseEn() == 1){        // Time-Lapse模式
             Set_WifiServer_TimeLapseEn(0);
@@ -4331,7 +4523,7 @@ void wifiSerThe_proc()
             Set_DataBin_TimeLapseMode(mTimeLapseMode);
             Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
             writeUS360DataBinFlag = 1;
-            setFeedBackData("CCNT", mCaptureCnt);
+            setFeedBackData("CCNT", 4, mCaptureCnt);
         }
         if(Get_WifiServer_EthernetSettingsEn() == 1){    // Ethernet Settings
             Set_WifiServer_EthernetSettingsEn(0);
@@ -4347,7 +4539,7 @@ void wifiSerThe_proc()
 //tmp            if(mEth != null)
 //tmp                mEth.SetInfo(databin.getEthernetMode(), databin.getEthernetIP(), databin.getEthernetMask(), databin.getEthernetGateWay(), databin.getEthernetDNS());
             writeUS360DataBinFlag = 1;
-            setFeedBackData("NETS", Get_DataBin_EthernetMode());
+            setFeedBackData("NETS", 4, Get_DataBin_EthernetMode());
         }
         if(Get_WifiServer_ChangeFPSEn() == 1){            // change FPS
             Set_WifiServer_ChangeFPSEn(0);
@@ -4375,14 +4567,14 @@ void wifiSerThe_proc()
             wifiSerThe.start();*/
             
             writeUS360DataBinFlag = 1;
-            setFeedBackData("PORT", Get_DataBin_MediaPort());
+            setFeedBackData("PORT", 4, Get_DataBin_MediaPort());
         }
         if(Get_WifiServer_DrivingRecordEn() == 1){
             Set_WifiServer_DrivingRecordEn(0);
             Set_DataBin_DrivingRecord(Get_WifiServer_DrivingRecord());
             mDrivingRecordMode = Get_DataBin_DrivingRecord();
             writeUS360DataBinFlag = 1;
-            setFeedBackData("DVRC", mDrivingRecordMode);
+            setFeedBackData("DVRC", 4, mDrivingRecordMode);
         }
         if(Get_WifiServer_WifiChannelEn() == 1){
             Set_WifiServer_WifiChannelEn(0);
@@ -4403,10 +4595,10 @@ void wifiSerThe_proc()
             mAegEpFreq = Get_DataBin_ExposureFreq();
             setFpgaEpFreq(mAegEpFreq);
             mPlayModeTmp = mPlayMode;
-            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, 1, mUserCtrl, mCameraMode);
+            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, 1, mCameraMode);
             chooseModeFlag = 1; 
             writeUS360DataBinFlag = 1;
-            setFeedBackData("EPFQ", mAegEpFreq);
+            setFeedBackData("EPFQ", 4, mAegEpFreq);
         }
         if(Get_WifiServer_FanCtrlEn() == 1){
             Set_WifiServer_FanCtrlEn(0);
@@ -4618,7 +4810,7 @@ void wifiSerThe_proc()
             	mTimeLapseMode = Get_DataBin_TimeLapseMode();
             	break;
             case 2:
-            	Set_DataBin_TimeLapseMode(databin.getSaveTimelapse());
+            	Set_DataBin_TimeLapseMode(Get_DataBin_SaveTimelapse());
                 mTimeLapseMode = Get_DataBin_TimeLapseMode();
             	break;
             case 5:
@@ -4648,7 +4840,7 @@ void wifiSerThe_proc()
             }
         	
             Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
-            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
+            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);        // return: FPS、ResolutionWidth、ResolutionHeight
 
             stopREC();
             chooseModeFlag = 1;
@@ -4656,7 +4848,7 @@ void wifiSerThe_proc()
             TestToolCmdInit();               
             
             writeUS360DataBinFlag = 1;
-            setFeedBackData("MODE", mResolutionMode);
+            setFeedBackData("MODE", 4, mResolutionMode);
         }
         if(Get_WifiServer_DebugLogModeEn() == 1){
             Set_WifiServer_DebugLogModeEn(0);
@@ -4799,19 +4991,19 @@ void wifiSerThe_proc()
         }
         if(Get_WifiServer_GetAntiAliasingEn() == 1){
             Set_WifiServer_GetAntiAliasingEn(0);
-            if(customerCode == CUSTOMER_CODE_ALIBABA) {
+            if(mCustomerCode == CUSTOMER_CODE_ALIBABA) {
             	Set_DataBin_AntiAliasingEn(0);
             	SetAntiAliasingEn(0);
             }
             else {
-            	Set_DataBin_AntiAliasingEn(Get_WifiServer_etAntiAliasingVal());
+            	Set_DataBin_AntiAliasingEn(Get_WifiServer_GetAntiAliasingVal());
             	SetAntiAliasingEn(Get_DataBin_AntiAliasingEn() );
             }
             writeUS360DataBinFlag = 1;
         }
         if(Get_WifiServer_GetRemoveAntiAliasingEn() == 1){
             Set_WifiServer_GetRemoveAntiAliasingEn(0);
-            if(customerCode == CUSTOMER_CODE_ALIBABA) {
+            if(mCustomerCode == CUSTOMER_CODE_ALIBABA) {
             	Set_DataBin_RemoveAntiAliasingEn(0);		
             	SetRemovalAntiAliasingEn(0);
             }
@@ -4827,8 +5019,8 @@ void wifiSerThe_proc()
         	defectType = DEFECT_TYPE_USER;
 			SetDefectType(defectType);
 			SetDefectStep(defectStep);
-        	Set_Cap_Rec_Start_Time(0, 3);
-        	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S, 7);
+        	Set_Cap_Rec_Start_Time(0);
+        	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S);
 //tmp			
 /*        	new Thread(new Runnable(){  //壞點檢測最多等100秒
 				public void run(){
@@ -4857,7 +5049,7 @@ void wifiSerThe_proc()
             }).start();*/       	
         }
         if(Get_WifiServer_GetEstimateEn() == 1){
-            switch(CameraMode){
+            switch(mCameraMode){
             case 1:
             case 2:
             case 10:
@@ -4865,10 +5057,10 @@ void wifiSerThe_proc()
             	Set_WifiServer_GetEstimateEn(0);
             	break;
             }
-            if(readCaptureDCnt() == 0){
+            if(read_F_Com_In_Capture_D_Cnt() == 0){
             	Set_WifiServer_GetEstimateEn(0);
             }else{
-            	t = getCaptureEstimatedTime();
+            	t = getCaptureAddTime();
                 ep_t = getCaptureEpTime();
                 get_current_usec(&nowTime);
                 if(t != -1){
@@ -4910,7 +5102,7 @@ void wifiSerThe_proc()
             get_current_usec(&nowTime);
         	Set_Power_Saving_Wifi_Cmd(nowTime, POWER_SAVING_CMD_OVERTIME_15S, 27);
         	mBottomTextMode = Get_WifiServer_BottomTMode();
-        	SetBottomTextMode(Get_WifiServer_BottomTMode());
+        	setBottomTextMode(Get_WifiServer_BottomTMode());
         	Set_DataBin_BottomTMode(Get_WifiServer_BottomTMode());
         	Set_DataBin_BottomTColor(Get_WifiServer_BottomTColor());
         	Set_DataBin_BottomBColor(Get_WifiServer_BottomBColor());
@@ -5004,48 +5196,46 @@ void wifiSerThe_proc()
     		Set_WifiServer_SendFolderSize(sendImgThe.mFolderSize);
     		Set_WifiServer_SendFolderEn(1);*/ 
         }
-        if(wifiSerThe.mPowerSavingEn == 1) { 
-            wifiSerThe.mPowerSavingEn = 0;
-            int mode = wifiSerThe.mPowerSavingMode;
-            databin.setPowerSaving(mode);
-            Power_Saving_Mode = databin.getPowerSaving();
-            if(Power_Saving_Mode == 1)
-            	Set_Cap_Rec_Finish_Time(System.currentTimeMillis(), 0, 14);
-            else {		 		
+        if(Get_WifiServer_PowerSavingEn() == 1) { 
+            Set_WifiServer_PowerSavingEn(0);
+            Set_DataBin_PowerSaving(Get_WifiServer_PowerSavingMode());
+            mPowerSavingMode = Get_DataBin_PowerSaving();
+            if(mPowerSavingMode == 1) {
+                get_current_usec(&nowTime);
+                Set_Cap_Rec_Finish_Time(nowTime, 0);
+            } else {		 		
             	if(fpgaStandbyEn == 1)
             		setFpgaStandbyEn(0);		//Off   
             }
             writeUS360DataBinFlag = 1;
         }
-        
-        if(wifiSerThe.mSetingUIEn == 1) { 
-            wifiSerThe.mSetingUIEn = 0;
-            Seting_UI_State = wifiSerThe.mSetingUIState;	//0:close	1:open
-            if(Seting_UI_State == 1) {		//open, power saving off
+        if(Get_WifiServer_SetingUIEn() == 1) { 
+            Set_WifiServer_SetingUIEn(0);
+            powerSavingSetingUiState = Get_WifiServer_SetingUIState();	//0:close	1:open
+            if(powerSavingSetingUiState == 1) {		//open, power saving off
     			if(fpgaStandbyEn == 1) {
     				setFpgaStandbyEn(0);
     				adjustSensorSyncFlag = 2;  	
     			}
-				Seting_UI_t1 = System.currentTimeMillis();
-				Seting_UI_t2 = 0;
-            	Set_Cap_Rec_Start_Time(0, 4);
-            	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S, 8);
+                get_current_usec(&powerSavingSetingUiTime1);
+				powerSavingSetingUiTime2 = 0;
+            	Set_Cap_Rec_Start_Time(0);
+            	Set_Cap_Rec_Finish_Time(0, POWER_SAVING_CMD_OVERTIME_5S);
             }
             else {				//close, power saving on
             	if(fpgaStandbyEn == 0) {
-            		Seting_UI_t2 = System.currentTimeMillis();
+                    get_current_usec(&powerSavingSetingUiTime2);
             		long over_t;
-            		if( (Seting_UI_t2 - Seting_UI_t1) > POWER_SAVING_CMD_OVERTIME_5S)
+            		if( (powerSavingSetingUiTime2 - powerSavingSetingUiTime1) > POWER_SAVING_CMD_OVERTIME_5S)
             			over_t = 0;
             		else
             			over_t = POWER_SAVING_CMD_OVERTIME_5S;
-            		Set_Cap_Rec_Finish_Time(Seting_UI_t1, over_t, 9);
+            		Set_Cap_Rec_Finish_Time(powerSavingSetingUiTime1, over_t);
             	}
             }
         }
-        
-        if(wifiSerThe.mDoAutoStitchEn == 1) { 
-            wifiSerThe.mDoAutoStitchEn = 0;
+        if(Get_WifiServer_DoAutoStitchEn() == 1) { 
+            Set_WifiServer_DoAutoStitchEn(0);
 			if(doAutoStitch() >= 0) {
 				WriteSensorAdjFile();
 				ReadSensorAdjFile();
@@ -5056,17 +5246,16 @@ void wifiSerThe_proc()
 				
 				WriteTestResult(0, 0);
 			}
-			paintOLEDStitching(0);
+//tmp			paintOLEDStitching(0);
+        }
+        if(Get_WifiServer_DoGsensorResetEn() == 1) { 
+            Set_WifiServer_DoGsensorResetEn(0);
+//tmp            setBma2x2ZeroingState(1);      //bma2x2_support.c
         }
         
-        if(wifiSerThe.mDoGsensorResetEn == 1) { 
-            wifiSerThe.mDoGsensorResetEn = 0;
-            setBma2x2ZeroingState(1);
-        }
-        
-        String resize_path;
+        char resize_path[128];
         int resize_len;
-        byte[] resize_buf = new byte[128];
+        char resize_buf[128];
         //void getdoResize(int *en, char *resize_path)
         //*en     = doResize_buf.cmd[resize_p2].mode;  //(-1:None 0:Cap 1:Rec 2:Timelaspe, 3:HDR, 4:RAW)
         //*(en+1) = doResize_buf.cmd[resize_p2].cap_file_cnt;
@@ -5074,85 +5263,84 @@ void wifiSerThe_proc()
         //*(en+3) = doResize_buf.cmd[resize_p2].rec_file_cnt;
         //*(en+4) = doResize_buf.cmd[resize_p2].rsv2;
         //*(en+5) = resize_len;
-        getdoResize(doResize, resize_buf);
-        if(doResize[0] != -1 && doResize_mode[doResize_flag] == -1 && doResize_path[doResize_flag] == null){
-            Log.d("Main", "doResize 00");
-            resize_len = doResize[5];
-            resize_path = new String(resize_buf);
-            doResize_path[doResize_flag] = resize_path.substring(0, resize_len);
-            doResize_mode[doResize_flag] = doResize[0];
-            doResize_flag++;
-            if(doResize_flag >= 8)    doResize_flag = 0;
+        getdoResize(&doResizeParameter[0], &resize_buf[0]);
+        if(doResizeParameter[0] != -1 && doResizeMode[doResizeIndex] == -1){    // && doResizePath[doResizeIndex][0] == null
+            resize_len = doResizeParameter[5];
+            snprintf(resize_path, sizeof(resize_path), "%s\0", resize_buf);
+            snprintf(doResizePath[doResizeIndex], sizeof(doResizePath[doResizeIndex]), "%s\0", resize_path);
+            doResizeMode[doResizeIndex] = doResizeParameter[0];
+            doResizeIndex++;
+            if(doResizeIndex >= 8)    doResizeIndex = 0;
         }  
-        
-        if(wifiSerThe.mImgEn == 8){
-            if(wifiSerThe.mImgTotle == -1){
+//tmp        
+/*        if(Get_WifiServer_ImgEn() == 8){            
+            if(Get_WifiServer_ImgTotle() == -1){
             	sendImgThe.mDownloadTHMName.clear();
             	String listString = new String(wifiSerThe.mSendTHMListData);
             	String[] array = listString.split(",");
             	for(String name : array){
             		sendImgThe.mDownloadTHMName.add(name);
             	}
-                wifiSerThe.mImgTotle = sendImgThe.getTrgTHMTotle(DIR_path, THM_path);
+                Set_WifiServer_ImgTotle(sendImgThe.getTrgTHMTotle(DIR_path, THM_path));
             }
         }
-        if(wifiSerThe.mImgEn == 5){
-            if(wifiSerThe.mImgTotle == -1){
-                wifiSerThe.mImgTotle = sendImgThe.getTHMTotle(DIR_path, THM_path);
+        if(Get_WifiServer_ImgEn() == 5){            
+            if(Get_WifiServer_ImgTotle() == -1){
+                Set_WifiServer_ImgTotle(sendImgThe.getTHMTotle(DIR_path, THM_path));
             }
         }
-        else if(wifiSerThe.mImgEn == 6){
+        else if(Get_WifiServer_ImgEn() == 6){            
             sendImgThe.startTHMThread();
             if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
                 int nLen = sendImgThe.mOutputLen;
-                if(wifiSerThe.mImgLen == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
+                if(Get_WifiServer_ImgLen() == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
                     System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mImgData, 0, nLen);
-                    wifiSerThe.mImgLen = nLen;
+                    Set_WifiServer_ImgLen(nLen);
                     sendImgThe.mOutputLen = -1;
                 }                            
             }                        
-            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mImgLen == 0){
-                wifiSerThe.mImgEn = 7;
+            else if(sendImgThe.mOutputLen == -2 && Get_WifiServer_ImgLen() == 0){
+                Set_WifiServer_ImgEn(7);
                 sendImgThe.stopTHMThread();
                 sendImgThe.mOutputLen = -1;
             }
         }
-        else if(wifiSerThe.mImgEn == 3){
-            if(wifiSerThe.mImgTotle == -1){
+        else if(Get_WifiServer_ImgEn() == 3){            
+            if(Get_WifiServer_ImgTotle() == -1){
                 sendImgThe.setExistName(wifiSerThe.mExistFileName);
-                wifiSerThe.mImgTotle = sendImgThe.getTotle();
-            }                       
+                Set_WifiServer_ImgTotle(sendImgThe.getTotle());
+            }                      
         }
-        else if(wifiSerThe.mImgEn == 1){
+        else if(Get_WifiServer_ImgEn() == 1){            
             sendImgThe.startThread();
             if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
                 int nLen = sendImgThe.mOutputLen;
-                if(wifiSerThe.mImgLen == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
+                if(Get_WifiServer_ImgLen() == 0 && nLen < cp.JAVA_UVC_BUF_MAX){
                     System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mImgData, 0, nLen);
-                    wifiSerThe.mImgLen = nLen;
+                    Set_WifiServer_ImgLen(nLen);
                     sendImgThe.mOutputLen = -1;
                 }                            
             }                        
-            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mImgLen == 0){
-                wifiSerThe.mImgEn = 4;
+            else if(sendImgThe.mOutputLen == -2 && Get_WifiServer_ImgLen() == 0){
+                Set_WifiServer_ImgEn(4);
                 sendImgThe.stopThread();
                 sendImgThe.mOutputLen = -1;
             }
         }  
-        else if(wifiSerThe.mImgEn == 2){
-            wifiSerThe.mImgEn = 4;
+        else if(Get_WifiServer_ImgEn() == 2){           
+            Set_WifiServer_ImgEn(4);
             sendImgThe.stopThread();
             sendImgThe.mOutputLen = -1;
         }                                        
-        else if(wifiSerThe.mDownloadEn == 3){
-            if(wifiSerThe.mDownloadTotle == -1){
+        else if(Get_WifiServer_DownloadEn() == 3){
+            if(Get_WifiServer_DownloadTotle() == -1){
                 sendImgThe.setDownloadName(wifiSerThe.mDownloadFileName, wifiSerThe.mDownloadFileSkip);
-                wifiSerThe.mDownloadTotle = sendImgThe.getDownloadTotle();
+                Set_WifiServer_DownloadTotle(sendImgThe.getDownloadTotle());
                 if(downloadLevel == 0){
                 	if(sendImgThe.mDownloadTotle > (100 * 1024 * 1024)){
                 		downloadLevel = 2;
                 		//FPGA_Ctrl_Power_Func(1, 6);
-                		if(Power_Saving_Mode == 0) 
+                		if(mPowerSavingMode == 0) 
                 			setFpgaStandbyEn(1);
                 	}else{
                 		downloadLevel = 1;
@@ -5160,33 +5348,33 @@ void wifiSerThe_proc()
                 }
             }
         }
-        else if(wifiSerThe.mDownloadEn == 1){
+        else if(Get_WifiServer_DownloadEn() == 1){
             sendImgThe.startDownloadThread();
             setDownloadOlad(sendImgThe.mDownloadNow,sendImgThe.mDownloadTotle);
             if(downloadLevel == 2){
             	if( (sendImgThe.mDownloadTotle - sendImgThe.mDownloadNow) < (10 * 1024 * 1024)){
             		downloadLevel = 1;
             		//FPGA_Ctrl_Power_Func(0, 7);
-            		if(Power_Saving_Mode == 0) 
+            		if(mPowerSavingMode == 0) 
             			setFpgaStandbyEn(0);
             	}
             }
             if(sendImgThe.mOutputLen > 0 && sendImgThe.isEnd == false){
                 int nLen = sendImgThe.mOutputLen;
-                if(wifiSerThe.mDownloadLen == 0 && nLen <= cp.JAVA_UVC_BUF_MAX){
+                if(Get_WifiServer_DownloadLen() == 0 && nLen <= cp.JAVA_UVC_BUF_MAX){
                     System.arraycopy(sendImgThe.mOutputData, 0, wifiSerThe.mDownloadData, 0, nLen);
-                    wifiSerThe.mDownloadLen = nLen;
+                    Set_WifiServer_DownloadLen(nLen);
                     sendImgThe.mOutputLen = -1;
                 }
             }
-            else if(sendImgThe.mOutputLen == -2 && wifiSerThe.mDownloadLen == 0){
-                wifiSerThe.mDownloadEn = 4;
+            else if(sendImgThe.mOutputLen == -2 && Get_WifiServer_DownloadLen() == 0){
+                Set_WifiServer_DownloadEn(4);
                 sendImgThe.stopDownloadThread();
                 sendImgThe.mOutputLen = -1;
             }
         }
-        else if(wifiSerThe.mDownloadEn == 2){
-            wifiSerThe.mDownloadEn = 4;
+        else if(Get_WifiServer_DownloadEn() == 2){
+            Set_WifiServer_DownloadEn(4);
             sendImgThe.stopDownloadThread();
             sendImgThe.mOutputLen = -1;
         }
@@ -5203,194 +5391,146 @@ void wifiSerThe_proc()
             	setDownloadOlad(0,0);
             	FPGA_Ctrl_Power_Func(0, 7);
             }
-        }
+        }*/
         
-        if(wifiSerThe.mWifiConfigEn == 1){
-            WriteUS360SystemConfig(wifiSerThe.mWifiConfigSsid, wifiSerThe.mWifiConfigPwd);
-            wifiSerThe.mWifiConfigEn = 0;
+        if(Get_WifiServer_WifiConfigEn() == 1){
+            Set_WifiServer_WifiConfigEn(0);
+            char ssid[32], pwd[16];
+            Get_WifiServer_WifiConfigSsid(&ssid[0], sizeof(ssid));
+            Get_WifiServer_WifiConfigPwd(&pwd[0], sizeof(pwd));
+            writeWifiConfig(&ssid[0], &pwd[0]);
         }  
-        
-        if(wifiSerThe.mGPSEn == 1){
-        	mGps = 1;
-        	setGpsStatus(mGps);
-        	wifiSerThe.mGPSEn = 0;
+        if(Get_WifiServer_GPSEn() == 1){
+            Set_WifiServer_GPSEn(0);
+        	gpsState = 1;
+//tmp        	setGpsStatus(gpsState);     //oled.c
         }
-        
-        if(wifiSerThe.mChangeDebugToolStateEn == 1){
-            wifiSerThe.mChangeDebugToolStateEn = 0; 
-            if(wifiSerThe.isDebugToolConnect == 1){
-                if(!stateTool.isRun)
-                    stateTool.startThread();
+        if(Get_WifiServer_ChangeDebugToolStateEn() == 1){
+            Set_WifiServer_ChangeDebugToolStateEn(0); 
+            if(Get_WifiServer_IsDebugToolConnect() == 1){
+//tmp                if(!stateTool.isRun)
+//tmp                    stateTool.startThread();
             }
             else{
-                if(stateTool.isRun)
-                    stateTool.stopThread();  
+//tmp                if(stateTool.isRun)
+//tmp                    stateTool.stopThread();  
             }
-            wifiSerThe.isDebugToolConnect = 0; 
+            Set_WifiServer_IsDebugToolConnect(0); 
         }
-        if(wifiSerThe.mCtrlOLEDEn == 1){
-            if(wifiSerThe.ctrlOLEDNum != 0){
-                if(!stateTool.isRun)
-                    stateTool.startThread();
+        if(Get_WifiServer_CtrlOLEDEn() == 1){
+            Set_WifiServer_CtrlOLEDEn(0);
+            if(Get_WifiServer_CtrlOLEDNum() != 0){
+//tmp                if(!stateTool.isRun)
+//tmp                    stateTool.startThread();
             }
-            setOLEDPage(wifiSerThe.ctrlOLEDNum);
-            wifiSerThe.mCtrlOLEDEn = 0;
+//tmp            setOLEDPage(Get_WifiServer_CtrlOLEDNum());     //oled.c
         }
         
-        if(wifiSerThe.mSetParametersToolEn == 1){
-            if(parametersTool != null){
-                //parametersTool.setParameterValue(wifiSerThe.mParametersNum, wifiSerThe.mParametersVal);
-                
-                switch(wifiSerThe.mParametersNum) {
-                case 1: setAdjWB(0, wifiSerThe.mParametersVal); break;    //R
-                case 2: setAdjWB(1, wifiSerThe.mParametersVal); break;    //G
-                case 3: setAdjWB(2, wifiSerThe.mParametersVal); break;    //B
-                case 4: 
-                    Show_DDR_En = wifiSerThe.mParametersVal;
-                    if(Show_DDR_En == 1) {
-                    	Set_ISP2_Addr(1, Show_DDR_Addr, -99);
-                        writeCmdTable(4, ResolutionMode, FPS, 1, 0, 1);
-                        writeCmdTable(5, ResolutionMode, FPS, 1, 0, 1);
+        if(Get_WifiServer_SetParametersToolEn() == 1){
+            //if(parametersTool != null){
+                switch(Get_WifiServer_ParametersNum()) {
+                case 1: setAdjWB(0, Get_WifiServer_ParametersVal()); break;    //R
+                case 2: setAdjWB(1, Get_WifiServer_ParametersVal()); break;    //G
+                case 3: setAdjWB(2, Get_WifiServer_ParametersVal()); break;    //B
+                case 4:    //Show DDR En 
+                    showFpgaDdrEn = Get_WifiServer_ParametersVal();
+                    if(showFpgaDdrEn == 1) {
+                    	Set_ISP2_Addr(1, showFpgaDdrAddr, -99);
+                        writeCmdTable(4, mResolutionMode, mFPS, 1, 0, 1);
+                        writeCmdTable(5, mResolutionMode, mFPS, 1, 0, 1);
                     }
                     else { 
                     	Set_ISP2_Addr(0, 0, -99);
-                        PlayMode2_tmp = PlayMode2; 
+                        mPlayModeTmp = mPlayMode; 
                         chooseModeFlag = 1;
                     }
-                    break;    //Show DDR En
-                case 5:         
-                    Show_DDR_En = 1;           
-                    Show_DDR_Addr = wifiSerThe.mParametersVal;
-                    Set_ISP2_Addr(1, Show_DDR_Addr, -99);
-                    writeCmdTable(4, ResolutionMode, FPS, 1, 0, 1);
-                    writeCmdTable(5, ResolutionMode, FPS, 1, 0, 1);
-                    break;    //Show DDR Addr
-                case 6:     // fan cpu temp threshold
-                    if(wifiSerThe.mParametersVal >=0 && wifiSerThe.mParametersVal <= 105){
-                        CpuTempThreshold = wifiSerThe.mParametersVal;
-                    }
                     break;
-                case 7:        // fan cpu temp down close
-                    if(wifiSerThe.mParametersVal >= -20 && wifiSerThe.mParametersVal <= 0){
-                        CpuTempDownClose = wifiSerThe.mParametersVal;
-                    }
+                case 5:    //Show DDR Addr         
+                    showFpgaDdrEn = 1;           
+                    showFpgaDdrAddr = Get_WifiServer_ParametersVal();
+                    Set_ISP2_Addr(1, showFpgaDdrAddr, -99);
+                    writeCmdTable(4, mResolutionMode, mFPS, 1, 0, 1);
+                    writeCmdTable(5, mResolutionMode, mFPS, 1, 0, 1);
                     break;
-                case 8:      
-                    setSensorMaskLineShiftAdj(wifiSerThe.mParametersVal);
-                    writeCmdTable(2, ResolutionMode, FPS, 0, 0, 1);
-                    break;    //Sensor_Mask_Line_Shift_Adj
-                case 9:      
-                    if(wifiSerThe.mParametersVal >= 1 && wifiSerThe.mParametersVal <= 4)
-                        setCpuFreq(wifiSerThe.mParametersVal, CpuFullSpeed);
-                    break;    //Set CPU Core
+                case 6: break;
+                case 7: break;
+                case 8: break;
+                case 9:       //Set CPU Core
+                    if(Get_WifiServer_ParametersVal() >= 1 && Get_WifiServer_ParametersVal() <= 4)
+                        setCpuFreq(Get_WifiServer_ParametersVal(), CPU_SPEED_FULL);
+                    break;
                 case 10:     //Skip WatchDog 
-                    if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 2)
-                        skipWatchDog = wifiSerThe.mParametersVal;
+                    if(Get_WifiServer_ParametersVal() >= 0 && Get_WifiServer_ParametersVal() <= 2)
+                        skipWatchDog = Get_WifiServer_ParametersVal();
                     break;
-				case 11: setSensroLensTable(0, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Gain 	
-				case 12: setSensroLensTable(1, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[0]
-				case 13: setSensroLensTable(2, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[1]
-				case 14: setSensroLensTable(3, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[2]
-				case 15: setSensroLensTable(4, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[3]
-				case 16: setSensroLensTable(5, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[4]
-				case 17: setSensroLensTable(6, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[5]
-				case 18: setSensroLensTable(7, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[6]
-				case 19: setSensroLensTable(8, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[7]
-				case 20: setSensroLensTable(9, wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[8]
-				case 21: setSensroLensTable(10, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[9]
-				case 22: setSensroLensTable(11, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Adj_Sensor_Lens_Th
-				case 23: setSensroLensTable(12, wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Th  
-                case 24: setSmoothSpeed(0, wifiSerThe.mParametersVal); break;    	// Smooth_YUV_Speed
-                case 25: setSmoothSpeed(1, wifiSerThe.mParametersVal); break;    	// Smooth_Z_Speed
-                case 26: setLOGEEn( wifiSerThe.mParametersVal); break;				// LOGE_Enable
-                case 32: SetSensorLensYLimit(0, wifiSerThe.mParametersVal); break;
-                case 33: SetSensorLensYLimit(1, wifiSerThe.mParametersVal); break;
-                case 34: SetColorSTSW(wifiSerThe.mParametersVal); break;
-                case 35: setSTMixEn(wifiSerThe.mParametersVal); break;    //ST_Mix_En
-                case 36: break;    //Show_40point_En
-                case 37:
-                    /*doAutoGlobalPhiAdjEn = (wifiSerThe.mParametersVal & 0x1);
-                    if(doAutoGlobalPhiAdjEn == 1) {
-                        doAutoGlobalPhiAdjStep = 1;
-                    }
-                    else {
-                          AutoGlobalPhiClose();
-                    }*/
-                    break;    //doGlobalPhiAdj 
-                case 38: setALIRelationRate(0, wifiSerThe.mParametersVal); break;    //ALIRelationD0
-                case 39: setALIRelationRate(1, wifiSerThe.mParametersVal); break;    //ALIRelationD1
-                case 40: setALIRelationRate(2, wifiSerThe.mParametersVal); break;    //ALIRelationD2
-				case 41: setGlobalPhiRate(0, wifiSerThe.mParametersVal); break;	//GP_CloseRate 
-				case 42: setGlobalPhiRate(1, wifiSerThe.mParametersVal); break;	//GP_FarRate
+				case 11: setSensroLensTable(0, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Gain 	
+				case 12: setSensroLensTable(1, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[0]
+				case 13: setSensroLensTable(2, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[1]
+				case 14: setSensroLensTable(3, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[2]
+				case 15: setSensroLensTable(4, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[3]
+				case 16: setSensroLensTable(5, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[4]
+				case 17: setSensroLensTable(6, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[5]
+				case 18: setSensroLensTable(7, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[6]
+				case 19: setSensroLensTable(8, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[7]
+				case 20: setSensroLensTable(9, Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[8]
+				case 21: setSensroLensTable(10, Get_WifiServer_ParametersVal()); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Table[9]
+				case 22: setSensroLensTable(11, Get_WifiServer_ParametersVal()); do_Sensor_Lens_Adj(1); break;	//Adj_Sensor_Lens_Th
+				case 23: setSensroLensTable(12, Get_WifiServer_ParametersVal()); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_Th  
+                case 24: setSmoothSpeed(0, Get_WifiServer_ParametersVal()); break;    	// Smooth_YUV_Speed
+                case 25: setSmoothSpeed(1, Get_WifiServer_ParametersVal()); break;    	// Smooth_Z_Speed
+                case 26: setLOGEEn(Get_WifiServer_ParametersVal()); break;				// LOGE_Enable
+                case 32: SetSensorLensYLimit(0, Get_WifiServer_ParametersVal()); break;
+                case 33: SetSensorLensYLimit(1, Get_WifiServer_ParametersVal()); break;
+                case 34: SetColorSTSW(Get_WifiServer_ParametersVal()); break;
+                case 35: setSTMixEn(Get_WifiServer_ParametersVal()); break;    //ST_Mix_En
+                case 36: break;
+                case 37: break;
+                case 38: setALIRelationRate(0, Get_WifiServer_ParametersVal()); break;    //ALIRelationD0
+                case 39: setALIRelationRate(1, Get_WifiServer_ParametersVal()); break;    //ALIRelationD1
+                case 40: setALIRelationRate(2, Get_WifiServer_ParametersVal()); break;    //ALIRelationD2
+				case 41: break;
                 case 42: 
-                	if(wifiSerThe.mParametersVal == 1) {
-                		doAutoStitch_flag = 1; 
-                		do_Auto_Stitch(1); 
+                	if(Get_WifiServer_ParametersVal() == 1) {
+                		doAutoStitchingFlag = 1; 
+                		do_Auto_Stitch_Proc(1); 
                 	}
                 	break;
-				case 43: setLensRateTable( 0, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 44: setLensRateTable( 1, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 45: setLensRateTable( 2, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 46: setLensRateTable( 3, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 47: setLensRateTable( 4, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 48: setLensRateTable( 5, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 49: setLensRateTable( 6, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 50: setLensRateTable( 7, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 51: setLensRateTable( 8, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 52: setLensRateTable( 9, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 53: setLensRateTable(10, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 54: setLensRateTable(11, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 55: setLensRateTable(12, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 56: setLensRateTable(13, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 57: setLensRateTable(14, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
-				case 58: setLensRateTable(15, wifiSerThe.mParametersVal); /*AdjFunction(); Send_ST_Cmd_Proc();*/ break;	//LensRateTable
+				case 43: setLensRateTable( 0, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 44: setLensRateTable( 1, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 45: setLensRateTable( 2, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 46: setLensRateTable( 3, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 47: setLensRateTable( 4, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 48: setLensRateTable( 5, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 49: setLensRateTable( 6, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 50: setLensRateTable( 7, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 51: setLensRateTable( 8, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 52: setLensRateTable( 9, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 53: setLensRateTable(10, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 54: setLensRateTable(11, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 55: setLensRateTable(12, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 56: setLensRateTable(13, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 57: setLensRateTable(14, Get_WifiServer_ParametersVal()); break;	//LensRateTable
+				case 58: setLensRateTable(15, Get_WifiServer_ParametersVal()); break;	//LensRateTable
 				case 59: 
-					if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 4)
-						Set_ISP2_Addr(1, 0, wifiSerThe.mParametersVal);
-					else if(wifiSerThe.mParametersVal == 5) {
-						Set_ISP2_Addr(PlayMode2, ResolutionMode, FPS, 1, -1);
-					}	
-					else if(wifiSerThe.mParametersVal == 6) {
+					if(Get_WifiServer_ParametersVal() >= 0 && Get_WifiServer_ParametersVal() <= 4)
+						Set_ISP2_Addr(1, 0, Get_WifiServer_ParametersVal());
+					else if(Get_WifiServer_ParametersVal() == 6)
 						Set_ISP2_Addr(1, 0, -2);
-					}	
-					else if(wifiSerThe.mParametersVal == 7) {
-  						Set_ISP2_Addr(PlayMode2, ResolutionMode, FPS, 1, -3);
-					}
 					else
 						chooseModeFlag = 1;
 					break;	//ShowSensor
-				case 60: 
-					setSensorXStep(wifiSerThe.mParametersVal); 
-					break;	//SensroXStep
-				case 61: 
-					setSensorLensRate(wifiSerThe.mParametersVal);
-					//AdjFunction();
-					//Send_ST_Cmd_Proc();
-					break;	//SensroLensRate
-				case 62: 
-					setS2RGB(0, wifiSerThe.mParametersVal);
-					break;	//S2_R_Gain
-				case 63: 
-					setS2RGB(1, wifiSerThe.mParametersVal);
-					break;	//S2_R_Gain
-				case 64: 
-					setS2RGB(2, wifiSerThe.mParametersVal);
-					break;	//S2_R_Gain
-				case 65: 
-					setS2ISO(0, wifiSerThe.mParametersVal);
-					break;	//S2_A_Gain
-				case 66: 
-					setS2ISO(1, wifiSerThe.mParametersVal);
-					break;	//S2_D_Gain 
-				case 67: 
-					RXDelaySet(wifiSerThe.mParametersVal, 0, 0xF);
-					break;	//RXDelaySet F0
-				case 68: 
-					RXDelaySet(wifiSerThe.mParametersVal, 1, 0xF);
-					break;	//RXDelaySet F1
+				case 60: setSensorXStep(Get_WifiServer_ParametersVal());    break;	//SensroXStep
+				case 61: setSensorLensRate(Get_WifiServer_ParametersVal()); break;	//SensroLensRate
+				case 62: setS2RGB(0, Get_WifiServer_ParametersVal());       break;	//S2_R_Gain
+				case 63: setS2RGB(1, Get_WifiServer_ParametersVal());       break;	//S2_R_Gain
+				case 64: setS2RGB(2, Get_WifiServer_ParametersVal());       break;	//S2_R_Gain
+				case 65: setS2ISO(0, Get_WifiServer_ParametersVal());       break;	//S2_A_Gain
+				case 66: setS2ISO(1, Get_WifiServer_ParametersVal());       break;	//S2_D_Gain 
+				case 67: RXDelaySet(Get_WifiServer_ParametersVal(), 0, 0xF);    break;	//RXDelaySet F0
+				case 68: RXDelaySet(Get_WifiServer_ParametersVal(), 1, 0xF);    break;	//RXDelaySet F1
 				case 69:
-					if(wifiSerThe.mParametersVal < 5) {
-						STTableTestS2Focus(wifiSerThe.mParametersVal);
+					if(Get_WifiServer_ParametersVal() < 5) {
+						STTableTestS2Focus(Get_WifiServer_ParametersVal());
 						Set_ISP2_Addr(1, 0, -4);
 					}
 					else {
@@ -5398,10 +5538,10 @@ void wifiSerThe_proc()
 						chooseModeFlag = 1; 
 					}
 					break;	//New_Focus
-				case 70: break;	//Set_Sensor_Reg_S_ID
-				case 71: break;	//Set_Sensor_Reg_Idx
+				case 70: break;
+				case 71: break;
 				case 72:
-					if(wifiSerThe.mParametersVal == 1) {
+					if(Get_WifiServer_ParametersVal() == 1) {
 						Set_ISP2_Addr(1, 0, -5);
 						AdjFunction();
 						STTableTestS2ShowSTLine();
@@ -5410,57 +5550,57 @@ void wifiSerThe_proc()
 						chooseModeFlag = 1;
 					break;	//Show_ST_Line
 				case 73: 
-					setGlobalSensorXOffset(1, wifiSerThe.mParametersVal);
+					setGlobalSensorXOffset(1, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_X_Offset_1
 				case 74: 
-					setGlobalSensorYOffset(1, wifiSerThe.mParametersVal);
+					setGlobalSensorYOffset(1, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_Y_Offset_1
 				case 75: 
-					setGlobalSensorXOffset(2, wifiSerThe.mParametersVal);
+					setGlobalSensorXOffset(2, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_X_Offset_2
 				case 76: 
-					setGlobalSensorYOffset(2, wifiSerThe.mParametersVal);
+					setGlobalSensorYOffset(2, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_Y_Offset_2
 				case 77:
-					setGlobalSensorXOffset(3, wifiSerThe.mParametersVal);
+					setGlobalSensorXOffset(3, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_X_Offset_3
 				case 78:
-					setGlobalSensorYOffset(3, wifiSerThe.mParametersVal);
+					setGlobalSensorYOffset(3, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_Y_Offset_3
 				case 79:
-					setGlobalSensorXOffset(4, wifiSerThe.mParametersVal);
+					setGlobalSensorXOffset(4, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_X_Offset_4
 				case 80:
-					setGlobalSensorYOffset(4, wifiSerThe.mParametersVal);
+					setGlobalSensorYOffset(4, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_Y_Offset_4
 				case 81:
-					setGlobalSensorXOffset(5, wifiSerThe.mParametersVal);
+					setGlobalSensorXOffset(5, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_X_Offset_6
 				case 82:
-					setGlobalSensorYOffset(5, wifiSerThe.mParametersVal);
+					setGlobalSensorYOffset(5, Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	// Global_Sensor_Y_Offset_6	
 				case 83:
-					if(wifiSerThe.mParametersVal == 1){
+					if(Get_WifiServer_ParametersVal() == 1){
 						if(doAutoStitch() >= 0){
 							WriteSensorAdjFile();
 							ReadSensorAdjFile();
@@ -5471,428 +5611,339 @@ void wifiSerThe_proc()
 							
 							WriteTestResult(0, 0);
 						}
-						paintOLEDStitching(0);
+//tmp						paintOLEDStitching(0);  //oled.c
 					}
 					break;
 				case 84: 
-					SetAutoSTSW(wifiSerThe.mParametersVal); 
+					SetAutoSTSW(Get_WifiServer_ParametersVal()); 
 					AdjFunction(); 
 					Send_ST_Cmd_Proc();
 					break;
-				case 85: 
-					//setALIGlobalPhi3Idx(wifiSerThe.mParametersVal); 
-					AdjFunction();
-					break;
-				case 86: 
-					setSmoothParameter(0, wifiSerThe.mParametersVal); 	// Smooth_Debug_Flag
-					break;
-				case 87:
-					setSmoothParameter(2, wifiSerThe.mParametersVal);	// Smooth_Avg_Weight
-					break;
+				case 85: AdjFunction(); break;
+				case 86: setSmoothParameter(0, Get_WifiServer_ParametersVal());  break; 	// Smooth_Debug_Flag
+				case 87: setSmoothParameter(2, Get_WifiServer_ParametersVal());  break;	    // Smooth_Avg_Weight
 				case 88:
-					if(wifiSerThe.mParametersVal < 512 && wifiSerThe.mParametersVal >= 0)
-						Smooth_O_Idx = wifiSerThe.mParametersVal;
+					if(Get_WifiServer_ParametersVal() < 512 && Get_WifiServer_ParametersVal() >= 0)
+						smoothOIdx = Get_WifiServer_ParametersVal();
 					break;
-				case 89:
-					setSmoothY(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
-					break;
-				case 90:
-					setSmoothU(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
-					break;
-				case 91:
-					setSmoothV(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
-					break;
-				case 92:
-					setSmoothZ(Smooth_O_Idx, wifiSerThe.mParametersVal, 0);
-					break;
-				case 93:
-					setSmoothParameter(4, wifiSerThe.mParametersVal);
-					break;
-				case 94:
-					setSmoothParameter(1, wifiSerThe.mParametersVal);
-					break;
-				case 95:
-					setSmoothParameter(6, wifiSerThe.mParametersVal);
-					break;
-				case 96:
-					setSmoothParameter(5, wifiSerThe.mParametersVal);
-					break;
-				case 97:
-					//SetNR3DStrength(wifiSerThe.mParametersVal); 
-					setShowSmoothIdx(2, wifiSerThe.mParametersVal); 
-					break; 
+				case 89: setSmooth(smoothOIdx, 0, Get_WifiServer_ParametersVal(), 0);    break;  //Y
+				case 90: setSmooth(smoothOIdx, 1, Get_WifiServer_ParametersVal(), 0);    break;  //U
+				case 91: setSmooth(smoothOIdx, 2, Get_WifiServer_ParametersVal(), 0);    break;  //V
+				case 92: setSmooth(smoothOIdx, 3, Get_WifiServer_ParametersVal(), 0);    break;  //Z
+				case 93: setSmoothParameter(4, Get_WifiServer_ParametersVal());  break;
+				case 94: setSmoothParameter(1, Get_WifiServer_ParametersVal());  break;
+				case 95: setSmoothParameter(6, Get_WifiServer_ParametersVal());  break;
+				case 96: setSmoothParameter(5, Get_WifiServer_ParametersVal());  break;
+				case 97: setShowSmoothIdx(2, Get_WifiServer_ParametersVal());    break; 
 				case 98:
-					//parametersTool.setParameterValue(98, wifiSerThe.mParametersVal);
-					smoothShow = wifiSerThe.mParametersVal;
+					smoothShow = Get_WifiServer_ParametersVal();
 					if(smoothShow == -1) {
-                        ShowPaintVisibilityMode = 0;  
-                        mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
+                        paintVisibilityMode = 0;  
+//tmp                        mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
 					}
 					else {
 						setShowSmoothIdx(1, smoothShow);
-                        if(ShowPaintVisibilityMode == 0) {
-                        	ShowPaintVisibilityMode = 1;
-                        	mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
+                        if(paintVisibilityMode == 0) {
+                        	paintVisibilityMode = 1;
+//tmp                         	mHandler.obtainMessage(SHOW_PAINT_VISIBILITY).sendToTarget();
                         }
 					}
 					break;
-				case 99: setShowSmoothIdx(0, wifiSerThe.mParametersVal); break;	
-				case 100: setSmoothXYSpace(wifiSerThe.mParametersVal); break;
-				case 101: setSmoothFarWeight(wifiSerThe.mParametersVal); break;
-				case 102: setSmoothDelSlope(wifiSerThe.mParametersVal); break;
-				case 103: setSmoothFunction(wifiSerThe.mParametersVal); break;
+				case 99: setShowSmoothIdx(0, Get_WifiServer_ParametersVal());    break;	
+				case 100: setSmoothXYSpace(Get_WifiServer_ParametersVal());      break;
+				case 101: setSmoothFarWeight(Get_WifiServer_ParametersVal());    break;
+				case 102: setSmoothDelSlope(Get_WifiServer_ParametersVal());     break;
+				case 103: setSmoothFunction(Get_WifiServer_ParametersVal());     break;
 				case 104:
-					//parametersTool.setParameterValue(98, wifiSerThe.mParametersVal);
-					stitchShow = wifiSerThe.mParametersVal;
+					stitchShow = Get_WifiServer_ParametersVal();
 					if(stitchShow == -1) {
-                        ShowStitchVisibilityMode = 0;  
-                        mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
+                        stitchingVisibilityMode = 0;  
+//tmp                        mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
 					}
 					else {
-                        if(ShowStitchVisibilityMode == 0) {
-                        	ShowStitchVisibilityMode = 1;
-                        	mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
+                        if(stitchingVisibilityMode == 0) {
+                        	stitchingVisibilityMode = 1;
+//tmp                        	mHandler.obtainMessage(SHOW_STITCH_VISIBILITY).sendToTarget();
                         }
 					}
 					break;
-				case 105:
-					ShowStitchVisibilityType = wifiSerThe.mParametersVal;
-					break;
+				case 105: stitchingVisibilityType = Get_WifiServer_ParametersVal(); break;
 				case 106:
-					if(wifiSerThe.mParametersVal == -1)
+					if(Get_WifiServer_ParametersVal() == -1)
 						chooseModeFlag = 1;
 					else
-						Set_ISP2_Addr(1, wifiSerThe.mParametersVal, -8);
+						Set_ISP2_Addr(1, Get_WifiServer_ParametersVal(), -8);
 					break;
 				case 107:
-					
-					if(wifiSerThe.mParametersVal == -1)
+					if(Get_WifiServer_ParametersVal() == -1)
 						chooseModeFlag = 1;
 					else
-						Set_ISP2_Addr(1, wifiSerThe.mParametersVal, -9);
+						Set_ISP2_Addr(1, Get_WifiServer_ParametersVal(), -9);
 					break;
-				case 108:
-					SetNR3DLeve(wifiSerThe.mParametersVal);
-					break;
+				case 108: SetNR3DLeve(Get_WifiServer_ParametersVal()); break;
 				case 109:
-					setSaveSmoothEn(wifiSerThe.mParametersVal);
-					if(wifiSerThe.mParametersVal == 1)
+					setSaveSmoothEn(Get_WifiServer_ParametersVal());
+					if(Get_WifiServer_ParametersVal() == 1)
 					    createSaveSmoothBin();
 					else
 					    deleteSaveSmoothBin(); 
 					break;
-				case 110:
-					setSTCmdDebugMode(wifiSerThe.mParametersVal);
-					break;
+				case 110: Set_ST_S_Cmd_Debug_Flag(Get_WifiServer_ParametersVal()); break;
 				case 111:
-					if(wifiSerThe.mParametersVal == 1) 
+					if(Get_WifiServer_ParametersVal() == 1) 
 						adjustSensorSyncFlag = 3;
 					break;
 				case 112:
-					Translucent_Mode = wifiSerThe.mParametersVal & 0x1;
-					SetTransparentEn(Translucent_Mode); 
+					mTranslucentMode = Get_WifiServer_ParametersVal() & 0x1;
+					SetTransparentEn(mTranslucentMode); 
 					break;
-				case 113:
-					SetUVtoRGB(0, wifiSerThe.mParametersVal);
-					break;
-				case 114:
-					SetUVtoRGB(1, wifiSerThe.mParametersVal);
-					break;
-				case 115:
-					SetUVtoRGB(2, wifiSerThe.mParametersVal);
-					break;
-				case 116:
-					SetUVtoRGB(3, wifiSerThe.mParametersVal);
-					break;
-				case 117:
-					SetUVtoRGB(4, wifiSerThe.mParametersVal);
-					break;
-				case 118:
-					SetUVtoRGB(5, wifiSerThe.mParametersVal);
-					break;
-				case 119:
-					SetSmoothOIdx(wifiSerThe.mParametersVal);
-					break;
+				case 113: set_A2K_ISP2_UVtoRGB(0, Get_WifiServer_ParametersVal());     break;
+				case 114: set_A2K_ISP2_UVtoRGB(1, Get_WifiServer_ParametersVal());     break;
+				case 115: set_A2K_ISP2_UVtoRGB(2, Get_WifiServer_ParametersVal());     break;
+				case 116: set_A2K_ISP2_UVtoRGB(3, Get_WifiServer_ParametersVal());     break;
+				case 117: set_A2K_ISP2_UVtoRGB(4, Get_WifiServer_ParametersVal());     break;
+				case 118: set_A2K_ISP2_UVtoRGB(5, Get_WifiServer_ParametersVal());     break;
+				case 119: SetSmoothOIdx(Get_WifiServer_ParametersVal()); break;
 				case 120:
-					Focus_Tool_Num = wifiSerThe.mParametersVal;
-					SetFocusToolNum(Focus_Tool_Num);
+					focusToolNum = Get_WifiServer_ParametersVal();
+					SetFocusToolNum(focusToolNum);
 					break;
 				case 121:
-					if(wifiSerThe.mParametersVal >= 0 && wifiSerThe.mParametersVal <= 4) {
-						if(CameraMode != 0 || ResolutionMode != 1 || PlayMode2_tmp !=0) {	//Change Mode: Cap 12K Mode
-			            	CameraMode = 0;
+					if(Get_WifiServer_ParametersVal() >= 0 && Get_WifiServer_ParametersVal() <= 4) {
+						if(mCameraMode != 0 || mResolutionMode != 1 || mPlayModeTmp !=0) {	//Change Mode: Cap 12K Mode
+			            	mCameraMode = 0;
 			                Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
-			                ResolutionMode = 1;	
-			            	PlayMode2_tmp = 0;
-                            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);
-			                choose_mode(CameraMode, PlayMode2_tmp, ResolutionMode, FPS);
+			                mResolutionMode = 1;	
+			            	mPlayModeTmp = 0;
+                            ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
+			                choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, mFPS);
 						}
 						
-						Focus2_Sensor = wifiSerThe.mParametersVal;
+						focusSensor2 = Get_WifiServer_ParametersVal();
 						FocusScanTableTranInit();
 						FocusResultInit();
-						if(ShowFocusVisibilityMode == 0) {
-							ShowFocusVisibilityMode = 1;  
-							mHandler.obtainMessage(SHOW_FOCUS_VISIBILITY).sendToTarget();
+						if(focusVisibilityMode == 0) {
+							focusVisibilityMode = 1;  
+//tmp							mHandler.obtainMessage(SHOW_FOCUS_VISIBILITY).sendToTarget();
 						}
-						STTableTestS2Focus(Focus2_Sensor);
+						STTableTestS2Focus(focusSensor2);
 						Set_ISP2_Addr(1, 0, -6);
 						do2DNR(1);		//銳利度調至最低
 					}
 					else {
-						Focus2_Sensor = -1;
-						STTableTestS2Focus(Focus2_Sensor);
+						focusSensor2 = -1;
+						STTableTestS2Focus(focusSensor2);
 						do2DNR(0);
-						ShowFocusVisibilityMode = 0;  
+						focusVisibilityMode = 0;  
 						chooseModeFlag = 1; 
-						testtool.doTestToolCmdInit();
+						TestToolCmdInit();
 					}
 					break;	//New_Focus2
-
-				case 122:			//BatteryWorkR
-					batteryWorkR = wifiSerThe.mParametersVal;
-					ledStateArray[workResistL] = batteryWorkR % 256;
-					ledStateArray[workResistH] = batteryWorkR / 256;
-					Log.d("debug", "workR:" + batteryWorkR / 256 + " " + batteryWorkR % 256);
-					break;
-				case 123:			//GammaLineOff
-					setGammaLineOff(wifiSerThe.mParametersVal);
-					break;
-				case 124: setISP1RGBOffset(0, wifiSerThe.mParametersVal); break;
-				case 125: setISP1RGBOffset(1, wifiSerThe.mParametersVal); break;
-				case 126: setWDR1PI0(wifiSerThe.mParametersVal); break;	// WDR
-				case 127: setWDR1PI1(wifiSerThe.mParametersVal); break;	// WDR
-				case 128: setWDR1PV0(wifiSerThe.mParametersVal); break;	// WDR
-				case 129: setWDR1PV1(wifiSerThe.mParametersVal); break;	// WDR
-				case 130: SetMaskAdd(0, wifiSerThe.mParametersVal); break;	//Add_Mask_X
-				case 131: SetMaskAdd(1, wifiSerThe.mParametersVal); break;	//Add_Mask_Y
-				case 132: SetMaskAdd(2, wifiSerThe.mParametersVal); break;	//Add_Pre_Mask_X
-				case 133: SetMaskAdd(3, wifiSerThe.mParametersVal); break;	//Add_Pre_Mask_Y
-				case 134: SetDGOffset(0, wifiSerThe.mParametersVal); break;	//DG_Offset[0]
-				case 135: SetDGOffset(1, wifiSerThe.mParametersVal); break;	//DG_Offset[1]
-				case 136: SetDGOffset(2, wifiSerThe.mParametersVal); break;	//DG_Offset[2]
-				case 137: SetDGOffset(3, wifiSerThe.mParametersVal); break;	//DG_Offset[3]
-				case 138: SetDGOffset(4, wifiSerThe.mParametersVal); break;	//DG_Offset[4]
-				case 139: SetDGOffset(5, wifiSerThe.mParametersVal); break;	//DG_Offset[5]
-				case 140: setISP1SkipOffset(2, wifiSerThe.mParametersVal); break;	//Skip_Offset_BX
-				case 141: setISP1SkipOffset(3, wifiSerThe.mParametersVal); break;	//Skip_Offset_BY
-				case 142: setISP1SkipOffset(4, wifiSerThe.mParametersVal); break;	//Skip_Offset_B_RY
-				case 143: setISP1SkipOffset(5, wifiSerThe.mParametersVal); break;	//Skip_Offset_B_BY
-				case 144: setLensSkipRRate(wifiSerThe.mParametersVal); break;	//Skip_R_Rate
-				case 145: setWDRTablePixel(wifiSerThe.mParametersVal); break;	// WDR 
-				case 146: setWDR2PI0(wifiSerThe.mParametersVal); break;	// WDR
-				case 147: setWDR2PI1(wifiSerThe.mParametersVal); break;	// WDR
-				case 148: setWDR2PV0(wifiSerThe.mParametersVal); break;	// WDR
-				case 149: setWDR2PV1(wifiSerThe.mParametersVal); break;	// WDR
-				case 150:
-					Focus_Sensor = wifiSerThe.mParametersVal;
-					break;	//Focus_Sensor
-				case 151:
-					Focus_Idx = wifiSerThe.mParametersVal;
-					break;	//Focus_Idx
-				case 152:
-					setFocusPosiOffsetXY(Focus_Sensor, Focus_Idx, 0, wifiSerThe.mParametersVal);
-					break;	//Focus_Offset_X
-				case 153:
-					setFocusPosiOffsetXY(Focus_Sensor, Focus_Idx, 1, wifiSerThe.mParametersVal);
-					break;	//Focus_Offset_Y
-				case 154:
-					setFocusEPIdx(wifiSerThe.mParametersVal);
-					break;	//Focus_EP_Idx
-				case 155:
-					setFocusGainIdx(wifiSerThe.mParametersVal);
-					break;	//Focus_Gain_Idx
-				case 156:
-					setFPGASpeed(0, wifiSerThe.mParametersVal);
-					break;	//F0_Speed
-				case 157:
-					setFPGASpeed(1, wifiSerThe.mParametersVal);
-					break;	//F1_Speed
-				case 158:
-					setFPGASpeed(2, wifiSerThe.mParametersVal);
-					break;	//F2_Speed
-				case 159:
-					setGammaAdjA(wifiSerThe.mParametersVal);
-					break;	//GAMMA
-				case 160:
-					setGammaAdjB(wifiSerThe.mParametersVal);
-					break;	//GAMMA
-				case 161:
-					setYOffValue(wifiSerThe.mParametersVal);
-					break;	//Y OFF
-				case 162:
-					SetSaturationValue(0, wifiSerThe.mParametersVal);
-					break;	//Saturation_C
-				case 163:
-					SetSaturationValue(1, wifiSerThe.mParametersVal);
-					break;	//Saturation_Ku
-				case 164:
-					SetSaturationValue(2, wifiSerThe.mParametersVal);
-					break;	//Saturationa_Kv
+				case 122: break;
+				case 123: setGammaLineOff(Get_WifiServer_ParametersVal()); break;			//GammaLineOff
+				case 124: setISP1RGBOffset(0, Get_WifiServer_ParametersVal()); break;
+				case 125: setISP1RGBOffset(1, Get_WifiServer_ParametersVal()); break;
+				case 126: setWDR1PI0(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 127: setWDR1PI1(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 128: setWDR1PV0(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 129: setWDR1PV1(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 130: SetMaskAdd(0, Get_WifiServer_ParametersVal()); break;	//Add_Mask_X
+				case 131: SetMaskAdd(1, Get_WifiServer_ParametersVal()); break;	//Add_Mask_Y
+				case 132: SetMaskAdd(2, Get_WifiServer_ParametersVal()); break;	//Add_Pre_Mask_X
+				case 133: SetMaskAdd(3, Get_WifiServer_ParametersVal()); break;	//Add_Pre_Mask_Y
+				case 134: set_A2K_ISP2_DG_Offset(0, Get_WifiServer_ParametersVal()); break;	//DG_Offset[0]
+				case 135: set_A2K_ISP2_DG_Offset(1, Get_WifiServer_ParametersVal()); break;	//DG_Offset[1]
+				case 136: set_A2K_ISP2_DG_Offset(2, Get_WifiServer_ParametersVal()); break;	//DG_Offset[2]
+				case 137: set_A2K_ISP2_DG_Offset(3, Get_WifiServer_ParametersVal()); break;	//DG_Offset[3]
+				case 138: set_A2K_ISP2_DG_Offset(4, Get_WifiServer_ParametersVal()); break;	//DG_Offset[4]
+				case 139: set_A2K_ISP2_DG_Offset(5, Get_WifiServer_ParametersVal()); break;	//DG_Offset[5]
+				case 140: break;
+				case 141: break;
+				case 142: break;
+				case 143: break;
+				case 144: break;
+				case 145: setWDRTablePixel(Get_WifiServer_ParametersVal()); break;	// WDR 
+				case 146: setWDR2PI0(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 147: setWDR2PI1(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 148: setWDR2PV0(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 149: setWDR2PV1(Get_WifiServer_ParametersVal()); break;	// WDR
+				case 150: focusSensor = Get_WifiServer_ParametersVal(); break;	//focusSensor
+				case 151: focusIdx = Get_WifiServer_ParametersVal(); break;	//focusIdx
+				case 152: setFocusPosiOffsetXY(focusSensor, focusIdx, 0, Get_WifiServer_ParametersVal()); break;	//Focus_Offset_X
+				case 153: setFocusPosiOffsetXY(focusSensor, focusIdx, 1, Get_WifiServer_ParametersVal()); break;	//Focus_Offset_Y
+				case 154: setFocusEPIdx(Get_WifiServer_ParametersVal()); break;	//Focus_EP_Idx
+				case 155: setFocusGainIdx(Get_WifiServer_ParametersVal()); break;	//Focus_Gain_Idx
+				case 156: setFPGASpeed(0, Get_WifiServer_ParametersVal()); break;	//F0_Speed
+				case 157: setFPGASpeed(1, Get_WifiServer_ParametersVal()); break;	//F1_Speed
+				case 158: setFPGASpeed(2, Get_WifiServer_ParametersVal()); break;	//F2_Speed
+				case 159: setGammaAdjA(Get_WifiServer_ParametersVal()); break;	//GAMMA
+				case 160: setGammaAdjB(Get_WifiServer_ParametersVal()); break;	//GAMMA
+				case 161: setYOffValue(Get_WifiServer_ParametersVal()); break;	//Y OFF
+				case 162: SetSaturationValue(0, Get_WifiServer_ParametersVal()); break;	//Saturation_C
+				case 163: SetSaturationValue(1, Get_WifiServer_ParametersVal()); break;	//Saturation_Ku
+				case 164: SetSaturationValue(2, Get_WifiServer_ParametersVal()); break;	//Saturationa_Kv
 				case 165:
-					SetSLAdjGap0(wifiSerThe.mParametersVal);
+					SetSLAdjGap0(Get_WifiServer_ParametersVal());
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					break;	//SL_Adj_Gap0
-				case 166: SetSensorLensDE(wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_D_E	
-				case 167: SetSensorLensEnd(wifiSerThe.mParametersVal); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_End	
-				case 168: SetSensorLensCY(wifiSerThe.mParametersVal);  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_C_Y	
-				case 169:
-					SetSaturationValue(3, wifiSerThe.mParametersVal);
-					break;	//Saturationa_Th
-				case 170: setAEGBExp1Sec(wifiSerThe.mParametersVal); break;
-				case 171: setAEGBExpGain(wifiSerThe.mParametersVal); break;
-				case 172: setAGainDebugOffset(wifiSerThe.mParametersVal); break;				//AGainOffset
-				case 173: setAdjRsY( wifiSerThe.mParametersVal); break;				// 173
-				case 174: setAdjGsY( wifiSerThe.mParametersVal); break;				// 174
-				case 175: setAdjBsY( wifiSerThe.mParametersVal); break;				// 175
-				case 176: setAdjRnX( wifiSerThe.mParametersVal); break;				// 176
-				case 177: setAdjGnX( wifiSerThe.mParametersVal); break;				// 177
-				case 178: setAdjBnX( wifiSerThe.mParametersVal); break;				// 178
-				case 179: SetBDTHDebug( wifiSerThe.mParametersVal); break;			// BD_TH_Debug
-				case 180: SetAWBTHDebug(0, wifiSerThe.mParametersVal); break;			// AWB_TH_H_Debug
-				case 181: SetAWBTHDebug(1, wifiSerThe.mParametersVal); break;			// AWB_TH_L_Debug
-				case 182: setAWBCrCbG( wifiSerThe.mParametersVal); break;			// 182
-				case 183: SetRGBMatrix(0, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RR
-				case 184: SetRGBMatrix(1, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RG
-				case 185: SetRGBMatrix(2, wifiSerThe.mParametersVal); break;			// RGB_Matrix_RB
-				case 186: SetRGBMatrix(3, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GR
-				case 187: SetRGBMatrix(4, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GG
-				case 188: SetRGBMatrix(5, wifiSerThe.mParametersVal); break;			// RGB_Matrix_GB
-				case 189: SetRGBMatrix(6, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BR
-				case 190: SetRGBMatrix(7, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BG
-				case 191: SetRGBMatrix(8, wifiSerThe.mParametersVal); break;			// RGB_Matrix_BB        
-				case 192: SetRGB2YUVMatrix(0, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YR
-				case 193: SetRGB2YUVMatrix(1, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YG
-				case 194: SetRGB2YUVMatrix(2, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_YB
-				case 195: SetRGB2YUVMatrix(3, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UR
-				case 196: SetRGB2YUVMatrix(4, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UG
-				case 197: SetRGB2YUVMatrix(5, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_UB
-				case 198: SetRGB2YUVMatrix(6, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VR
-				case 199: SetRGB2YUVMatrix(7, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VG
-				case 200: SetRGB2YUVMatrix(8, wifiSerThe.mParametersVal); break;			// 2YUV_Matrix_VB
-				case 201: SetHDRTone(wifiSerThe.mParametersVal); break;			// HDR_Tone
+				case 166: SetSensorLensDE(Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_D_E	
+				case 167: SetSensorLensEnd(Get_WifiServer_ParametersVal()); do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_End	
+				case 168: SetSensorLensCY(Get_WifiServer_ParametersVal());  do_Sensor_Lens_Adj(1); break;	//Sensor_Lens_C_Y	
+				case 169: SetSaturationValue(3, Get_WifiServer_ParametersVal()); break;	//Saturationa_Th
+				case 170: setAEGBExp1Sec(Get_WifiServer_ParametersVal()); break;
+				case 171: setAEGBExpGain(Get_WifiServer_ParametersVal()); break;
+				case 172: setAGainDebugOffset(Get_WifiServer_ParametersVal()); break;				//AGainOffset
+				case 173: setAdjRsY(Get_WifiServer_ParametersVal()); break;				// 173
+				case 174: setAdjGsY(Get_WifiServer_ParametersVal()); break;				// 174
+				case 175: setAdjBsY(Get_WifiServer_ParametersVal()); break;				// 175
+				case 176: setAdjRnX(Get_WifiServer_ParametersVal()); break;				// 176
+				case 177: setAdjGnX(Get_WifiServer_ParametersVal()); break;				// 177
+				case 178: setAdjBnX(Get_WifiServer_ParametersVal()); break;				// 178
+				case 179: SetBDTHDebug(Get_WifiServer_ParametersVal()); break;			// BD_TH_Debug
+				case 180: SetAWBTHDebug(0, Get_WifiServer_ParametersVal()); break;			// AWB_TH_H_Debug
+				case 181: SetAWBTHDebug(1, Get_WifiServer_ParametersVal()); break;			// AWB_TH_L_Debug
+				case 182: setAWBCrCbG(Get_WifiServer_ParametersVal()); break;			// 182
+				case 183: SetRGBMatrix(0, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_RR
+				case 184: SetRGBMatrix(1, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_RG
+				case 185: SetRGBMatrix(2, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_RB
+				case 186: SetRGBMatrix(3, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_GR
+				case 187: SetRGBMatrix(4, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_GG
+				case 188: SetRGBMatrix(5, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_GB
+				case 189: SetRGBMatrix(6, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_BR
+				case 190: SetRGBMatrix(7, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_BG
+				case 191: SetRGBMatrix(8, Get_WifiServer_ParametersVal()); break;			// RGB_Matrix_BB        
+				case 192: SetRGB2YUVMatrix(0, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_YR
+				case 193: SetRGB2YUVMatrix(1, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_YG
+				case 194: SetRGB2YUVMatrix(2, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_YB
+				case 195: SetRGB2YUVMatrix(3, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_UR
+				case 196: SetRGB2YUVMatrix(4, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_UG
+				case 197: SetRGB2YUVMatrix(5, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_UB
+				case 198: SetRGB2YUVMatrix(6, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_VR
+				case 199: SetRGB2YUVMatrix(7, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_VG
+				case 200: SetRGB2YUVMatrix(8, Get_WifiServer_ParametersVal()); break;			// 2YUV_Matrix_VB
+				case 201: SetHDRTone(Get_WifiServer_ParametersVal()); break;			// HDR_Tone
 				case 202: 
-					LiveQualityMode = wifiSerThe.mParametersVal & 0x1;
-					set_A2K_JPEG_Live_Quality_Mode(LiveQualityMode);	
-					//testHonz = wifiSerThe.mParametersVal;
+					mJpegLiveQualityMode = Get_WifiServer_ParametersVal() & 0x1;
+					set_A2K_JPEG_Live_Quality_Mode(mJpegLiveQualityMode);	
 					break;				//Live_Quality_Mode
-				case 203: SetGammaMax(wifiSerThe.mParametersVal); break;			// Gamma_Max
-				case 204: SetA2KWDRPixel(wifiSerThe.mParametersVal); break;			// WDR_Pixel
-				case 205: break;			// XXXX
-				case 206: break;			// XXXX
+				case 203: SetGammaMax(Get_WifiServer_ParametersVal()); break;			// Gamma_Max
+				case 204: set_A2K_WDRPixel(Get_WifiServer_ParametersVal()); break;			// WDR_Pixel
+				case 205: break;
+				case 206: break;
 				case 207: 
-					defectStep = wifiSerThe.mParametersVal;
+					defectStep = Get_WifiServer_ParametersVal();
 					defectType = DEFECT_TYPE_TESTTOOL;
 					SetDefectType(defectType);
 					SetDefectStep(defectStep);
-					
 					if(defectStep == 5) {
-				    	SetDefectEn(0);
+				    	set_A2K_ISP2_Defect_En(0);
 				    	defectState = DEFECT_STATE_NONE;
 					}
 					break;			// do_Defect
-				case 208: SetDefectTh(wifiSerThe.mParametersVal); break;				// Defect_Th
-				case 209: SetDefectOffset(0, wifiSerThe.mParametersVal); break;			// Defect_X
-				case 210: SetDefectOffset(1, wifiSerThe.mParametersVal); break;			// Defect_Y
-				case 211: SetDefectEn(wifiSerThe.mParametersVal); break;				// Defect_En
-				case 212: SetDefectDebugEn(wifiSerThe.mParametersVal); break;			// Defect_Debug_En
-				case 213: SetRGBGainI(0, wifiSerThe.mParametersVal); break;				// GainI_R
-				case 214: SetRGBGainI(1, wifiSerThe.mParametersVal); break;				// GainI_G
-				case 215: SetRGBGainI(2, wifiSerThe.mParametersVal); break;				// GainI_B
-				case 216: SetHDR7PAutoTh(0, wifiSerThe.mParametersVal); break;			// HDR_Auto_Th[0]
-				case 217: SetHDR7PAutoTh(1, wifiSerThe.mParametersVal); break;			// HDR_Auto_Th[1]
-				case 218: SetHDR7PAutoTarget(0, wifiSerThe.mParametersVal); break;		// HDR_Auto_Target[0]
-				case 219: SetHDR7PAutoTarget(1, wifiSerThe.mParametersVal); break;		// HDR_Auto_Target[1]
-				case 220: SetRemovalVariable(0, wifiSerThe.mParametersVal); break;
-				case 221: SetRemovalVariable(1, wifiSerThe.mParametersVal); break;
-				case 222: SetRemovalVariable(2, wifiSerThe.mParametersVal); break;
-				case 223: SetRemovalVariable(3, wifiSerThe.mParametersVal); break;
-				case 224: SetDeGhostParameter(0, wifiSerThe.mParametersVal); break;		// Motion_Th
-				case 225: SetDeGhostParameter(1, wifiSerThe.mParametersVal); break;		// Motion_Diff_Pix
-				case 226: SetDeGhostParameter(2, wifiSerThe.mParametersVal); break;		// Overlay_Mul
-				case 227: SetDeGhostParameter(3, wifiSerThe.mParametersVal); break;		// DeGhost_Th
-				case 228: SetColorRate(0, wifiSerThe.mParametersVal); break;			// Color_Rate_0
-				case 229: SetColorRate(1, wifiSerThe.mParametersVal); break;			// Color_Rate_1
-				case 230: ReadFXDDR(0, wifiSerThe.mParametersVal); break;				// Read_F0_ADDR
-				case 231: ReadFXDDR(1, wifiSerThe.mParametersVal); break;				// Read_F1_ADDR
+				case 208: SetDefectTh(Get_WifiServer_ParametersVal()); break;				// Defect_Th
+				case 209: SetDefectOffsetX(Get_WifiServer_ParametersVal()); break;			// Defect_X
+				case 210: SetDefectOffsetY(Get_WifiServer_ParametersVal()); break;			// Defect_Y
+				case 211: set_A2K_ISP2_Defect_En(Get_WifiServer_ParametersVal()); break;				// Defect_En
+				case 212: SetDefectDebugEn(Get_WifiServer_ParametersVal()); break;			// Defect_Debug_En
+				case 213: SetRGBGainI(0, Get_WifiServer_ParametersVal()); break;				// GainI_R
+				case 214: SetRGBGainI(1, Get_WifiServer_ParametersVal()); break;				// GainI_G
+				case 215: SetRGBGainI(2, Get_WifiServer_ParametersVal()); break;				// GainI_B
+				case 216: SetHDR7PAutoTh(0, Get_WifiServer_ParametersVal()); break;			// HDR_Auto_Th[0]
+				case 217: SetHDR7PAutoTh(1, Get_WifiServer_ParametersVal()); break;			// HDR_Auto_Th[1]
+				case 218: SetHDR7PAutoTarget(0, Get_WifiServer_ParametersVal()); break;		// HDR_Auto_Target[0]
+				case 219: SetHDR7PAutoTarget(1, Get_WifiServer_ParametersVal()); break;		// HDR_Auto_Target[1]
+				case 220: SetRemovalVariable(0, Get_WifiServer_ParametersVal()); break;
+				case 221: SetRemovalVariable(1, Get_WifiServer_ParametersVal()); break;
+				case 222: SetRemovalVariable(2, Get_WifiServer_ParametersVal()); break;
+				case 223: SetRemovalVariable(3, Get_WifiServer_ParametersVal()); break;
+				case 224: SetDeGhostParameter(0, Get_WifiServer_ParametersVal()); break;		// Motion_Th
+				case 225: SetDeGhostParameter(1, Get_WifiServer_ParametersVal()); break;		// Motion_Diff_Pix
+				case 226: SetDeGhostParameter(2, Get_WifiServer_ParametersVal()); break;		// Overlay_Mul
+				case 227: SetDeGhostParameter(3, Get_WifiServer_ParametersVal()); break;		// DeGhost_Th
+				case 228: SetColorRate(0, Get_WifiServer_ParametersVal()); break;			// Color_Rate_0
+				case 229: SetColorRate(1, Get_WifiServer_ParametersVal()); break;			// Color_Rate_1
+				case 230: ReadFXDDR(0, Get_WifiServer_ParametersVal()); break;				// Read_F0_ADDR
+				case 231: ReadFXDDR(1, Get_WifiServer_ParametersVal()); break;				// Read_F1_ADDR
 				case 232: 
 					makeDNAfile();
-					dna_check_ok = dnaCheck();
+					dnaCheckOk = dnaCheck();
 					break;			// Make_DNA
-				case 233: SetColorTempGRate(wifiSerThe.mParametersVal); break;			// Color_Temp_G_Rate
-				case 234: SetColorTempTh(wifiSerThe.mParametersVal); break;				// Color_Temp_Th
-				case 235: SetADTAdj(0, wifiSerThe.mParametersVal); break;				// ADT_Adj_Idx
-				case 236: SetADTAdj(1, wifiSerThe.mParametersVal); break;				// ADT_Adj_Value
-				case 237: adc_ratio = wifiSerThe.mParametersVal; break;					// ADC_value
-				case 238: break;			// XXXX
-				case 239: break;			// XXXX
-				case 240: break;			// XXXX
-				case 241: break;			// XXXX
-				case 242: break;			// XXXX
-				case 243: SetConvertState(wifiSerThe.mParametersVal); break;			// doConver
-				case 244: SetMuxerType(wifiSerThe.mParametersVal);	break;				// Muxer_Type
-				case 245: Set3DModelResMode(wifiSerThe.mParametersVal); break;			// 3D_Res_Mode
-				case 246: DrivingModeDeleteFile(); break;								// Driving_Mode
-				case 247: SetPlantParameter(99, wifiSerThe.mParametersVal); break;		// Plant_Adj_En
-				case 248: SetPlantParameter(0, wifiSerThe.mParametersVal); break;		// Plant_Pan
-				case 249: SetPlantParameter(1, wifiSerThe.mParametersVal); break;		// Plant_Tilt
-				case 250: SetPlantParameter(2, wifiSerThe.mParametersVal); break;		// Plant_Rotate
-				case 251: SetPlantParameter(3, wifiSerThe.mParametersVal); break;		// Plant_Wide
+				case 233: SetColorTempGRate(Get_WifiServer_ParametersVal()); break;			// Color_Temp_G_Rate
+				case 234: SetColorTempTh(Get_WifiServer_ParametersVal()); break;				// Color_Temp_Th
+				case 235: SetADTAdj(0, Get_WifiServer_ParametersVal()); break;				// ADT_Adj_Idx
+				case 236: SetADTAdj(1, Get_WifiServer_ParametersVal()); break;				// ADT_Adj_Value
+				case 237: break;
+				case 238: break;
+				case 239: break;
+				case 240: break;
+				case 241: break;
+				case 242: break;
+				case 243: break;
+				case 244: break;
+				case 245: set_A2K_JPEG_3D_Res_Mode(Get_WifiServer_ParametersVal()); break;			// 3D_Res_Mode
+				case 246: break;
+				case 247: SetPlantParameter(99, Get_WifiServer_ParametersVal()); break;		// Plant_Adj_En
+				case 248: SetPlantParameter(0, Get_WifiServer_ParametersVal()); break;		// Plant_Pan
+				case 249: SetPlantParameter(1, Get_WifiServer_ParametersVal()); break;		// Plant_Tilt
+				case 250: SetPlantParameter(2, Get_WifiServer_ParametersVal()); break;		// Plant_Rotate
+				case 251: SetPlantParameter(3, Get_WifiServer_ParametersVal()); break;		// Plant_Wide
 				case 252: 
-	            	CameraMode = 14;		
+	            	mCameraMode = 14;		
 	                Set_OLED_MainType(mCameraMode, mCaptureCnt, mCaptureMode, mTimeLapseMode);
-	                ResolutionMode = 1;	
-	            	PlayMode2_tmp = 0;
-                    ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mUserCtrl, mCameraMode);
+	                mResolutionMode = 1;	
+	            	mPlayModeTmp = 0;
+                    ModeTypeSelectS2(mPlayModeTmp, mResolutionMode, hdmiState, mCameraMode);
 					chooseModeFlag = 1; 
-					init3dmap();
+//tmp            	init3dmap();    //awcodec.c
 					break;			// 3D-Model
-				case 253: SetNoiseTh(wifiSerThe.mParametersVal); break;				// Noise_TH
-				case 254: SetAdjYtarget(wifiSerThe.mParametersVal); break;			// Adj_Y_target
-				case 255: SetGammaOffset(0, wifiSerThe.mParametersVal); break;		// Gamma_Offset[0]
-				case 256: SetGammaOffset(1, wifiSerThe.mParametersVal); break;		// Gamma_Offset[1]
+				case 253: set_A2K_ISP1_Noise_Th(Get_WifiServer_ParametersVal()); break;				// Noise_TH
+				case 254: SetAdjYtarget(Get_WifiServer_ParametersVal()); break;			// Adj_Y_target
+				case 255: SetGammaOffset(0, Get_WifiServer_ParametersVal()); break;		// Gamma_Offset[0]
+				case 256: SetGammaOffset(1, Get_WifiServer_ParametersVal()); break;		// Gamma_Offset[1]
                 }
-            }
-            wifiSerThe.mSetParametersToolEn = 0;
-            wifiSerThe.mParametersNum = -1;
-            wifiSerThe.mParametersVal = -1;
+            //}
+            Set_WifiServer_SetParametersToolEn(0);
+            Set_WifiServer_ParametersNum(-1);
+            Set_WifiServer_ParametersVal(-1);
         }
         
-        if(wifiSerThe.mSetSensorToolEn == 1){
-        	if(sensorTool != null){
-                if(wifiSerThe.mSensorToolNum >= 1 &&
-                   wifiSerThe.mSensorToolNum <= 15) 
+        if(Get_WifiServer_SetSensorToolEn() == 1){
+            Set_WifiServer_SetSensorToolEn(0);
+//tmp            
+/*        	if(sensorTool != null){
+                if(Get_WifiServer_SensorToolNum() >= 1 &&
+                   Get_WifiServer_SensorToolNum() <= 15) 
                 {
-					setSensor(AdjSensorIdx, (wifiSerThe.mSensorToolNum-1), wifiSerThe.mSensorToolVal); 
+					setSensor(adjSensorIdx, (Get_WifiServer_SensorToolNum()-1), Get_WifiServer_SensorToolVal()); 
 					AdjFunction();
 					Send_ST_Cmd_Proc();
 					SaveConfig(1);
                 }
-            }
-            wifiSerThe.mSetSensorToolEn = 0;
-            wifiSerThe.mSensorToolNum = -1;
-            wifiSerThe.mSensorToolVal = -1;
+            }*/ 
+            Set_WifiServer_SensorToolNum(-1);
+            Set_WifiServer_SensorToolVal(-1);
         }
-        
-        if(ControllerServer.mUpdateEn == 1){
-        	wifiDisableTime = -2;
+//tmp        
+/*        if(ControllerServer.mUpdateEn == 1){
+        	mWifiDisableTime = -2;
         	ledStateArray[sleepTimerStart] = 0;
         	ledStateArray[watchdogFlag] = 1;
         	setSendMcuA64Version(ssid,pwd,"            ");
         	setMcuDate(System.currentTimeMillis());
         	ControllerServer.mUpdateEn = 0;
-        }
-        
-        if(socketChkThe.mUpdateEn == 1){
-        	wifiDisableTime = -2;
+        }*/
+//tmp        
+/*        if(socketChkThe.mUpdateEn == 1){
+        	mWifiDisableTime = -2;
         	ledStateArray[sleepTimerStart] = 0;
         	ledStateArray[watchdogFlag] = 1;
         	setSendMcuA64Version(ssid,pwd,"            ");
         	setMcuDate(System.currentTimeMillis());
         	socketChkThe.mUpdateEn = 2;
-        }
-        if(socketChkThe.mUpdateEn == 2){
+        }*/
+//tmp        
+/*        if(socketChkThe.mUpdateEn == 2){
         	int[] mData = new int[20];
             getMCUSendData(mData);
             Log.d("test", "watchdogState: "+ mData[8]);
@@ -5924,10 +5975,27 @@ void wifiSerThe_proc()
 					e.printStackTrace();
 				}
         	}
+        }*/
+        
+        if(Get_WifiServer_DbtDdrCmdEn() == 1) { 
+            Set_WifiServer_DbtDdrCmdEn(0);
+            if(getDbtDdrCmdReadWrite() == FPGA_READ) {
+                doFpgaDbtReadWriteDdrService();
+            }
+            else {
+                if(Get_WifiServer_DbtInputDdrDataEn() == 1) {
+                    Set_WifiServer_DbtInputDdrDataEn(0);
+                    doFpgaDbtReadWriteDdrService();
+                }
+            }
+        }
+        else if(Get_WifiServer_DbtRegCmdEn() == 1) {
+            Set_WifiServer_DbtRegCmdEn(0);
+            doFpgaDbtReadWriteRegService();
         }
     //}
 }
-#endif
+//#endif
 
 void *thread_5ms(void *junk)
 {    
@@ -5972,7 +6040,7 @@ void *thread_5ms(void *junk)
 				WriteUS360DataBin();
 			}
 		}
-		//wifiSerThe_proc_jni();
+		wifiSerThe_proc();
 
         skip_watchdog = getSkipWatchDog();
 		if(skip_watchdog_lst != skip_watchdog){
@@ -6020,7 +6088,7 @@ void *thread_5ms(void *junk)
 			if(fpgaCmdP1 != fpgaCmdIdx) {
 
 				if(chooseModeFlag == 1) {        // 切換模式
-					choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
+					choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, mFPS);
 					isNeedNewFreeCount = 1;
 					chooseModeFlag = 0;
 //                	mHandler.obtainMessage(REC_SHOW_NOW_MODE).sendToTarget();
@@ -6143,7 +6211,7 @@ void *thread_5ms(void *junk)
 						if(TestToolCmd.SubCmd == 0) {
 							if(TestToolCmd.Step == 1) {
 								Set_ISP2_Addr(2, 0, -1);
-								writeCmdTable(4, mResolutionMode, getFPS(), 3, 0, 1);
+								writeCmdTable(4, mResolutionMode, mFPS, 3, 0, 1);
 //                            	AutoGlobalPhiInit(1);
 								TestToolCmd.Step = 2;		//testtool.SetStep(2);
 							}
@@ -6252,7 +6320,7 @@ void *thread_5ms(void *junk)
 				if(SendMainCmdPipeT1 < SendMainCmdPipeT2) SendMainCmdPipeT1 = SendMainCmdPipeT2;
 				if( (SendMainCmdPipeT1 - SendMainCmdPipeT2) > 50000) {
 					SendMainCmdPipeT2 = SendMainCmdPipeT1;
-					choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, getFPS());
+					choose_mode(mCameraMode, mPlayModeTmp, mResolutionMode, mFPS);
 					SendMainCmdPipe(mCameraMode, getTimeLapseMode(), 1);
 					MainCmdStart();
 
